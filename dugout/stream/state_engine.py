@@ -21,6 +21,10 @@ SNAPSHOT_MS = 10_000
 MAX_SUBS, MAX_WINDOWS = 5, 3
 MIN_MS = 60_000
 
+# Scoring rates: weight on the rolling rate grows with played time up to RATE_W_MAX at 90'.
+RATE_WINDOW_MS = 20 * MIN_MS
+RATE_W_MAX = 0.6
+
 
 @dataclass
 class _Player:
@@ -117,6 +121,8 @@ class StateEngine:
             self._sub(e)
         elif kind == "restart":
             self._kicked_off = True
+        elif kind == "shot" and e.get("xg") is not None:
+            self.shots.append((self.played(e["t_ms"]), e["period"], team, e["channel"], e["xg"]))
 
     def _sub(self, e: dict) -> None:
         team = e["team"]
@@ -138,10 +144,27 @@ class StateEngine:
             "score": dict(self.score),
             "subs_left": {t: MAX_SUBS - self.subs_used[t] for t in self.teams},
             "windows_left": {t: MAX_WINDOWS - len(self.windows[t]) for t in self.teams},
-            "rates": {t: {"for90": self.prior90, "against90": self.prior90} for t in self.teams},
+            "rates": self._rates(self.played(t_ms)),
             "players": [self._player_dict(p) for p in self.players.values() if p.on_pitch],
             "threat_by_channel": {},
         }
+
+    def _rates(self, now: int) -> dict:
+        """Prior blended with each team's rolling xG for and against over the last 20 minutes."""
+        span = min(now, RATE_WINDOW_MS)
+        w = RATE_W_MAX * min(now, 90 * MIN_MS) / (90 * MIN_MS) if span >= MIN_MS else 0.0
+        xg = dict.fromkeys(self.teams, 0.0)
+        for played, _, team, _, x in self.shots:
+            if now - RATE_WINDOW_MS <= played < now:
+                xg[team] += x
+        per90 = {t: xg[t] / span * 90 * MIN_MS if span else 0.0 for t in self.teams}
+
+        def blend(rolling: float) -> float:
+            return round(w * rolling + (1 - w) * self.prior90, 2)
+
+        return {t: {"for90": blend(per90[t]),
+                    "against90": blend(sum(v for u, v in per90.items() if u != t))}
+                for t in self.teams}
 
     def _player_dict(self, p: _Player) -> dict:
         outfield = p.role != "GK"

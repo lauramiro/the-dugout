@@ -121,3 +121,46 @@ def test_subs_and_windows():
     assert last["windows_left"] == {"A": 1, "B": 3}
     on = {p["id"] for p in last["players"]}
     assert {"A-12", "A-13", "A-14", "A-15"} <= on and not {"A-02", "A-03", "A-04", "A-05"} & on
+
+
+# --- item 2: scoring rates ------------------------------------------------------
+
+TWO_GK = [{"id": "A-01", "team": "A", "role": "GK", "side": "centre", "starting": True},
+          {"id": "B-01", "team": "B", "role": "GK", "side": "centre", "starting": True}]
+
+
+def at(snaps, period, t_s):
+    return next(x for x in snaps if x["period"] == period and x["t_ms"] == t_s * 1000)
+
+
+def test_rates_start_at_the_prior_for_both_teams():
+    engine = StateEngine(TWO_GK, prior90=1.4)
+    (snap, _), = engine.feed(ev(1, 0, "restart", "A", outcome="kickoff"))
+    assert snap["rates"] == {"A": {"for90": 1.4, "against90": 1.4}, "B": {"for90": 1.4, "against90": 1.4}}
+
+
+def test_rates_blend_moves_from_the_prior_towards_the_rolling_rate():
+    # A shoots 0.25 xG every 5 minutes (4.5 xG/90); B never shoots
+    events = [ev(1, 0, "restart", "A", outcome="kickoff")]
+    events += [ev(i + 2, 60 + 300 * i, "shot", "A", channel="centre", outcome="saved", xg=0.25)
+               for i in range(9)]
+    events.append(ev(20, 2699, "pass", "B"))
+    snaps = run_engine(StateEngine(TWO_GK), events)
+    gaps = []
+    for minute in (10, 20, 30, 40):
+        r = at(snaps, 1, minute * 60)["rates"]
+        assert r["A"]["for90"] == r["B"]["against90"] and r["A"]["against90"] == r["B"]["for90"]
+        assert 1.35 < r["A"]["for90"] < 4.5
+        assert 0.0 < r["A"]["against90"] < 1.35
+        gaps.append(4.5 - r["A"]["for90"])
+    assert gaps == sorted(gaps, reverse=True) and gaps[0] > gaps[-1] + 0.3
+
+
+def test_rolling_rate_forgets_shots_older_than_20_minutes():
+    events = [ev(1, 0, "restart", "A", outcome="kickoff"),
+              ev(2, 60, "shot", "A", channel="centre", outcome="saved", xg=0.5),
+              ev(3, 2699, "pass", "B")]
+    snaps = run_engine(StateEngine(TWO_GK), events)
+    assert at(snaps, 1, 20 * 60)["rates"]["A"]["for90"] > 1.35
+    late = at(snaps, 1, 22 * 60)["rates"]["A"]
+    assert late["for90"] == late["against90"] < 1.35
