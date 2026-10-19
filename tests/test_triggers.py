@@ -18,7 +18,8 @@ def snap(t_s, est=None, period=None):
     return {"match_id": "m", "t_ms": t_ms, "period": period or (1 if t_ms < H2 else 2),
             "score": {"A": 0, "B": 0}, "subs_left": {"A": 5, "B": 5}, "windows_left": {"A": 3, "B": 3},
             "rates": {"A": {"for90": 1.35, "against90": 1.35}, "B": {"for90": 1.35, "against90": 1.35}},
-            "players": [{"id": pid, "team": pid[0], "role": "FB", "condition_est": v} for pid, v in est.items()],
+            "players": [{"id": pid, "team": pid[0], "role": "FB", "condition_est": v,
+                         "condition_band": [round(v - 0.25, 2), round(v + 0.25, 2)]} for pid, v in est.items()],
             "threat_by_channel": {}}
 
 
@@ -55,7 +56,7 @@ def test_condition_below_60_fires_once_per_player_for_his_team():
              (snap(3620, {"B-02": 0.61}), []), (snap(3630, {"B-02": 0.55}), [])]
     (point,) = opened(run(DecisionPoints(), ticks))
     assert point["trigger"] == "condition_below_60" and point["team"] == "B"
-    assert point["detail"] == {"player_id": "B-02", "condition_est": 0.58}
+    assert point["detail"] == {"player_id": "B-02", "condition_est": 0.58, "condition_band": [0.33, 0.83]}
     assert point["t_ms"] == 3_610_000 and point["snapshot"]["t_ms"] == 3_610_000
 
 

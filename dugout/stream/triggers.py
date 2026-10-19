@@ -93,7 +93,8 @@ class DecisionPoints:
             if est < CONDITION_LINE <= before and p["id"] not in self._fired:
                 self._fired.add(p["id"])
                 points.append(_Point(p["team"], "condition_below_60", snapshot["t_ms"],
-                                     {"player_id": p["id"], "condition_est": est}))
+                                     {"player_id": p["id"], "condition_est": est,
+                                      "condition_band": p.get("condition_band")}))
         return points
 
     def _open(self, snapshot: dict, point: _Point) -> dict:

@@ -87,10 +87,10 @@ Decision points (`dugout.stream.triggers`), one record each, carrying the snapsh
 ```json
 {"kind": "decision_point", "id": "rfc-62-01", "t_ms": 3720000, "period": 2, "team": "RFC",
  "trigger": "condition_below_60", "raised_t_ms": 3720000,
- "detail": {"player_id": "RFC-03", "condition_est": 0.594}, "snapshot": {"t_ms": 3720000, "...": "..."}}
+ "detail": {"player_id": "RFC-03", "condition_est": 0.594, "condition_band": [0.35, 0.86]}, "snapshot": {"t_ms": 3720000, "...": "..."}}
 ```
 
-`detail` is `{"player_id", "condition_est"}` for `condition_below_60`, `{"scorer_team"}` for `goal_after_55` (one point for each team, the conceding team first) and `{"subs": [{"off", "on"}]}` for `manager_sub` (one per team per window). One card is open at a time and the rest wait, oldest first. A card closes when its team makes a change, after 3 minutes of match clock or at the end of the stream, written as `{"kind": "card_closed", "id", "t_ms", "period", "team", "reason"}` with `reason` `change`, `timeout` or `full_time`. `python -m dugout.stream.snapshots` writes snapshots as `{"kind": "snapshot", "snapshot": {...}}` with these records in between.
+`detail` is `{"player_id", "condition_est", "condition_band"}` for `condition_below_60` (the estimate crossing 0.60; the band is usually wide, so the card should read as a possible rather than a certain drop), `{"scorer_team"}` for `goal_after_55` (one point for each team, the conceding team first) and `{"subs": [{"off", "on"}]}` for `manager_sub` (one per team per window). One card is open at a time and the rest wait, oldest first. A card closes when its team makes a change, after 3 minutes of match clock or at the end of the stream, written as `{"kind": "card_closed", "id", "t_ms", "period", "team", "reason"}` with `reason` `change`, `timeout` or `full_time`. `python -m dugout.stream.snapshots` writes snapshots as `{"kind": "snapshot", "snapshot": {...}}` with these records in between.
 
 ## 4. Decision payload (decision engine output; the agents' only input)
 
