@@ -1,5 +1,11 @@
+import subprocess
+import sys
+
 from dugout.contracts import Event
-from dugout.sim.seed_search import NARROW, WIDE, Match, check_story
+from dugout.sim.counterfactual import NO_CHANGE, Option, play_to, true_gap
+from dugout.sim.match import new_match, run_match
+from dugout.sim.seed_search import (NARROW, WIDE, Match, check_story, fallback_step, honest_gap, play_seed,
+                                    rank_by_gap, search)
 
 _seq = iter(range(1, 10_000))
 
@@ -93,12 +99,6 @@ def test_the_equaliser_is_the_goal_that_levels_not_an_earlier_one():
 
 # --- running the search ------------------------------------------------------
 
-import subprocess
-import sys
-
-from dugout.sim.match import run_match
-from dugout.sim.seed_search import fallback_step, play_seed, search
-
 
 def test_play_seed_matches_run_match_and_reads_the_hidden_fade(scenario):
     events, fade = play_seed(scenario, 2)  # RFC-03 is at about 0.6 around 62' in this seed
@@ -132,3 +132,23 @@ def test_cli_search_lists_seeds_and_steps():
     out = subprocess.run([sys.executable, "-m", "dugout.sim", "search", "--seeds", "30", "--wide"],
                          check=True, capture_output=True, text=True).stdout
     assert "seeds 1-30" in out
+
+
+# --- ranking by honest gap ---------------------------------------------------
+
+
+def test_honest_gap_is_no_change_against_the_like_for_like_bench_player_at_the_fade(scenario):
+    s, _ = new_match(scenario, 17)
+    play_to(s, 63)
+    off = Option("sub", "RFC-03 off, RFC-15 on", subs=(("RFC-03", "RFC-15"),))
+    expected = true_gap(s, "RFC", [NO_CHANGE, off], n=20)[1]
+    got = honest_gap(scenario, 17, 63, n=20)
+    assert got.on == "RFC-15"
+    assert got.delta_win == expected.delta_win and got.delta_xpts == expected.delta_xpts
+
+
+def test_rank_by_gap_puts_the_largest_gap_first(scenario):
+    found = [(17, Match(63, 77, 80)), (73, Match(64, 72, 79))]
+    ranked = rank_by_gap(scenario, found, n=20, workers=1)
+    assert sorted(r.seed for r in ranked) == [17, 73]
+    assert ranked[0].delta_win >= ranked[1].delta_win

@@ -17,7 +17,7 @@ from dugout.sim.counterfactual import NO_CHANGE, Option, play_to, true_gap
 from dugout.sim.match import new_match, run_match
 from dugout.sim.realism import TARGETS, realism, summarise
 from dugout.sim.scenario import load_scenario
-from dugout.sim.seed_search import NARROW, WIDE, fallback_step, search
+from dugout.sim.seed_search import NARROW, WIDE, fallback_step, rank_by_gap, search
 from dugout.sim.tracking import run_with_tracking
 
 DEFAULT_SCENARIO = Path(__file__).resolve().parents[2] / "scenarios" / "riverside-castleton.yaml"
@@ -48,6 +48,8 @@ def main() -> None:
     sr = sub.add_parser("search", help="find seeds where the demo story happens on its own")
     sr.add_argument("--seeds", type=int, default=2000, help="search seeds 1 to N")
     sr.add_argument("--wide", action="store_true", help="wider equaliser and substitution windows")
+    sr.add_argument("--rank", type=int, default=0, metavar="N",
+                    help="rank the matches by true gap at the fade minute, N forks per option (500 or more)")
     args = ap.parse_args()
 
     scenario = load_scenario(args.scenario)
@@ -83,6 +85,10 @@ def main() -> None:
         for seed, m in found:
             print(f"seed {seed:<6} step {fallback_step(seed, m)}  fade {m.fade}'  equaliser {m.equaliser}'  sub {m.sub}'")
         print(f"{len(found)} matching seeds")
+        if args.rank:
+            print(f"true gap at the fade minute, RFC-03 off against no change, {args.rank} forks per option:")
+            for g in rank_by_gap(scenario, found, args.rank):
+                print(f"seed {g.seed:<6} {g.on} on  true gap {100 * g.delta_win:+.1f} pts win, {g.delta_xpts:+.2f} xpts")
     else:
         stats = realism(scenario, range(1, args.seeds + 1))
         for key, v in stats.items():

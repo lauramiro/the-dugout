@@ -25,6 +25,7 @@ from dataclasses import dataclass
 
 from dugout.contracts import Event
 from dugout.sim import managers
+from dugout.sim.counterfactual import NO_CHANGE, Option, play_to, true_gap
 from dugout.sim.match import MIRROR, new_match, step
 from dugout.sim.scenario import Scenario
 
@@ -140,3 +141,41 @@ def search(scenario: Scenario, seeds: Iterable[int], windows: Windows, workers: 
         with ProcessPoolExecutor(max_workers=workers) as pool:
             results = list(pool.map(_try, jobs, chunksize=16))
     return [r for r in results if r]
+
+
+# --- ranking by honest gap ---------------------------------------------------
+
+@dataclass(frozen=True, slots=True)
+class Gap:
+    seed: int
+    match: Match | None
+    on: str  # the like-for-like bench player
+    delta_win: float  # win probability, RFC-03 off against no change
+    delta_xpts: float
+
+
+def honest_gap(scenario: Scenario, seed: int, fade_minute: int, n: int, match: Match | None = None) -> Gap:
+    """True gap at the fade minute: no change against RFC-03 off for a like-for-like bench player."""
+    s, _ = new_match(scenario, seed)
+    play_to(s, fade_minute)
+    on = managers._like_for_like(s, s.players[FADING_PLAYER], set())
+    option = Option(f"sub_{FADING_PLAYER}", f"{FADING_PLAYER} off, {on} on", subs=((FADING_PLAYER, on),))
+    _, sub = true_gap(s, HOME, [NO_CHANGE, option], n)
+    return Gap(seed, match, on, sub.delta_win, sub.delta_xpts)
+
+
+def _gap_job(args: tuple[Scenario, int, Match, int]) -> Gap:
+    scenario, seed, m, n = args
+    return honest_gap(scenario, seed, m.fade, n, m)
+
+
+def rank_by_gap(scenario: Scenario, found: list[tuple[int, Match]], n: int = 500,
+                workers: int | None = None) -> list[Gap]:
+    """Matching seeds with their true gap, the largest gain from the change first."""
+    jobs = [(scenario, seed, m, n) for seed, m in found]
+    if workers == 1:
+        gaps = list(map(_gap_job, jobs))
+    else:
+        with ProcessPoolExecutor(max_workers=workers) as pool:
+            gaps = list(pool.map(_gap_job, jobs))
+    return sorted(gaps, key=lambda g: (-g.delta_win, -g.delta_xpts, g.seed))
