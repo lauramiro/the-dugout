@@ -5,6 +5,7 @@ import pytest
 from dugout.contracts import Event
 from dugout.sim import fatigue
 from dugout.sim.match import run_match
+from dugout.sim.realism import TARGETS
 
 OLD_KEYS = ["match_id", "seq", "t_ms", "period", "type", "team", "player_id", "channel",
             "x", "y", "end_x", "end_y", "outcome", "xg"]
@@ -50,3 +51,8 @@ def test_match_emits_sprints_and_hsr_with_distance(scenario):
 def test_running_falls_in_the_second_half(realism_100):
     assert realism_100["sprints_h2"]["mean"] < realism_100["sprints_h1"]["mean"]
     assert realism_100["hsr_m_h2"]["mean"] < realism_100["hsr_m_h1"]["mean"]
+
+
+def test_realism_targets_hold_over_100_seeds(realism_100):
+    for key, (lo, hi) in TARGETS.items():
+        assert lo <= realism_100[key]["mean"] <= hi, key

@@ -77,8 +77,12 @@ def test_match_invariants(scenario, seed):
         assert e.t_ms >= (0 if e.period == 1 else HALF_S * 1000)
         if e.x is not None:
             assert 0 <= e.x <= PITCH_LENGTH and 0 <= e.y <= PITCH_WIDTH
+    restarts = [e for e in events if e.type in ("goal", "restart")]
+    for goal, nxt in zip(restarts, restarts[1:]):
+        if goal.type == "goal":  # a half can end before the kickoff, so the next one may be the second half's
+            assert nxt.type == "restart" and nxt.outcome == "kickoff"
     kickoffs = [e for e in events if e.type == "restart" and e.outcome == "kickoff"]
-    assert len(kickoffs) == 2 + len(goals)
+    assert len(goals) <= len(kickoffs) - 1 <= len(goals) + 1
     second_half = [e for e in events if e.period == 2]
     assert second_half[0].type == "restart" and second_half[0].team == s.away
 

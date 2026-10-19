@@ -11,7 +11,7 @@ SUB_LB = Option("sub_lb", "Replace left-back (RFC-03 for RFC-15)", subs=(("RFC-0
 
 @pytest.fixture(scope="module")
 def at_62(scenario):
-    s, _ = new_match(scenario, 1)
+    s, _ = new_match(scenario, 2)  # Riverside 1-0 up at 62', left-back at about 0.6
     play_to(s, 62)
     return s
 
@@ -19,6 +19,7 @@ def at_62(scenario):
 def test_play_to_stops_at_the_minute(at_62):
     assert (at_62.period, at_62.clock_s) == (2, 62 * 60)
     assert at_62.players["RFC-03"].on_pitch
+    assert at_62.score == {"RFC": 1, "CAS": 0}
 
 
 def test_true_gap_at_62(at_62):
@@ -54,7 +55,7 @@ def test_true_gap_needs_no_change_and_legal_subs(at_62):
 
 
 def test_cli_gap_prints_a_true_gap():
-    out = subprocess.run([sys.executable, "-m", "dugout.sim", "gap", "--seed", "1", "--minute", "62",
+    out = subprocess.run([sys.executable, "-m", "dugout.sim", "gap", "--seed", "2", "--minute", "62",
                           "--team", "RFC", "--off", "RFC-03", "--on", "RFC-15", "--n", "20"],
                          check=True, capture_output=True, text=True).stdout
     assert "no_change" in out and "sub" in out and "true gap" in out
