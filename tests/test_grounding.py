@@ -103,3 +103,10 @@ def test_narration_word_limits():
     assert any("headline" in e for e in check_narration(long_headline, SAMPLE_PAYLOAD, "en"))
     long_reason = Narration(headline=ok.headline, reason="(strong) " + " ".join(["word"] * 25))
     assert any("reason" in e for e in check_narration(long_reason, SAMPLE_PAYLOAD, "en"))
+
+
+def test_value_that_rounds_to_zero_matches_either_sign():
+    payload = payload_with(delta_win=-0.0004)
+    for quoted in ("+0.0", "-0.0", "0.0"):
+        line = f"Changing now: {quoted} pts win probability (strong)."
+        assert check_grounding(line, payload, "en") == []

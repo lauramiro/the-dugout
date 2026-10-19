@@ -17,7 +17,7 @@ MAX_HEADLINE_WORDS = 12
 MAX_REASON_WORDS = 25
 INTERVAL_PERCENT = 90
 
-_PLAYER_ID = re.compile(r"\b[A-Z]{2,4}-\d{2,3}\b")
+PLAYER_ID = re.compile(r"\b[A-Z]{2,4}-\d{2,3}\b")
 _NUMBER = re.compile(r"(?<!\w)([+\-−])?(\d+)(?:([.,])(\d+))?")
 
 
@@ -60,7 +60,7 @@ def payload_player_ids(payload: dict) -> set[str]:
 
     def walk(node) -> None:
         if isinstance(node, str):
-            found.update(_PLAYER_ID.findall(node))
+            found.update(PLAYER_ID.findall(node))
         elif isinstance(node, dict):
             for value in node.values():
                 walk(value)
@@ -95,13 +95,13 @@ def check_grounding(text: str, payload: dict, locale: str) -> list[str]:
     errors: list[str] = []
 
     known_ids = payload_player_ids(payload)
-    for player_id in dict.fromkeys(_PLAYER_ID.findall(text)):
+    for player_id in dict.fromkeys(PLAYER_ID.findall(text)):
         if player_id not in known_ids:
             errors.append(f"player {player_id} is not in the payload")
 
     candidates = payload_numbers(payload)
     separator = DECIMAL_SEPARATOR[locale]
-    for match in _NUMBER.finditer(_PLAYER_ID.sub(" ", text)):
+    for match in _NUMBER.finditer(PLAYER_ID.sub(" ", text)):
         sign, whole, point, fraction = match.groups()
         quoted = match.group(0)
         if point and point != separator:
