@@ -41,12 +41,14 @@ Defined in code as `dugout.contracts.Event`.
 
 ## 2. Tracking frame (2 Hz; `v` in m/s)
 
-Used only to draw the pitch.
+Used only to draw the pitch, never as a decision-engine input.
 
 ```json
-{"match_id": "rfc-cas-0001", "t_ms": 3725500, "ball": {"x": 51.0, "y": 12.4},
+{"match_id": "rfc-cas-0001", "period": 2, "t_ms": 3725500, "ball": {"x": 51.0, "y": 12.4},
  "players": [{"id": "RFC-03", "x": 33.8, "y": 9.0, "v": 7.4}]}
 ```
+
+One frame every 500 ms of match clock in each period, from the period's kick-off to its final whistle, listing every player on the pitch. `period` is there because first-half added time overlaps second-half `t_ms`; order frames by `(period, t_ms)`. `v` is the distance from the previous frame divided by 0.5 s (0 on a player's first frame of a period). Positions are a formation template shifted with the ball plus noise, so they are drawn, not measured. `python -m dugout.sim run --out X.jsonl` writes the frames to `X.tracking.jsonl`.
 
 ## 3. Snapshot (state engine, every 10 s; the decision engine's only input)
 
