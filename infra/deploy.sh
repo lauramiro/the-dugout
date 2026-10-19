@@ -90,7 +90,7 @@ fi
 
 echo "# 2. Event Hubs namespace and hub"
 run az eventhubs namespace create --name "$EH_NS" --resource-group "$RG" --location "$REGION" --sku Basic --output none
-run az eventhubs eventhub create --name "$HUB" --namespace-name "$EH_NS" --resource-group "$RG" --partition-count 2 --retention-time 24 --output none
+run az eventhubs eventhub create --name "$HUB" --namespace-name "$EH_NS" --resource-group "$RG" --partition-count 2 --cleanup-policy Delete --retention-time 24 --output none
 
 echo "# 3. Web PubSub"
 run az webpubsub create --name "$WPS" --resource-group "$RG" --location "$REGION" --sku Free_F1 --output none
