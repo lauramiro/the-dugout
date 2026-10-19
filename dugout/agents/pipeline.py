@@ -78,12 +78,23 @@ class _Unavailable(Exception):
         self.reason = reason
 
 
-def _parse(reply: str) -> Narration | str:
+def parse_reply(reply: str) -> Narration | str:
     try:
         data = json.loads(reply)
         return Narration(headline=str(data["headline"]), reason=str(data["reason"]))
     except (ValueError, KeyError, TypeError):
         return "reply is not JSON with a headline and a reason"
+
+
+def build_request(payload: dict, locale: str, mode: str, draft: Narration | None) -> dict:
+    request = {
+        "target": {"locale": locale, "mode": mode},
+        "payload": payload,
+        "numbers": format_payload(payload, locale),
+    }
+    if draft is not None:
+        request["draft"] = {"headline": draft.headline, "reason": draft.reason}
+    return request
 
 
 class NarrationPipeline:
@@ -107,13 +118,7 @@ class NarrationPipeline:
 
     def _stage(self, prompt: str, payload: dict, locale: str, mode: str,
                draft: Narration | None) -> Narration | None:
-        request = {
-            "target": {"locale": locale, "mode": mode},
-            "payload": payload,
-            "numbers": format_payload(payload, locale),
-        }
-        if draft is not None:
-            request["draft"] = {"headline": draft.headline, "reason": draft.reason}
+        request = build_request(payload, locale, mode, draft)
         system = load_prompt(prompt)
         for _ in range(MAX_ATTEMPTS):
             try:
@@ -124,7 +129,7 @@ class NarrationPipeline:
                 raise _Unavailable("timeout") from exc
             except ModelError as exc:
                 raise _Unavailable("error") from exc
-            parsed = _parse(reply)
+            parsed = parse_reply(reply)
             errors = [parsed] if isinstance(parsed, str) else check_narration(parsed, payload, locale)
             if not errors:
                 return parsed
