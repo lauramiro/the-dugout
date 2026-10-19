@@ -15,8 +15,9 @@
 # Secrets are read into shell variables and passed on, never echoed or written to disk,
 # except the local .env (git-ignored) written for the replayer.
 #
-# Flags marked UNVERIFIED were not checked against `az ... -h` (az was not installed when
-# this was written). Run `infra/deploy.sh --check-help` once az is installed.
+# Checked against `az ... -h`: containerapp up/env create/secret set/update, staticwebapp secrets list,
+# eventhubs keys list. Still UNVERIFIED: webpubsub key show, budget create-with-rg input shapes, and the
+# output property names primaryConnectionString / apiKey. `--check-help` prints the help for these.
 set -euo pipefail
 
 APPLY=0
@@ -66,7 +67,17 @@ run_quiet() { local label="$1"; shift; echo "+ ($label; arguments hidden)"; [[ $
 # Capture a value; in a dry run return a placeholder.
 capture() { if [[ $APPLY == 1 ]]; then "$@"; else echo "<dry-run>"; fi; }
 
+# Abort when a captured value is empty (a wrong --query property comes back empty or "None").
+need() { if [[ $APPLY == 1 && ( -z "$2" || "$2" == "None" ) ]]; then echo "empty value for $1; check the --query" >&2; exit 1; fi; }
+
 echo "mode: $([[ $APPLY == 1 ]] && echo APPLY || echo dry run)  region: $REGION  swa region: $SWA_REGION"
+
+echo "# 0. resource providers (new subscriptions have most unregistered) and CLI extensions"
+for ns in Microsoft.EventHub Microsoft.SignalRService Microsoft.Web Microsoft.App           Microsoft.OperationalInsights Microsoft.ContainerRegistry; do
+  run az provider register --namespace "$ns" --wait
+done
+run az extension add --name containerapp --upgrade --only-show-errors
+run az extension add --name webpubsub --upgrade --only-show-errors
 
 echo "# 1. resource group"
 run az group create --name "$RG" --location "$REGION" --output none
@@ -75,7 +86,7 @@ echo "# 2. Event Hubs namespace and hub"
 run az eventhubs namespace create --name "$EH_NS" --resource-group "$RG" --location "$REGION" --sku Basic --output none
 run az eventhubs eventhub create --name "$HUB" --namespace-name "$EH_NS" --resource-group "$RG" --partition-count 2 --output none
 
-echo "# 3. Web PubSub (extension installs on first use)"
+echo "# 3. Web PubSub"
 run az webpubsub create --name "$WPS" --resource-group "$RG" --location "$REGION" --sku Free_F1 --output none
 # The hub needs no setup: Web PubSub creates a hub on first use.
 
@@ -83,11 +94,13 @@ echo "# 4. Static Web Apps (no repo: content is uploaded in step 7)"
 run az staticwebapp create --name "$SWA" --resource-group "$RG" --location "$SWA_REGION" --sku Free --output none
 SWA_HOST="$(capture az staticwebapp show --name "$SWA" --resource-group "$RG" --query defaultHostname -o tsv)"
 
-echo "# 5. Container Apps environment and stub engine (UNVERIFIED: up / env create / secret set / update flags)"
-run az extension add --name containerapp --upgrade --only-show-errors
+need SWA_HOST "$SWA_HOST"
+
+echo "# 5. Container Apps environment and stub engine "
 run az containerapp env create --name "$CAE" --resource-group "$RG" --location "$REGION"
 WPS_CONN="$(capture az webpubsub key show --name "$WPS" --resource-group "$RG" --query primaryConnectionString -o tsv)"
 # 'up' builds the repo Dockerfile in Azure and creates or updates the app.
+need WPS_CONN "$WPS_CONN"
 run az containerapp up --name "$APP" --resource-group "$RG" --environment "$CAE" \
   --source "$ROOT" --ingress external --target-port 8000
 run_quiet "store Web PubSub connection string as secret" \
@@ -97,9 +110,12 @@ run az containerapp update --name "$APP" --resource-group "$RG" --set-env-vars \
   "STUB_CORS_ORIGINS=https://$SWA_HOST"
 STUB_FQDN="$(capture az containerapp show --name "$APP" --resource-group "$RG" --query properties.configuration.ingress.fqdn -o tsv)"
 
+need STUB_FQDN "$STUB_FQDN"
+
 echo "# 6. Local .env for the replayer (git-ignored)"
 EH_CONN="$(capture az eventhubs namespace authorization-rule keys list --namespace-name "$EH_NS" \
   --resource-group "$RG" --name RootManageSharedAccessKey --query primaryConnectionString -o tsv)"
+need EH_CONN "$EH_CONN"
 if [[ $APPLY == 1 ]]; then
   umask 077
   { echo "EVENTHUB_CONNECTION_STRING=$EH_CONN"; echo "EVENTHUB_NAME=$HUB"; } > "$ROOT/.env"
@@ -112,6 +128,7 @@ echo "# 7. Build and upload the web page"
 run bash -c "cd '$ROOT/web' && npm ci && npm run build"
 run bash -c "printf '{ \"stubUrl\": \"https://%s\" }\n' '$STUB_FQDN' > '$ROOT/web/out/config.json'"
 SWA_TOKEN="$(capture az staticwebapp secrets list --name "$SWA" --resource-group "$RG" --query properties.apiKey -o tsv)"
+need SWA_TOKEN "$SWA_TOKEN"
 if [[ $APPLY == 1 ]]; then
   SWA_CLI_DEPLOYMENT_TOKEN="$SWA_TOKEN" npx --yes @azure/static-web-apps-cli@2.0.10 deploy "$ROOT/web/out" --env production
 else
