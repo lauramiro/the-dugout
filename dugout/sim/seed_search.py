@@ -1,0 +1,94 @@
+"""Seed search: find a seed where the demo story happens on its own.
+
+The story: Riverside lead at 60'; the left-back RFC-03 (the played-midweek
+lever) fades by about 62'; Castleton equalise down that flank between 70' and
+80'; Riverside's manager takes RFC-03 off at about 78'. Every candidate is an
+honest simulation of the scenario; nothing is written or edited by hand.
+
+This is an authoring tool, so it may read hidden values. "Fades" means the
+hidden condition of RFC-03 first drops below `FADE_BELOW`, the level at which
+the simulated manager treats a player as fading (`managers.FADE`), so the fade
+minute is the first whole minute the manager could start reacting. Minutes are
+whole match minutes: 80 means 80:00 to 80:59, and the second half runs on from
+45 (an event at t_ms 4_800_000 is minute 80).
+
+Channel mapping: event channels are from the scoring team's view. RFC-03 is
+Riverside's left-back, so the flank he covers is Riverside's left, which is
+Castleton's right: the equaliser must be a Castleton goal with channel "right".
+"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass
+
+from dugout.contracts import Event
+from dugout.sim import managers
+from dugout.sim.match import MIRROR
+
+HOME, AWAY = "RFC", "CAS"
+FADING_PLAYER = "RFC-03"
+FLANK_FOR_HOME = "left"  # RFC-03's side, from Riverside's view
+EQUALISER_CHANNEL = MIRROR[FLANK_FOR_HOME]  # the same flank from Castleton's view
+FADE_BELOW = managers.FADE
+LEAD_AT = 60
+
+
+@dataclass(frozen=True, slots=True)
+class Windows:
+    fade: tuple[int, int]
+    equaliser: tuple[int, int]
+    sub: tuple[int, int] | None  # None: any time after the fade
+
+
+NARROW = Windows(fade=(60, 64), equaliser=(70, 80), sub=(76, 80))
+WIDE = Windows(fade=(60, 64), equaliser=(65, 85), sub=None)
+
+
+@dataclass(frozen=True, slots=True)
+class Match:
+    fade: int
+    equaliser: int
+    sub: int
+
+
+def minute(e: Event) -> int:
+    return e.t_ms // 60_000
+
+
+def check_story(events: list[Event], fade_minute: int | None, windows: Windows) -> Match | None:
+    """The minutes of the story if `events` tell it inside `windows`, else None.
+
+    `fade_minute` is the first minute RFC-03's hidden condition was below
+    `FADE_BELOW`, or None if it never was; it is not in the event stream.
+    """
+    if fade_minute is None or not windows.fade[0] <= fade_minute <= windows.fade[1]:
+        return None
+    goals = [e for e in events if e.type == "goal"]
+    score = {HOME: 0, AWAY: 0}
+    for e in goals:
+        if minute(e) < LEAD_AT:
+            score[e.team] += 1
+    if score[HOME] <= score[AWAY]:
+        return None
+    equaliser = None
+    for e in goals:
+        if minute(e) < LEAD_AT:
+            continue
+        score[e.team] += 1
+        if (e.team == AWAY and score[HOME] == score[AWAY] and e.channel == EQUALISER_CHANNEL
+                and windows.equaliser[0] <= minute(e) <= windows.equaliser[1]):
+            equaliser = minute(e)
+            break
+    if equaliser is None:
+        return None
+    for e in events:
+        if (e.type == "sub" and e.team == HOME and e.player_id == FADING_PLAYER
+                and _sub_in_window(minute(e), fade_minute, windows)):
+            return Match(fade_minute, equaliser, minute(e))
+    return None
+
+
+def _sub_in_window(m: int, fade_minute: int, windows: Windows) -> bool:
+    if windows.sub is None:
+        return m >= fade_minute
+    return windows.sub[0] <= m <= windows.sub[1]
