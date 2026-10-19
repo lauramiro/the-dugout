@@ -7,4 +7,4 @@ COPY dugout ./dugout
 RUN uv sync --frozen --no-dev
 ENV PATH="/app/.venv/bin:$PATH"
 EXPOSE 8000
-CMD ["uvicorn", "dugout.stub.app:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "dugout.service.app:app", "--host", "0.0.0.0", "--port", "8000"]
