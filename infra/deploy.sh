@@ -141,19 +141,19 @@ else
   echo "+ (npx @azure/static-web-apps-cli@2.0.10 deploy web/out --env production; token via SWA_CLI_DEPLOYMENT_TOKEN)"
 fi
 
-echo "# 8. Budget alert on the resource group (UNVERIFIED: create-with-rg input shapes)"
+echo "# 8. Budget alert on the resource group"
 START="$(date -u +%Y-%m-01T00:00:00Z)"
 END="$(date -u -d '+1 year' +%Y-%m-01T00:00:00Z)"
 TMP="$(mktemp -d)"
 cat > "$TMP/notifications.json" <<JSON
 {
-  "actual80": {"enabled": true, "operator": "GreaterThan", "threshold": 80, "thresholdType": "Actual",
-               "contactEmails": ["$BUDGET_EMAIL"]},
-  "forecast100": {"enabled": true, "operator": "GreaterThan", "threshold": 100, "thresholdType": "Forecasted",
-                  "contactEmails": ["$BUDGET_EMAIL"]}
+  "actual80": {"enabled": true, "operator": "GreaterThan", "threshold": 80,
+               "contact-emails": ["$BUDGET_EMAIL"]},
+  "actual100": {"enabled": true, "operator": "GreaterThan", "threshold": 100,
+                "contact-emails": ["$BUDGET_EMAIL"]}
 }
 JSON
-echo "{\"startDate\": \"$START\", \"endDate\": \"$END\"}" > "$TMP/period.json"
+echo "{\"start-date\": \"$START\", \"end-date\": \"$END\"}" > "$TMP/period.json"
 run az consumption budget create-with-rg --resource-group "$RG" --budget-name "$PREFIX-budget" \
   --amount "$BUDGET_USD" --category Cost --time-grain Monthly \
   --time-period "@$TMP/period.json" --notifications "@$TMP/notifications.json" --output none
