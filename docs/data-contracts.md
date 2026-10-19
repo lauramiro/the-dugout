@@ -75,6 +75,23 @@ One frame every 500 ms of match clock in each period, from the period's kick-off
 
 Goalkeepers carry `"condition_est": null`.
 
+Written by `dugout.stream.state_engine` from events in `seq` order plus a lineup (each player's id, team, role, side and whether he starts; nothing hidden). Additions to the shape above:
+
+- `match_id` and `period` at the top level; `period` because first-half added time overlaps second-half `t_ms`. A snapshot at `(period, t_ms)` covers every event of that period with a smaller `t_ms`. Snapshots run every 10 s from each period's kick-off; a period's last snapshot is the first boundary after its last event.
+- `rates` has an entry for each team: a pre-match prior (1.35 xG/90 by default) blended with rolling xG over the last 20 played minutes, the rolling weight growing to 0.6 at 90'.
+- `players` lists everyone on the pitch, both teams, with `team` and `role`. The condition estimate compares exponentially weighted running per in-play minute (hsr metres weighted above sprints) with the player's own first 20 minutes on the pitch, clipped to 0.3 to 1.0; it stays 1.0 until that baseline is complete, and `baseline_hsr_m_10m` and `baseline_sprints_10m` are null until then. `condition_band` is wider for CB and CM. Goalkeepers also carry `"condition_band": null`.
+- `threat_by_channel` has keys for both teams (`RFC_left` = attacks on Riverside's left, from Riverside's view): the share of the opponent's xG over the last 15 played minutes, shrunk towards the first-half split. `threat_by_channel_first_half` gives that first-half split (even before half-time).
+
+Decision points (`dugout.stream.triggers`), one record each, carrying the snapshot the card opens on with the deciding team first in `rates`:
+
+```json
+{"kind": "decision_point", "id": "rfc-62-01", "t_ms": 3720000, "period": 2, "team": "RFC",
+ "trigger": "condition_below_60", "raised_t_ms": 3720000,
+ "detail": {"player_id": "RFC-03", "condition_est": 0.594}, "snapshot": {"t_ms": 3720000, "...": "..."}}
+```
+
+`detail` is `{"player_id", "condition_est"}` for `condition_below_60`, `{"scorer_team"}` for `goal_after_55` (one point for each team, the conceding team first) and `{"subs": [{"off", "on"}]}` for `manager_sub` (one per team per window). One card is open at a time and the rest wait, oldest first. A card closes when its team makes a change, after 3 minutes of match clock or at the end of the stream, written as `{"kind": "card_closed", "id", "t_ms", "period", "team", "reason"}` with `reason` `change`, `timeout` or `full_time`. `python -m dugout.stream.snapshots` writes snapshots as `{"kind": "snapshot", "snapshot": {...}}` with these records in between.
+
 ## 4. Decision payload (decision engine output; the agents' only input)
 
 ```json

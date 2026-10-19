@@ -147,3 +147,20 @@ def test_simulated_match_opens_cards_one_at_a_time(scenario, seed):
     subs = {(e.team, e.period, e.t_ms) for e in events if e.type == "sub"}
     raised = [r for r in opened(records) if r["trigger"] == "manager_sub"]
     assert raised and len(raised) <= len(subs)
+
+
+def test_cli_writes_snapshots_and_decision_points(scenario, tmp_path):
+    import json
+    from pathlib import Path
+
+    s, events = run_match(scenario, 2)
+    src, out = tmp_path / "events.jsonl", tmp_path / "snapshots.jsonl"
+    src.write_text("".join(json.dumps(e.to_dict()) + "\n" for e in reversed(events)), encoding="utf-8")
+    path = Path(__file__).resolve().parents[1] / "scenarios" / "riverside-castleton.yaml"
+    subprocess.run([sys.executable, "-m", "dugout.stream.snapshots", "--events", str(src),
+                    "--scenario", str(path), "--out", str(out)], check=True)
+    rows = [json.loads(line) for line in out.read_text(encoding="utf-8").splitlines()]
+    snaps = [r["snapshot"] for r in rows if r["kind"] == "snapshot"]
+    assert snaps[-1]["score"] == s.score
+    assert {r["kind"] for r in rows} == {"snapshot", "decision_point", "card_closed"}
+    assert {r["team"] for r in rows if r["kind"] == "decision_point"} == {"RFC", "CAS"}
