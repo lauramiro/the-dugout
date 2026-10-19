@@ -1542,6 +1542,7 @@ p {
   border-radius: 3px;
   padding: 2px 5px;
   font-size: 1rem;
+  color: var(--led-amber);
   text-shadow: 0 0 6px rgba(255, 182, 39, 0.45);
 }
 
