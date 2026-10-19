@@ -1,17 +1,20 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { DecisionCard } from "../components/DecisionCard";
 import { ConditionBars, WindowChips } from "../components/Dugout";
 import { ModeSwitcher, type Settings } from "../components/ModeSwitcher";
 import { Pitch } from "../components/Pitch";
 import { Timeline } from "../components/Timeline";
 import { Controls, Scoreboard, Ticker } from "../components/MatchZone";
+import { YourCall } from "../components/YourCall";
+import type { Vote } from "../lib/calls";
 import { fromPos, lastAtOrBefore } from "../lib/clock";
 import type { DecisionCard as Card, Locale } from "../lib/contracts";
 import { score, tickerEvents } from "../lib/derive";
 import { LOCALES, translator } from "../lib/i18n";
 import { useDataSource, useFeed } from "../lib/useFeed";
+import { LocalVotes, ServiceVotes, type VoteStore } from "../lib/votes";
 
 const TICKER_LENGTH = 8;
 const SETTINGS_KEY = "dugout.settings";
@@ -80,6 +83,21 @@ export default function Page() {
   const focus = roster && settings.focus in roster.teams ? settings.focus : (roster?.home ?? "");
   const allGoals = useMemo(() => log.events.filter((e) => e.item.type === "goal"), [log.events]);
 
+  // Your call: replay votes stay in the page; live votes also go to the service.
+  const voteStore = useMemo<VoteStore>(() => (source.kind === "live" ? new ServiceVotes() : new LocalVotes()), [source.kind]);
+  const [votes, setVotes] = useState<Record<string, Vote>>({});
+  const castVote = useCallback(
+    (id: string, option: string | null) => {
+      setVotes((v) => (id in v ? v : { ...v, [id]: { option, tally: null, error: null } }));
+      if (option === null) return;
+      voteStore.cast(id, option).then(
+        (tally) => setVotes((v) => ({ ...v, [id]: { ...v[id], tally } })),
+        (err: unknown) => setVotes((v) => ({ ...v, [id]: { ...v[id], error: err instanceof Error ? err.message : String(err) } })),
+      );
+    },
+    [voteStore],
+  );
+
   return (
     <main className="screen">
       <header className="topbar">
@@ -106,6 +124,16 @@ export default function Page() {
 
       <aside className="dugout" aria-label={t("dugout")}>
         <DecisionCard card={card} snapshot={cardSnapshot} roster={roster} focus={focus} mode={mode} locale={locale} t={t} />
+        <YourCall
+          card={cardIdx >= 0 ? log.cards[cardIdx] : null}
+          cards={log.cards}
+          votes={votes}
+          onVote={castVote}
+          playhead={playhead}
+          firstHalfEnd={log.firstHalfEnd}
+          roster={roster}
+          t={t}
+        />
         <WindowChips snapshot={snapshot} roster={roster} teams={teams} t={t} />
         <ConditionBars snapshot={snapshot} roster={roster} teams={teams} mode={mode} locale={locale} flagged={flaggedId} t={t} />
       </aside>
@@ -124,6 +152,7 @@ export default function Page() {
       />
 
       <p className="foot">{t("demoNote")}</p>
+
     </main>
   );
 }

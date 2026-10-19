@@ -88,7 +88,9 @@ export class LiveDataSource implements DataSource {
       const payload = msg as unknown as DecisionPayload;
       const card: DecisionCard = { period: payload.t_ms >= HALF_MS ? 2 : 1, payload, narration: {} };
       pos = toPos(card.period, payload.t_ms, end1);
-      next = { ...log, cards: add(log.cards, card, pos) };
+      // A card sent again (say, once the manager has acted) replaces the earlier copy.
+      const others = log.cards.filter((c) => c.item.payload.decision_id !== payload.decision_id);
+      next = { ...log, cards: add(others, card, pos) };
     } else if ("seq" in msg) {
       const e = msg as unknown as MatchEvent;
       pos = toPos(e.period, e.t_ms, end1);

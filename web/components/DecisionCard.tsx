@@ -14,12 +14,12 @@ interface Props {
   t: Translate;
 }
 
-function conditionPlayer(card: Card): string | null {
+export function conditionPlayer(card: Card): string | null {
   const ev = card.payload.evidence.find((e) => e.type === "condition");
   return ev && ev.type === "condition" ? ev.player_id : null;
 }
 
-function optionLabel(o: DecisionOption, card: Card, roster: Roster | null, t: Translate): string {
+export function optionLabel(o: Pick<DecisionOption, "id" | "label">, card: Card, roster: Roster | null, t: Translate): string {
   const known: Record<string, StringKey> = {
     no_change: "opt_no_change",
     sub_like_for_like: "opt_sub_like_for_like",
