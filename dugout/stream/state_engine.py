@@ -29,15 +29,23 @@ MIN_MS = 60_000
 RATE_WINDOW_MS = 20 * MIN_MS
 RATE_W_MAX = 0.6
 
-# Condition estimate: high-speed running per in-play minute against the player's own first
-# 20 minutes on the pitch, hsr metres weighted above sprint counts. Running is taken to fall
-# faster than condition, so the ratio is raised to COND_EXP. Assumptions, not fitted.
-# The band is a 90% interval from the run counts behind the ratio (Poisson, with the spread
-# of hsr run lengths), so it is wide where there are few runs, as for low-sprint roles.
+# Condition estimate, mostly from accumulated load: every minute on the pitch costs a drain
+# for the role and every run a little more, and half-time gives some back. The costs are the
+# simulator's fatigue assumptions for an average player, not fitted. What load cannot see is a
+# player tiring faster than his load says; the only sign of that is his running rate falling
+# against his own first 20 minutes on the pitch, and with about one run per in-play minute that
+# ratio is mostly Poisson noise, so it gets a small weight. Running is taken to fall faster
+# than condition, so the ratio is raised to COND_EXP. The band is a 90% interval from the
+# spread of drain between players on the same load and the run counts behind the ratio.
 BASELINE_MS = 20 * MIN_MS
 RECENT_MS = 10 * MIN_MS
-HSR_WEIGHT = 0.7
 EW_TAU_MS = 15 * MIN_MS
+DRAIN_PER_MIN = {"CB": 0.0024, "FB": 0.0028, "CM": 0.0028, "W": 0.0028, "ST": 0.0026}
+DRAIN_DEFAULT = 0.0027
+SPRINT_COST, HSR_COST = 0.002, 0.0008
+HALF_TIME_RECOVERY = 0.05
+RATE_WEIGHT = 0.1
+DRAIN_CV = 0.2  # drain between players on the same load (stamina, work rate): sd / mean
 COND_EXP = 2 / 3
 COND_MIN, COND_MAX = 0.3, 1.0
 TREND_MS = 5 * MIN_MS
@@ -65,14 +73,13 @@ class _Player:
     hsr_t: list[int] = field(default_factory=list)  # played ms of each hsr run
     hsr_m: list[float] = field(default_factory=list)
     sprint_t: list[int] = field(default_factory=list)
-    baseline: tuple[float, int, int, float] | None = None  # hsr m, hsr runs, sprints, in-play ms
-    ew_m: float = 0.0  # exponentially weighted hsr metres, hsr runs, sprints and in-play ms
-    ew_hsr: float = 0.0
-    ew_sprints: float = 0.0
+    baseline: tuple[float, int, float] | None = None  # hsr m, runs (hsr and sprints), in-play ms
+    load: float = 0.0  # condition spent since he came on
+    ew_runs: float = 0.0  # exponentially weighted runs and in-play ms
     ew_inplay: float = 0.0
     ew_inplay2: float = 0.0  # in-play ms under squared weights, for the effective sample size
     ew_at: int | None = None
-    ratio: float = 1.0  # weighted running rate against his baseline
+    ratio: float = 1.0  # running rate against his baseline
     est: float = 1.0
     band: tuple[float, float] | None = None
     history: list[tuple[int, float]] = field(default_factory=list)  # (played ms, est)
@@ -110,7 +117,6 @@ class StateEngine:
         self._inplay = 0  # in-play ms so far
         self._inplay_at = 0  # played ms that count runs to
         self._marks: list[tuple[int, int]] = [(0, 0)]  # (played, in-play) where liveness changes
-        self._hsr_stats = [0, 0.0, 0.0]  # every hsr run so far: count, sum and sum of squares of metres
 
     # --- clock ----------------------------------------------------------------
 
@@ -152,6 +158,7 @@ class StateEngine:
             self._start_period(period, played_start=0)
         elif period != self._period:
             out += self._close_period()
+            self._half_time()
             self._start_period(period, played_start=self.played(self._next_t - SNAPSHOT_MS))
         out += self._emit_until(t)
         self._apply(event)
@@ -168,6 +175,11 @@ class StateEngine:
         self._period, self._next_t, self._last_t = period, kickoff, kickoff
         self._offset = played_start - kickoff
         self._kicked_off = False
+
+    def _half_time(self) -> None:
+        for p in self.players.values():
+            if p.on_pitch:
+                p.load = max(0.0, p.load - HALF_TIME_RECOVERY)
 
     def _close_period(self) -> list[tuple[dict, list[dict]]]:
         out = self._emit_until(self._last_t)
@@ -204,10 +216,6 @@ class StateEngine:
         elif kind == "hsr" and player is not None:
             player.hsr_t.append(now)
             player.hsr_m.append(e["dist_m"])
-            stats = self._hsr_stats
-            stats[0] += 1
-            stats[1] += e["dist_m"]
-            stats[2] += e["dist_m"] ** 2
         elif kind == "sprint" and player is not None:
             player.sprint_t.append(now)
         elif kind == "goal":
@@ -230,60 +238,51 @@ class StateEngine:
     # --- condition ------------------------------------------------------------
 
     def _update_condition(self, p: _Player, now: int) -> None:
-        """Advance one outfield player's estimate and band to a snapshot boundary.
+        """Advance one outfield player's load, estimate and band to a snapshot boundary.
 
-        Exponentially weighted hsr metres, sprints and in-play time since he came on give
-        his current running rates; each is compared with his own baseline rate."""
+        Load counts minutes and runs since he came on. Exponentially weighted runs and in-play
+        time give his current running rate, compared with his own baseline rate."""
         prev = p.ew_at if p.ew_at is not None else p.on_since
+        runs = p.hsr_runs_between(prev, now) + p.sprints_between(prev, now)
+        p.load += (DRAIN_PER_MIN.get(p.role, DRAIN_DEFAULT) * (now - prev) / MIN_MS
+                   + SPRINT_COST * p.sprints_between(prev, now) + HSR_COST * p.hsr_runs_between(prev, now))
         d_inplay = self.inplay_at(now) - self.inplay_at(prev)
         decay = math.exp(-(now - prev) / EW_TAU_MS)
-        p.ew_m = p.ew_m * decay + p.hsr_between(prev, now)
-        p.ew_hsr = p.ew_hsr * decay + p.hsr_runs_between(prev, now)
-        p.ew_sprints = p.ew_sprints * decay + p.sprints_between(prev, now)
+        p.ew_runs = p.ew_runs * decay + runs
         p.ew_inplay = p.ew_inplay * decay + d_inplay
         p.ew_inplay2 = p.ew_inplay2 * decay ** 2 + d_inplay
         p.ew_at = now
+        loaded = 1.0 - p.load
+        p.est = self._clip(loaded)
+        p.history.append((now, p.est))
         on = p.on_since
         if now - on < BASELINE_MS:
             return  # still setting his own baseline
         if p.baseline is None:
             end = on + BASELINE_MS
-            p.baseline = (p.hsr_between(on, end), p.hsr_runs_between(on, end),
-                          p.sprints_between(on, end), self.inplay_at(end) - self.inplay_at(on))
-        base_m, base_hsr, base_sprints, base_inplay = p.baseline
-        if p.ew_inplay > 0 and base_inplay > 0:
-            # (weight, ratio, recent runs, runs expected at the baseline rate, baseline runs,
-            #  spread of what is summed)
-            parts = []
-            if base_m > 0:
-                parts.append((HSR_WEIGHT, p.ew_m / p.ew_inplay / (base_m / base_inplay), p.ew_hsr,
-                              base_hsr / base_inplay * p.ew_inplay, base_hsr, self._hsr_spread()))
-            if base_sprints > 0:
-                parts.append((1 - HSR_WEIGHT, p.ew_sprints / p.ew_inplay / (base_sprints / base_inplay),
-                              p.ew_sprints, base_sprints / base_inplay * p.ew_inplay, base_sprints, 1.0))
-            if parts:
-                total = sum(part[0] for part in parts)
-                p.ratio = sum(w * r for w, r, *_ in parts) / total
-                # an exponentially weighted Poisson count n has variance k * n, k = sum w^2 / sum w
-                k = p.ew_inplay2 / p.ew_inplay
-                var = sum((w / total) ** 2 * spread * (k * max(n, 1.0) / expected ** 2 + r ** 2 / base)
-                          for w, r, n, expected, base, spread in parts)
-                sd = math.sqrt(var)
-                p.band = (self._scale(p.ratio - BAND_Z * sd), self._scale(p.ratio + BAND_Z * sd))
-        p.est = self._scale(p.ratio)
-        p.history.append((now, p.est))
+            p.baseline = (p.hsr_between(on, end),
+                          p.hsr_runs_between(on, end) + p.sprints_between(on, end),
+                          self.inplay_at(end) - self.inplay_at(on))
+        _, base_runs, base_inplay = p.baseline
+        rate, rate_lo, rate_hi = 1.0, 1.0, 1.0
+        if base_runs > 0 and base_inplay > 0 and p.ew_inplay > 0:
+            expected = base_runs / base_inplay * p.ew_inplay
+            p.ratio = p.ew_runs / expected
+            # an exponentially weighted Poisson count n has variance k * n, k = sum w^2 / sum w
+            k = p.ew_inplay2 / p.ew_inplay
+            sd = math.sqrt(k * max(p.ew_runs, 1.0) / expected ** 2 + p.ratio ** 2 / base_runs)
+            # not clipped: a rate above his baseline must be able to offset one below it
+            rate, rate_lo, rate_hi = (max(p.ratio + z * sd, 0.0) ** COND_EXP for z in (0.0, -BAND_Z, BAND_Z))
+        p.est = self._clip((1 - RATE_WEIGHT) * loaded + RATE_WEIGHT * rate)
+        p.history[-1] = (now, p.est)
+        drain = BAND_Z * DRAIN_CV * min(1.0, p.load)
+        lo = math.hypot(drain, RATE_WEIGHT * (rate - rate_lo))
+        hi = math.hypot(drain, RATE_WEIGHT * (rate_hi - rate))
+        p.band = (self._clip(p.est - lo), self._clip(p.est + hi))
 
     @staticmethod
-    def _scale(ratio: float) -> float:
-        return min(COND_MAX, max(COND_MIN, max(ratio, 0.0) ** COND_EXP))
-
-    def _hsr_spread(self) -> float:
-        """1 + squared coefficient of variation of hsr run lengths, over every run so far."""
-        n, total, squares = self._hsr_stats
-        if n < 2:
-            return 1.0
-        mean = total / n
-        return 1.0 + max(0.0, squares / n - mean ** 2) / mean ** 2
+    def _clip(x: float) -> float:
+        return min(COND_MAX, max(COND_MIN, x))
 
     def _trend(self, p: _Player, now: int) -> float:
         """Change in the estimate per minute over the last 5 minutes."""
@@ -366,7 +365,8 @@ class StateEngine:
              "sprints_10m": p.sprints_between(start, now), "baseline_sprints_10m": None}
         if p.baseline is not None:
             d["baseline_hsr_m_10m"] = round(p.baseline[0] * RECENT_MS / BASELINE_MS)
-            d["baseline_sprints_10m"] = round(p.baseline[2] * RECENT_MS / BASELINE_MS, 1)
+            d["baseline_sprints_10m"] = round(p.sprints_between(p.on_since, p.on_since + BASELINE_MS)
+                                              * RECENT_MS / BASELINE_MS, 1)
         if p.role != "GK":
             d["condition_est"] = round(p.est, 3)
             if p.band is not None:  # null while he is still setting his baseline
