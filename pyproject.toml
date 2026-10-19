@@ -6,6 +6,7 @@ readme = "README.md"
 license = "MIT"
 requires-python = ">=3.12"
 dependencies = [
+    "azure-eventhub>=5.15.1",
     "numpy>=2.2",
     "pyyaml>=6.0",
 ]

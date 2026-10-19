@@ -1,0 +1,6 @@
+{"match_id": "fx-0001", "seq": 3, "t_ms": 2000, "period": 1, "type": "pass", "team": "RFC", "player_id": "RFC-03", "channel": "left", "x": 34.2, "y": 8.1, "end_x": 51.0, "end_y": 12.4, "outcome": "complete", "xg": null}
+{"match_id": "fx-0001", "seq": 1, "t_ms": 0, "period": 1, "type": "restart", "team": "RFC", "player_id": null, "channel": null, "x": 52.5, "y": 34.0, "end_x": null, "end_y": null, "outcome": "kickoff", "xg": null}
+{"match_id": "fx-0001", "seq": 2, "t_ms": 1000, "period": 1, "type": "pass", "team": "RFC", "player_id": "RFC-04", "channel": "centre", "x": 52.0, "y": 34.0, "end_x": 60.0, "end_y": 30.0, "outcome": "complete", "xg": null}
+{"match_id": "fx-0001", "seq": 4, "t_ms": 2000, "period": 1, "type": "duel", "team": "CAS", "player_id": "CAS-05", "channel": "right", "x": 51.0, "y": 12.4, "end_x": null, "end_y": null, "outcome": "won", "xg": null}
+{"match_id": "fx-0001", "seq": 5, "t_ms": 2700000, "period": 2, "type": "restart", "team": "CAS", "player_id": null, "channel": null, "x": 52.5, "y": 34.0, "end_x": null, "end_y": null, "outcome": "kickoff", "xg": null}
+{"match_id": "fx-0001", "seq": 6, "t_ms": 2704000, "period": 2, "type": "pass", "team": "CAS", "player_id": "CAS-06", "channel": "left", "x": 52.0, "y": 34.0, "end_x": 44.0, "end_y": 30.0, "outcome": "complete", "xg": null}
