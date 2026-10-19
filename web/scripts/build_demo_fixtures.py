@@ -170,7 +170,7 @@ def manager_option(snapshot: dict, payload: dict, action: dict) -> dict | None:
     its gap to the card's options is a paired difference. A like-for-like change made later
     than the card is priced as that change at its minute; a manager_sub card was opened after
     the change, so his call is the card's no-change option. None when the engine has no
-    option for what he did."""
+    option for what he did, or none at the minute he did it."""
     by_id = {o["id"]: o for o in payload["options"]}
     if payload["trigger"] == "manager_sub":
         o = by_id["no_change"]
@@ -179,10 +179,11 @@ def manager_option(snapshot: dict, payload: dict, action: dict) -> dict | None:
         options = [Option("no_change", "No change"), Option("manager", "Manager's change", sub_at=minute)]
         r = evaluate(situation(snapshot, payload["team"]), options, SeedSequence(snapshot["t_ms"]))[1]
         return {"id": "manager_later", "minute": minute, "win": round(r.win, 3), "xpts": round(r.xpts, 2)}
-    elif action["option_id"] in by_id:
+    elif action["option_id"] == "no_change" or (action["option_id"] in by_id
+                                                 and action["t_ms"] // MIN_MS == payload["t_ms"] // MIN_MS):
         o = by_id[action["option_id"]]
     else:
-        return None
+        return None  # an attacking change made later has no option at its own minute
     return {"id": o["id"], "win": o["win"], "xpts": o["xpts"]}
 
 
@@ -192,19 +193,19 @@ RECAP = {
         "same": "Manager and model chose the same option.",
         "gap": "The model's option rated {win} pts of win probability and {xpts} expected points above the manager's.",
         "behind": "The manager's call rated {win} pts of win probability and {xpts} expected points above the model's option.",
-        "unpriced": "The manager made a change the card did not price, so there is no gap to show.",
+        "unpriced": "The card has no option for the manager's change at the minute he made it, so there is no gap to show.",
     },
     "es": {
         "same": "El entrenador y el modelo eligieron la misma opción.",
         "gap": "La opción del modelo valía {win} pts de probabilidad de victoria y {xpts} puntos esperados más que la del entrenador.",
         "behind": "La decisión del entrenador valía {win} pts de probabilidad de victoria y {xpts} puntos esperados más que la opción del modelo.",
-        "unpriced": "El entrenador hizo un cambio que la tarjeta no valoraba, así que no hay diferencia que mostrar.",
+        "unpriced": "La tarjeta no tiene ninguna opción para el cambio del entrenador en el minuto en que lo hizo, así que no hay diferencia que mostrar.",
     },
     "ca": {
         "same": "L'entrenador i el model van triar la mateixa opció.",
         "gap": "L'opció del model valia {win} punts de probabilitat de victòria i {xpts} punts esperats més que la de l'entrenador.",
         "behind": "La decisió de l'entrenador valia {win} punts de probabilitat de victòria i {xpts} punts esperats més que l'opció del model.",
-        "unpriced": "L'entrenador va fer un canvi que la targeta no valorava, així que no hi ha diferència a mostrar.",
+        "unpriced": "La targeta no té cap opció per al canvi de l'entrenador al minut en què el va fer, així que no hi ha diferència a mostrar.",
     },
 }
 

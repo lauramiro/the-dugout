@@ -720,17 +720,13 @@
      "win": 0.024,
      "xpts": 0.22
     },
-    "manager": {
-     "id": "attacking",
-     "win": 0.024,
-     "xpts": 0.22
-    },
-    "gap_win": 0.0,
-    "gap_xpts": 0.0,
+    "manager": null,
+    "gap_win": null,
+    "gap_xpts": null,
     "recap": {
-     "en": "Manager and model chose the same option.",
-     "es": "El entrenador y el modelo eligieron la misma opción.",
-     "ca": "L'entrenador i el model van triar la mateixa opció."
+     "en": "The card has no option for the manager's change at the minute he made it, so there is no gap to show.",
+     "es": "La tarjeta no tiene ninguna opción para el cambio del entrenador en el minuto en que lo hizo, así que no hay diferencia que mostrar.",
+     "ca": "La targeta no té cap opció per al canvi de l'entrenador al minut en què el va fer, així que no hi ha diferència a mostrar."
     },
     "recap_source": "template"
    }
@@ -1026,9 +1022,9 @@
     "gap_win": null,
     "gap_xpts": null,
     "recap": {
-     "en": "The manager made a change the card did not price, so there is no gap to show.",
-     "es": "El entrenador hizo un cambio que la tarjeta no valoraba, así que no hay diferencia que mostrar.",
-     "ca": "L'entrenador va fer un canvi que la targeta no valorava, així que no hi ha diferència a mostrar."
+     "en": "The card has no option for the manager's change at the minute he made it, so there is no gap to show.",
+     "es": "La tarjeta no tiene ninguna opción para el cambio del entrenador en el minuto en que lo hizo, así que no hay diferencia que mostrar.",
+     "ca": "La targeta no té cap opció per al canvi de l'entrenador al minut en què el va fer, així que no hi ha diferència a mostrar."
     },
     "recap_source": "template"
    }

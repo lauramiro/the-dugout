@@ -1,12 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { DecisionCard } from "../components/DecisionCard";
 import { ConditionBars, WindowChips } from "../components/Dugout";
 import { ModeSwitcher, type Settings } from "../components/ModeSwitcher";
 import { Pitch } from "../components/Pitch";
 import { Timeline } from "../components/Timeline";
 import { Controls, Scoreboard, Ticker } from "../components/MatchZone";
+import { Review } from "../components/Review";
 import { YourCall } from "../components/YourCall";
 import type { Vote } from "../lib/calls";
 import { fromPos, lastAtOrBefore } from "../lib/clock";
@@ -98,6 +99,17 @@ export default function Page() {
     [voteStore],
   );
 
+  // The review opens by itself once at full time, and from its button at any point.
+  const [reviewOpen, setReviewOpen] = useState(false);
+  const shownAtFullTime = useRef(false);
+  useEffect(() => {
+    if (finished && !shownAtFullTime.current) {
+      shownAtFullTime.current = true;
+      setReviewOpen(true);
+    }
+    if (!finished) shownAtFullTime.current = false;
+  }, [finished]);
+
   return (
     <main className="screen">
       <header className="topbar">
@@ -105,7 +117,12 @@ export default function Page() {
           <h1>The Dugout</h1>
           <span className="tagline">{t("tagline")}</span>
         </div>
-        <ModeSwitcher settings={{ ...settings, focus }} roster={roster} onChange={changeSettings} t={t} />
+        <div className="topbar-actions">
+          <ModeSwitcher settings={{ ...settings, focus }} roster={roster} onChange={changeSettings} t={t} />
+          <button className="review-open" onClick={() => setReviewOpen(true)} disabled={status !== "ready"}>
+            {finished ? t("review") : t("openReview")}
+          </button>
+        </div>
       </header>
 
       <section className="match" aria-label={roster ? `${roster.teams[roster.home].name} v ${roster.teams[roster.away].name}` : undefined}>
@@ -153,6 +170,18 @@ export default function Page() {
 
       <p className="foot">{t("demoNote")}</p>
 
+      <Review
+        open={reviewOpen}
+        onClose={() => setReviewOpen(false)}
+        cards={log.cards}
+        votes={votes}
+        playhead={playhead}
+        firstHalfEnd={log.firstHalfEnd}
+        finished={finished}
+        roster={roster}
+        locale={locale}
+        t={t}
+      />
     </main>
   );
 }
