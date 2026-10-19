@@ -58,7 +58,8 @@ export class ReplayDataSource implements DataSource {
   private disposed = false;
   private loading: Promise<void> | null = null;
 
-  constructor(private readonly base = "/demo") {
+  /** startMinute: open the replay at that match minute (second half from 45). */
+  constructor(private readonly startMinute = 0, private readonly base = "/demo") {
     this.controls = {
       play: () => {
         const { playhead, log } = this.state;
@@ -148,8 +149,10 @@ export class ReplayDataSource implements DataSource {
       });
 
       const byPos = <T>(a: Timed<T>, b: Timed<T>) => a.pos - b.pos;
+      const start = this.startMinute > 0 ? pos(this.startMinute >= 45 ? 2 : 1, this.startMinute * 60_000) : 0;
       this.set({
         status: "ready",
+        playhead: start,
         log: {
           roster,
           firstHalfEnd: end1,

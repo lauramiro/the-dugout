@@ -150,18 +150,6 @@ p {
     grid-template-areas: "top top" "match dugout" "time dugout" "foot foot";
     padding-bottom: 10px;
   }
-  .match {
-    min-height: 0;
-  }
-  .dugout {
-    min-height: 0;
-    overflow-y: auto;
-    padding-right: 4px;
-  }
-  .ticker {
-    min-height: 0;
-    overflow-y: auto;
-  }
 }
 
 /* ---------- Top bar ---------- */
@@ -373,7 +361,7 @@ p {
 .pitch {
   display: block;
   width: 100%;
-  max-width: calc(56dvh * 111 / 72);
+  max-width: calc(60dvh * 111 / 72);
   margin-inline: auto;
   aspect-ratio: 111 / 72;
   height: auto;
@@ -1209,6 +1197,33 @@ p {
 
 .status.error {
   border-color: var(--low);
+}
+
+/* Desktop: one screen, no page scroll. Last in the file so it wins over the base rules. */
+@media (min-width: 1040px) {
+  .match {
+    min-height: 0;
+  }
+  .dugout {
+    min-height: 0;
+    overflow-y: auto;
+    padding-right: 4px;
+  }
+  .ticker {
+    flex: 0 0 auto;
+    height: 168px;
+    overflow-y: auto;
+  }
+  /* The pitch takes whatever height is left and keeps its proportions. */
+  .pitch-wrap {
+    flex: 1 1 0;
+    min-height: 200px;
+    container-type: size;
+  }
+  .pitch {
+    width: min(100cqw, 100cqh * 111 / 72);
+    max-width: none;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -21,11 +21,11 @@ export function formatClock(tMs: number): string {
   return `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
 }
 
-/** Broadcast minute, e.g. "62'" or "45+3'". */
+/** Minute as the engine counts it (t_ms // 60000, "62'"); added time as "45+3'". */
 export function formatMinute(period: 1 | 2, tMs: number): string {
   const regular = period === 1 ? 45 : 90;
-  const minute = Math.floor(tMs / MIN_MS) + 1;
-  if (minute > regular) return `${regular}+${minute - regular}'`;
+  const minute = Math.floor(tMs / MIN_MS);
+  if (minute >= regular && tMs > regular * MIN_MS) return `${regular}+${minute - regular + 1}'`;
   return `${minute}'`;
 }
 
