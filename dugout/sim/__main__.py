@@ -3,6 +3,7 @@
     python -m dugout.sim run --seed 1 --out data/rfc-cas-0001.jsonl
         (also writes data/rfc-cas-0001.tracking.jsonl)
     python -m dugout.sim realism --seeds 100
+    python -m dugout.sim gap --seed 1 --minute 62 --team RFC --off RFC-03 --on RFC-15
 """
 
 from __future__ import annotations
@@ -11,6 +12,7 @@ import argparse
 import json
 from pathlib import Path
 
+from dugout.sim.counterfactual import NO_CHANGE, Option, play_to, true_gap
 from dugout.sim.match import new_match, run_match
 from dugout.sim.realism import TARGETS, realism, summarise
 from dugout.sim.scenario import load_scenario
@@ -34,6 +36,13 @@ def main() -> None:
     run.add_argument("--out", type=Path, help="write events as JSONL, and tracking frames beside them")
     rl = sub.add_parser("realism", help="summarise many seeds against the realism targets")
     rl.add_argument("--seeds", type=int, default=100)
+    gp = sub.add_parser("gap", help="true gap between no change and a substitution, from forks")
+    gp.add_argument("--seed", type=int, required=True)
+    gp.add_argument("--minute", type=int, default=62)
+    gp.add_argument("--team", required=True)
+    gp.add_argument("--off", required=True, help="player going off")
+    gp.add_argument("--on", required=True, help="player coming on")
+    gp.add_argument("--n", type=int, default=500, help="forks per option")
     args = ap.parse_args()
 
     scenario = load_scenario(args.scenario)
@@ -50,6 +59,15 @@ def main() -> None:
         sm = summarise(s, events)
         print(f"{s.match_id}: {s.home} {sm.home_goals}-{sm.away_goals} {s.away} | "
               f"shots {sm.shots}, xG {sm.xg}, ball in play {sm.in_play_min} min, {len(events)} events")
+    elif args.cmd == "gap":
+        s, _ = new_match(scenario, args.seed)
+        play_to(s, args.minute)
+        sub = Option(f"sub_{args.off}", f"{args.off} off, {args.on} on", subs=((args.off, args.on),))
+        print(f"{s.match_id} at {s.clock_s // 60}': {s.home} {s.score[s.home]}-{s.score[s.away]} {s.away}, "
+              f"{args.n} forks per option, common random numbers")
+        for r in true_gap(s, args.team, [NO_CHANGE, sub], args.n):
+            print(f"{r.id:<16} win {r.win:.3f}  draw {r.draw:.3f}  loss {r.loss:.3f}  xpts {r.xpts:.2f}  "
+                  f"true gap {100 * r.delta_win:+.1f} pts win, {r.delta_xpts:+.2f} xpts")
     else:
         stats = realism(scenario, range(1, args.seeds + 1))
         for key, v in stats.items():
