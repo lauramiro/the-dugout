@@ -9,7 +9,7 @@
 #
 # Required:  BUDGET_EMAIL  address that receives the budget alert
 # Optional:  REGION (default northeurope; westeurope refused new customers on the free
-#            subscription), SWA_REGION (default westeurope), BUDGET_USD (default 20),
+#            subscription), SWA_REGION (default eastus2; westeurope refused, northeurope not offered), BUDGET_USD (default 20),
 #            PREFIX (default dugout)
 #
 # Idempotent: each create is an upsert or is skipped when the resource exists.
@@ -40,7 +40,7 @@ if [[ "${CHECK_HELP:-0}" == 1 ]]; then
 fi
 
 REGION="${REGION:-northeurope}"
-SWA_REGION="${SWA_REGION:-westeurope}"
+SWA_REGION="${SWA_REGION:-eastus2}"
 : "${BUDGET_EMAIL:?set BUDGET_EMAIL}"
 BUDGET_USD="${BUDGET_USD:-20}"
 PREFIX="${PREFIX:-dugout}"
