@@ -19,11 +19,14 @@ Castleton's right: the equaliser must be a Castleton goal with channel "right".
 
 from __future__ import annotations
 
+from collections.abc import Iterable
+from concurrent.futures import ProcessPoolExecutor
 from dataclasses import dataclass
 
 from dugout.contracts import Event
 from dugout.sim import managers
-from dugout.sim.match import MIRROR
+from dugout.sim.match import MIRROR, new_match, step
+from dugout.sim.scenario import Scenario
 
 HOME, AWAY = "RFC", "CAS"
 FADING_PLAYER = "RFC-03"
@@ -92,3 +95,48 @@ def _sub_in_window(m: int, fade_minute: int, windows: Windows) -> bool:
     if windows.sub is None:
         return m >= fade_minute
     return windows.sub[0] <= m <= windows.sub[1]
+
+
+# Fallback order (decision 11): 1) 2,000 seeds, narrow windows; 2) the same seeds,
+# wide windows; 3) up to 10,000 seeds. Scenario levers are not a step here: that
+# is the user's call.
+STEP_SEEDS = 2000
+
+
+def fallback_step(seed: int, m: Match) -> int:
+    """The first fallback step that finds this seed with this match."""
+    if seed > STEP_SEEDS:
+        return 3
+    narrow = (NARROW.equaliser[0] <= m.equaliser <= NARROW.equaliser[1]
+              and NARROW.sub[0] <= m.sub <= NARROW.sub[1])
+    return 1 if narrow else 2
+
+
+def play_seed(scenario: Scenario, seed: int) -> tuple[list[Event], int | None]:
+    """Play one match; return its events and the minute RFC-03 first fell below FADE_BELOW."""
+    s, events = new_match(scenario, seed)
+    fade = None
+    while not s.finished:
+        events += step(s)
+        if fade is None and s.clock_s % 60 == 0 and s.players[FADING_PLAYER].condition < FADE_BELOW:
+            fade = s.clock_s // 60
+    return events, fade
+
+
+def _try(args: tuple[Scenario, int, Windows]) -> tuple[int, Match] | None:
+    scenario, seed, windows = args
+    events, fade = play_seed(scenario, seed)
+    m = check_story(events, fade, windows)
+    return (seed, m) if m else None
+
+
+def search(scenario: Scenario, seeds: Iterable[int], windows: Windows, workers: int | None = None
+           ) -> list[tuple[int, Match]]:
+    """(seed, match) for every seed whose honest simulation tells the story, in seed order."""
+    jobs = [(scenario, seed, windows) for seed in seeds]
+    if workers == 1:
+        results = map(_try, jobs)
+    else:
+        with ProcessPoolExecutor(max_workers=workers) as pool:
+            results = list(pool.map(_try, jobs, chunksize=16))
+    return [r for r in results if r]

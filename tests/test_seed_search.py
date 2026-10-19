@@ -1,5 +1,5 @@
 from dugout.contracts import Event
-from dugout.sim.seed_search import NARROW, WIDE, check_story
+from dugout.sim.seed_search import NARROW, WIDE, Match, check_story
 
 _seq = iter(range(1, 10_000))
 
@@ -89,3 +89,46 @@ def test_the_equaliser_is_the_goal_that_levels_not_an_earlier_one():
     events = [goal("RFC", 10), goal("RFC", 50), goal("CAS", 66, "right"), goal("CAS", 76, "centre"),
               sub_off(78)]
     assert check_story(events, 62, NARROW) is None  # the levelling goal came down the middle
+
+
+# --- running the search ------------------------------------------------------
+
+import subprocess
+import sys
+
+from dugout.sim.match import run_match
+from dugout.sim.seed_search import fallback_step, play_seed, search
+
+
+def test_play_seed_matches_run_match_and_reads_the_hidden_fade(scenario):
+    events, fade = play_seed(scenario, 2)  # RFC-03 is at about 0.6 around 62' in this seed
+    _, expected = run_match(scenario, 2)
+    assert [e.to_dict() for e in events] == [e.to_dict() for e in expected]
+    assert fade is not None and 55 <= fade <= 70
+
+
+def test_search_returns_only_seeds_whose_events_pass_the_checks(scenario):
+    found = search(scenario, range(1, 41), WIDE, workers=1)
+    for seed, m in found:
+        events, fade = play_seed(scenario, seed)
+        assert check_story(events, fade, WIDE) == m
+
+
+def test_search_gives_the_same_result_in_parallel(scenario):
+    assert search(scenario, range(1, 41), WIDE, workers=2) == search(scenario, range(1, 41), WIDE, workers=1)
+
+
+def test_fallback_step_is_the_first_step_that_finds_the_seed():
+    m = Match(fade=62, equaliser=75, sub=78)
+    assert fallback_step(100, m) == 1
+    assert fallback_step(2000, m) == 1
+    assert fallback_step(2001, m) == 3
+    wide_only = Match(fade=62, equaliser=67, sub=70)
+    assert fallback_step(100, wide_only) == 2
+    assert fallback_step(5000, wide_only) == 3
+
+
+def test_cli_search_lists_seeds_and_steps():
+    out = subprocess.run([sys.executable, "-m", "dugout.sim", "search", "--seeds", "30", "--wide"],
+                         check=True, capture_output=True, text=True).stdout
+    assert "seeds 1-30" in out

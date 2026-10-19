@@ -4,6 +4,7 @@
         (also writes data/rfc-cas-0001.tracking.jsonl)
     python -m dugout.sim realism --seeds 100
     python -m dugout.sim gap --seed 1 --minute 62 --team RFC --off RFC-03 --on RFC-15
+    python -m dugout.sim search --seeds 2000 [--wide]
 """
 
 from __future__ import annotations
@@ -16,6 +17,7 @@ from dugout.sim.counterfactual import NO_CHANGE, Option, play_to, true_gap
 from dugout.sim.match import new_match, run_match
 from dugout.sim.realism import TARGETS, realism, summarise
 from dugout.sim.scenario import load_scenario
+from dugout.sim.seed_search import NARROW, WIDE, fallback_step, search
 from dugout.sim.tracking import run_with_tracking
 
 DEFAULT_SCENARIO = Path(__file__).resolve().parents[2] / "scenarios" / "riverside-castleton.yaml"
@@ -43,6 +45,9 @@ def main() -> None:
     gp.add_argument("--off", required=True, help="player going off")
     gp.add_argument("--on", required=True, help="player coming on")
     gp.add_argument("--n", type=int, default=500, help="forks per option")
+    sr = sub.add_parser("search", help="find seeds where the demo story happens on its own")
+    sr.add_argument("--seeds", type=int, default=2000, help="search seeds 1 to N")
+    sr.add_argument("--wide", action="store_true", help="wider equaliser and substitution windows")
     args = ap.parse_args()
 
     scenario = load_scenario(args.scenario)
@@ -68,6 +73,16 @@ def main() -> None:
         for r in true_gap(s, args.team, [NO_CHANGE, sub], args.n):
             print(f"{r.id:<16} win {r.win:.3f}  draw {r.draw:.3f}  loss {r.loss:.3f}  xpts {r.xpts:.2f}  "
                   f"true gap {100 * r.delta_win:+.1f} pts win, {r.delta_xpts:+.2f} xpts")
+    elif args.cmd == "search":
+        windows = WIDE if args.wide else NARROW
+        sub_text = "any time after the fade" if windows.sub is None else f"{windows.sub[0]}-{windows.sub[1]}'"
+        print(f"seeds 1-{args.seeds}, {'wide' if args.wide else 'narrow'} windows: "
+              f"fade {windows.fade[0]}-{windows.fade[1]}', equaliser {windows.equaliser[0]}-{windows.equaliser[1]}', "
+              f"sub {sub_text}")
+        found = search(scenario, range(1, args.seeds + 1), windows)
+        for seed, m in found:
+            print(f"seed {seed:<6} step {fallback_step(seed, m)}  fade {m.fade}'  equaliser {m.equaliser}'  sub {m.sub}'")
+        print(f"{len(found)} matching seeds")
     else:
         stats = realism(scenario, range(1, args.seeds + 1))
         for key, v in stats.items():
