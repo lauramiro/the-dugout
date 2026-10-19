@@ -325,7 +325,7 @@ class StateEngine:
 
     def _player_dict(self, p: _Player, now: int) -> dict:
         start = max(p.on_since, now - RECENT_MS)
-        d = {"id": p.id, "role": p.role,
+        d = {"id": p.id, "team": p.team, "role": p.role,
              "condition_est": None, "condition_band": None, "trend_per_min": 0.0,
              "hsr_m_10m": round(p.hsr_between(start, now)), "baseline_hsr_m_10m": None,
              "sprints_10m": p.sprints_between(start, now), "baseline_sprints_10m": None}
