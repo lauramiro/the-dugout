@@ -19,7 +19,7 @@ import math
 import numpy as np
 
 from dugout.contracts import CHANNELS, PITCH_LENGTH, PITCH_WIDTH, Event
-from dugout.sim import fatigue
+from dugout.sim import fatigue, managers
 from dugout.sim.scenario import Scenario
 from dugout.sim.state import HALF_S, MatchState, Player
 
@@ -295,17 +295,61 @@ def _restart_event(s: MatchState) -> Event:
     return ev
 
 
+def make_subs(s: MatchState, team: str, subs: list[tuple[str, ...]], half_time: bool = False) -> list[Event]:
+    """Make one window of substitutions now: (off, on) or (off, on, kind) each.
+
+    Raises ValueError for any change the Laws or the squad do not allow. A kind
+    left out is like_for_like when the roles match, otherwise tactical.
+    """
+    if not managers.window_open(s, team, half_time) or s.subs_used[team] + len(subs) > managers.MAX_SUBS:
+        raise ValueError(f"{team}: no substitution window left")
+    offs, ons = [sub[0] for sub in subs], [sub[1] for sub in subs]
+    if len(set(offs)) != len(offs) or len(set(ons)) != len(ons):
+        raise ValueError("a player can only go off or come on once per window")
+    for off, on in zip(offs, ons):
+        p_off, p_on = s.players.get(off), s.players.get(on)
+        if p_off is None or p_off.team != team or not p_off.on_pitch:
+            raise ValueError(f"{off} is not on the pitch for {team}")
+        if p_on is None or p_on.team != team or p_on.on_pitch or on in s.subbed_off:
+            raise ValueError(f"{on} is not on the {team} bench")
+    events = []
+    for sub in subs:
+        off, on = s.players[sub[0]], s.players[sub[1]]
+        kind = sub[2] if len(sub) > 2 else "like_for_like" if off.role == on.role else "tactical"
+        off.on_pitch, on.on_pitch = False, True
+        s.subbed_off.append(off.id)
+        s.subs_used[team] += 1
+        s.attacking_subs[team] += kind == "attacking"
+        s.load.pop(off.id, None)
+        events.append(_event(s, "sub", team, player_id=off.id, player_in_id=on.id, outcome=kind))
+    if not half_time:
+        s.windows_used[team] += 1
+    return events
+
+
+def _manager_subs(s: MatchState, half_time: bool = False) -> list[Event]:
+    events = []
+    for team in (s.home, s.away):
+        if team in s.managers and managers.window_open(s, team, half_time):
+            subs = managers.due(s, team, half_time)
+            if subs:
+                events += make_subs(s, team, subs, half_time)
+    return events
+
+
 def _start_period(s: MatchState, period: int) -> list[Event]:
-    if period == 2:
-        fatigue.half_time(s)
     s.period = period
     s.clock_s = 0 if period == 1 else HALF_S
+    events = []
+    if period == 2:
+        fatigue.half_time(s)
+        events = _manager_subs(s, half_time=True)
     lo, hi = ADDED_MIN[period]
     s.period_end_s = s.clock_s + HALF_S + 60 * int(s.rng.integers(lo, hi + 1))
     s.possession = s.home if period == 1 else s.away
     s.third, s.channel, s.dead_s = 1, "centre", 0
     s.restart = "kickoff"
-    return [_restart_event(s)]
+    return events + [_restart_event(s)]
 
 
 def new_match(scenario: Scenario, seed: int) -> tuple[MatchState, list[Event]]:
@@ -317,9 +361,13 @@ def new_match(scenario: Scenario, seed: int) -> tuple[MatchState, list[Event]]:
                                    attack=p.attack, defence=p.defence, pace=p.pace,
                                    stamina=p.stamina, work_rate=p.work_rate,
                                    condition=scenario.levers.start_condition.get(p.id, 1.0), on_pitch=i < 11)
+    codes = [scenario.home.code, scenario.away.code]
     s = MatchState(match_id=f"{scenario.match_id_prefix}-{seed:04d}", entropy=[seed],
-                   home=scenario.home.code, away=scenario.away.code, players=players, rng=rng,
-                   score={scenario.home.code: 0, scenario.away.code: 0})
+                   home=codes[0], away=codes[1], players=players, rng=rng,
+                   score=dict.fromkeys(codes, 0), managers=list(codes),
+                   slow_managers=[c for c in codes if c in scenario.levers.slow_manager],
+                   subs_used=dict.fromkeys(codes, 0), windows_used=dict.fromkeys(codes, 0),
+                   attacking_subs=dict.fromkeys(codes, 0))
     return s, _start_period(s, 1)
 
 
@@ -328,8 +376,10 @@ def step(s: MatchState) -> list[Event]:
     if s.finished:
         return []
     if s.dead_s > 0:
+        events = _manager_subs(s)
         s.dead_s -= 1
-        events = [] if s.dead_s else [_restart_event(s)]
+        if not s.dead_s:
+            events.append(_restart_event(s))
     else:
         s.in_play_s += 1
         events = _play(s)
@@ -338,6 +388,8 @@ def step(s: MatchState) -> list[Event]:
     s.clock_s += 1
     if s.clock_s % 60 == 0:
         fatigue.drain_minute(s)
+        for team in s.managers:
+            managers.plan(s, team)
     if s.clock_s >= s.period_end_s:
         if s.period == 1:
             events += _start_period(s, 2)

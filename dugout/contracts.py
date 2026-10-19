@@ -12,6 +12,7 @@ EVENT_TYPES = frozenset(
      "restart", "sub", "sprint", "hsr"}
 )
 RUNNING_TYPES = frozenset({"sprint", "hsr"})
+OPTIONAL_FIELDS = ("dist_m", "player_in_id")  # left out of the JSON when null
 CHANNELS = ("left", "centre", "right")
 PITCH_LENGTH = 105.0
 PITCH_WIDTH = 68.0
@@ -34,6 +35,7 @@ class Event:
     outcome: str | None = None
     xg: float | None = None
     dist_m: float | None = None  # running events only; left out of the JSON when null
+    player_in_id: str | None = None  # sub only (player_id is the player going off); left out when null
 
     def __post_init__(self) -> None:
         if self.type not in EVENT_TYPES:
@@ -42,9 +44,12 @@ class Event:
             raise ValueError(f"unknown channel: {self.channel}")
         if self.dist_m is not None and self.type not in RUNNING_TYPES:
             raise ValueError(f"dist_m is only for {sorted(RUNNING_TYPES)} events")
+        if self.player_in_id is not None and self.type != "sub":
+            raise ValueError("player_in_id is only for sub events")
 
     def to_dict(self) -> dict:
         d = asdict(self)
-        if d["dist_m"] is None:
-            del d["dist_m"]
+        for key in OPTIONAL_FIELDS:
+            if d[key] is None:
+                del d[key]
         return d

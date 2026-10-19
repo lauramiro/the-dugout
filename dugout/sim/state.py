@@ -55,6 +55,13 @@ class MatchState:
     in_play_s: int = 0
     finished: bool = False
     load: dict[str, float] = field(default_factory=dict)  # this minute's high-intensity cost, by player
+    managers: list[str] = field(default_factory=list)  # teams whose simulated manager makes changes
+    slow_managers: list[str] = field(default_factory=list)
+    pending: list[dict] = field(default_factory=list)  # changes decided on, waiting for their moment
+    subs_used: dict[str, int] = field(default_factory=dict)
+    windows_used: dict[str, int] = field(default_factory=dict)  # in-play windows; half-time is free
+    attacking_subs: dict[str, int] = field(default_factory=dict)
+    subbed_off: list[str] = field(default_factory=list)
 
     def opponent(self, team: str) -> str:
         return self.away if team == self.home else self.home

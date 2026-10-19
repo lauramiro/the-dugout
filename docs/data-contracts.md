@@ -26,7 +26,16 @@ Running events carry one extra field, `dist_m`: the metres covered in that run (
  "x": 34.2, "y": 8.1, "end_x": 51.0, "end_y": 12.4, "outcome": "complete", "xg": null}
 ```
 
-`outcome` by type in the simulator core:
+`sub` events carry one extra field, `player_in_id`: the player coming on. `player_id` is the player going off, `team` is their team, `outcome` says what kind of change it is, and `channel`, `x`, `y`, `end_x`, `end_y` and `xg` are null. Every other type leaves `player_in_id` out of the JSON. Changes are made at a dead ball or at half-time; the changes a team makes at one `(period, t_ms)` form one window. Half-time changes have `period` 2 and `t_ms` 2700000 and come before the second-half kick-off; they do not use up an in-play window. Each team gets five changes in at most three in-play windows, and a player who goes off never comes back.
+
+```json
+{"match_id": "rfc-cas-0001", "seq": 6120, "t_ms": 4680000, "period": 2,
+ "type": "sub", "team": "RFC", "player_id": "RFC-03", "channel": null,
+ "x": null, "y": null, "end_x": null, "end_y": null, "outcome": "like_for_like", "xg": null,
+ "player_in_id": "RFC-15"}
+```
+
+`outcome` by type in the simulator:
 
 | Type | Outcomes |
 | --- | --- |
@@ -36,6 +45,8 @@ Running events carry one extra field, `dist_m`: the metres covered in that run (
 | `foul` | `committed` (by the event's team) |
 | `out` | `throw_in` |
 | `restart` | `kickoff`, `throw_in`, `goal_kick`, `corner`, `keeper`, `free_kick` |
+| `sub` | `like_for_like` (same role or cover for it), `attacking` (a forward for a midfielder or full-back), `tactical` (any other change) |
+| `sprint`, `hsr` | null |
 
 Defined in code as `dugout.contracts.Event`.
 

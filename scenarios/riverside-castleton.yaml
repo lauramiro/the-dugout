@@ -4,9 +4,11 @@
 match_id_prefix: rfc-cas
 
 # Story levers. played_midweek: starting condition below 1.0 (hidden from the engine).
+# slow_manager: that team's manager reacts at the slow end of the delay range.
 levers:
   played_midweek:
     RFC-03: 0.85
+  slow_manager: [RFC]
 
 home:
   code: RFC

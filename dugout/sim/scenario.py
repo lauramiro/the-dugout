@@ -44,6 +44,7 @@ class Levers:
     """Story levers set in the scenario. All default to off."""
 
     start_condition: dict[str, float] = field(default_factory=dict)  # "played midweek"
+    slow_manager: frozenset[str] = frozenset()  # team codes whose manager reacts late
 
 
 @dataclass(frozen=True, slots=True)
@@ -84,7 +85,10 @@ def _levers(raw: dict, home: TeamSpec, away: TeamSpec) -> Levers:
             raise ValueError(f"played_midweek: unknown player {pid}")
         if not 0.0 < c <= 1.0:
             raise ValueError(f"played_midweek: {pid} condition must be in (0, 1]")
-    return Levers(start_condition=start)
+    slow = frozenset(raw.get("slow_manager") or ())
+    if not slow <= {home.code, away.code}:
+        raise ValueError(f"slow_manager: unknown team in {sorted(slow)}")
+    return Levers(start_condition=start, slow_manager=slow)
 
 
 def load_scenario(path: str | Path) -> Scenario:
