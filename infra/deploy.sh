@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Azure walking skeleton: resource group, Event Hubs, Web PubSub, Static Web Apps,
-# Container Apps (stub engine) and a budget alert.
+# Container Apps (decision service and live pipeline runner) and a budget alert.
 #
 # Dry run by default: prints every az command and runs nothing.
 #   BUDGET_EMAIL=... infra/deploy.sh
@@ -18,7 +18,14 @@
 #
 # Checked against `az ... -h`: containerapp up/env create/secret set/update, staticwebapp secrets list,
 # eventhubs keys list. Still UNVERIFIED: webpubsub key show, budget create-with-rg input shapes, and the
-# output property names primaryConnectionString / apiKey. `--check-help` prints the help for these.
+# output property names primaryConnectionString / apiKey, and for the runner the service app's
+# properties.configuration.registries[0] (server, username, passwordSecretRef) and
+# properties.template.containers[0].image. `--check-help` prints the help for these.
+#
+# Two Container Apps from one image (built once, by `containerapp up` on the service): $PREFIX-service runs
+# the Dockerfile's decision service; $PREFIX-runner runs the live pipeline (Event Hubs in, Web PubSub out)
+# with a command of its own, no ingress and one replica (no checkpoint store, so a second replica would
+# publish everything twice). It replaces the old $PREFIX-stub app, which this script no longer touches.
 set -euo pipefail
 
 APPLY=0
@@ -31,7 +38,7 @@ esac
 
 if [[ "${CHECK_HELP:-0}" == 1 ]]; then
   for c in "containerapp up" "containerapp env create" "containerapp secret set" \
-           "containerapp update" "staticwebapp secrets list" \
+           "containerapp update" "containerapp create" "containerapp secret list" "containerapp show" "staticwebapp secrets list" \
            "eventhubs namespace authorization-rule keys list" "webpubsub key show" \
            "webpubsub hub create" "consumption budget create-with-rg"; do
     echo "=== az $c -h"; az $c -h
@@ -60,11 +67,17 @@ EH_NS="$PREFIX-eh-$SUFFIX"
 WPS="$PREFIX-wps-$SUFFIX"
 SWA="$PREFIX-web-$SUFFIX"
 CAE="$PREFIX-env"
-APP="$PREFIX-stub"
+APP="$PREFIX-service"
+RUNNER="$PREFIX-runner"
 
 run() { echo "+ $*"; [[ $APPLY == 1 ]] && "$@"; return 0; }
 # For commands whose arguments carry secrets: print the label only.
-run_quiet() { local label="$1"; shift; echo "+ ($label; arguments hidden)"; [[ $APPLY == 1 ]] && "$@"; return 0; }
+run_quiet() {
+  local label="$1"; shift
+  # a dry run holds only placeholders, so it may show the command in full
+  if [[ $APPLY == 1 ]]; then echo "+ ($label; arguments hidden)"; "$@"; else echo "+ $*"; fi
+  return 0
+}
 # Capture a value; in a dry run return a placeholder.
 capture() { if [[ $APPLY == 1 ]]; then "$@"; else echo "<dry-run>"; fi; }
 
@@ -102,7 +115,7 @@ SWA_HOST="$(capture az staticwebapp show --name "$SWA" --resource-group "$RG" --
 
 need SWA_HOST "$SWA_HOST"
 
-echo "# 5. Container Apps environment and stub engine "
+echo "# 5. Container Apps environment and decision service"
 run az containerapp env create --name "$CAE" --resource-group "$RG" --location "$REGION"
 WPS_CONN="$(capture az webpubsub key show --name "$WPS" --resource-group "$RG" --query primaryConnectionString -o tsv)"
 # 'up' builds the repo Dockerfile in Azure and creates or updates the app.
@@ -114,14 +127,45 @@ run_quiet "store Web PubSub connection string as secret" \
 run az containerapp update --name "$APP" --resource-group "$RG" --set-env-vars \
   "WEBPUBSUB_CONNECTION_STRING=secretref:wps-conn" "WEBPUBSUB_HUB=$PUBSUB_HUB" \
   "STUB_CORS_ORIGINS=https://$SWA_HOST"
-STUB_FQDN="$(capture az containerapp show --name "$APP" --resource-group "$RG" --query properties.configuration.ingress.fqdn -o tsv)"
+SERVICE_FQDN="$(capture az containerapp show --name "$APP" --resource-group "$RG" --query properties.configuration.ingress.fqdn -o tsv)"
 
-need STUB_FQDN "$STUB_FQDN"
+need SERVICE_FQDN "$SERVICE_FQDN"
 
-echo "# 6. Local .env for the replayer (git-ignored)"
 EH_CONN="$(capture az eventhubs namespace authorization-rule keys list --namespace-name "$EH_NS" \
   --resource-group "$RG" --name RootManageSharedAccessKey --query primaryConnectionString -o tsv)"
 need EH_CONN "$EH_CONN"
+
+echo "# 5b. Live pipeline runner: the service's image, its own command"
+# Same image and registry as the service app; the registry login is read from the service app.
+IMAGE="$(capture az containerapp show --name "$APP" --resource-group "$RG" \
+  --query "properties.template.containers[0].image" -o tsv)"
+REG_SERVER="$(capture az containerapp show --name "$APP" --resource-group "$RG" \
+  --query "properties.configuration.registries[0].server" -o tsv)"
+REG_USER="$(capture az containerapp show --name "$APP" --resource-group "$RG" \
+  --query "properties.configuration.registries[0].username" -o tsv)"
+REG_PW_REF="$(capture az containerapp show --name "$APP" --resource-group "$RG" \
+  --query "properties.configuration.registries[0].passwordSecretRef" -o tsv)"
+need IMAGE "$IMAGE"; need REG_SERVER "$REG_SERVER"; need REG_USER "$REG_USER"; need REG_PW_REF "$REG_PW_REF"
+REG_PASS="$(capture az containerapp secret list --name "$APP" --resource-group "$RG" --show-values \
+  --query "[?name=='$REG_PW_REF'].value | [0]" -o tsv)"
+need REG_PASS "$REG_PASS"
+# The command has no flags (az would read them as its own): PIPELINE_SOURCE selects Event Hubs and follow mode.
+if [[ $APPLY == 1 ]] && az containerapp show --name "$RUNNER" --resource-group "$RG" >/dev/null 2>&1; then
+  run az containerapp update --name "$RUNNER" --resource-group "$RG" --image "$IMAGE"
+  run_quiet "refresh runner secrets" az containerapp secret set --name "$RUNNER" --resource-group "$RG" \
+    --secrets "wps-conn=$WPS_CONN" "eh-conn=$EH_CONN" "acr-pw=$REG_PASS"
+else
+  run_quiet "create runner (secrets and registry password in arguments)" \
+    az containerapp create --name "$RUNNER" --resource-group "$RG" --environment "$CAE" \
+    --image "$IMAGE" --command python /app/dugout/stream/pipeline.py \
+    --min-replicas 1 --max-replicas 1 \
+    --registry-server "$REG_SERVER" --registry-username "$REG_USER" --registry-password secretref:acr-pw \
+    --secrets "wps-conn=$WPS_CONN" "eh-conn=$EH_CONN" "acr-pw=$REG_PASS" \
+    --env-vars "PIPELINE_SOURCE=eventhub" "EVENTHUB_CONNECTION_STRING=secretref:eh-conn" \
+    "EVENTHUB_NAME=$HUB" "WEBPUBSUB_CONNECTION_STRING=secretref:wps-conn" "WEBPUBSUB_HUB=$PUBSUB_HUB"
+fi
+
+echo "# 6. Local .env for the replayer (git-ignored)"
 if [[ $APPLY == 1 ]]; then
   umask 077
   { echo "EVENTHUB_CONNECTION_STRING=$EH_CONN"; echo "EVENTHUB_NAME=$HUB"; } > "$ROOT/.env"
@@ -132,7 +176,7 @@ fi
 
 echo "# 7. Build and upload the web page"
 run bash -c "cd '$ROOT/web' && npm ci && npm run build"
-run bash -c "printf '{ \"stubUrl\": \"https://%s\" }\n' '$STUB_FQDN' > '$ROOT/web/out/config.json'"
+run bash -c "printf '{ \"stubUrl\": \"https://%s\" }\n' '$SERVICE_FQDN' > '$ROOT/web/out/config.json'"
 SWA_TOKEN="$(capture az staticwebapp secrets list --name "$SWA" --resource-group "$RG" --query properties.apiKey -o tsv)"
 need SWA_TOKEN "$SWA_TOKEN"
 if [[ $APPLY == 1 ]]; then
@@ -161,4 +205,5 @@ rm -rf "$TMP"
 
 echo
 echo "page: https://$SWA_HOST"
-echo "stub: https://$STUB_FQDN/decision"
+echo "service: https://$SERVICE_FQDN/healthz"
+echo "runner: $RUNNER (logs: az containerapp logs show --name $RUNNER --resource-group $RG --follow)"

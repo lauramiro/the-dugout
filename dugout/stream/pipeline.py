@@ -11,7 +11,9 @@ numbers come from the engine and text from the narration pipeline.
 
 Settings (environment or .env): EVENTHUB_CONNECTION_STRING, EVENTHUB_NAME, EVENTHUB_CONSUMER_GROUP
 (default $Default) for the Event Hubs source; WEBPUBSUB_CONNECTION_STRING, WEBPUBSUB_HUB for
-publishing; SERVICE_URL for a remote decision service.
+publishing; SERVICE_URL for a remote decision service. For a container command without flags:
+PIPELINE_SOURCE=eventhub (read Event Hubs and keep following) and SCENARIO (default
+scenarios/riverside-castleton.yaml).
 """
 
 from __future__ import annotations
@@ -127,12 +129,15 @@ def make_decisions(publisher: Publisher | None, service_url: str | None) -> Deci
 
 
 def main(argv: list[str] | None = None) -> None:
+    load_dotenv()
+    from_env = os.environ.get("PIPELINE_SOURCE") == "eventhub"
     ap = argparse.ArgumentParser(prog="dugout.stream.pipeline")
     ap.add_argument("events", type=Path, nargs="?", help="events JSONL (contract 1); omit with --eventhub")
-    ap.add_argument("--eventhub", action="store_true", help="read from Event Hubs instead of a file")
-    ap.add_argument("--scenario", type=Path, required=True, help="scenario YAML, for the lineup")
+    ap.add_argument("--eventhub", action="store_true", default=from_env, help="read from Event Hubs instead of a file")
+    ap.add_argument("--scenario", type=Path, default=Path(os.environ.get("SCENARIO", "scenarios/riverside-castleton.yaml")),
+                    help="scenario YAML, for the lineup")
     ap.add_argument("--speed", type=int, choices=SPEEDS, default=1, help="file source only")
-    ap.add_argument("--follow", action="store_true", help="Event Hubs: keep waiting for further runs")
+    ap.add_argument("--follow", action="store_true", default=from_env, help="Event Hubs: keep waiting for further runs")
     ap.add_argument("--from-start", action="store_true",
                     help="Event Hubs: read the whole retained stream, not only new events")
     ap.add_argument("--prior", type=float, default=1.35, help="pre-match xG/90 for each team")
@@ -140,7 +145,6 @@ def main(argv: list[str] | None = None) -> None:
     if bool(args.events) == args.eventhub:
         ap.error("give an events file or --eventhub, not both or neither")
 
-    load_dotenv()
     publisher = default_publisher()
     decisions = make_decisions(publisher, os.environ.get("SERVICE_URL"))
     runner = PipelineRunner(lineup_from_scenario(args.scenario), decisions, publisher, args.prior)
