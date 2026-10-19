@@ -25,6 +25,10 @@ class ModelTimeout(Exception):
     """Raised by a ModelClient when the model does not answer in time."""
 
 
+class ModelError(Exception):
+    """Raised by a ModelClient on a transport or service failure (not a timeout)."""
+
+
 class ModelClient(Protocol):
     def complete(self, system: str, user: str, *, timeout_s: float) -> str: ...
 
@@ -39,7 +43,7 @@ class Card:
     headline: str
     reason: str
     source: str  # "model" or "template"
-    fallback: str | None = None  # "timeout" or "ungrounded" when source is "template"
+    fallback: str | None = None  # "timeout", "error" or "ungrounded" when source is "template"
 
 
 @dataclass(frozen=True, slots=True)
@@ -69,8 +73,9 @@ class StubClient:
         return item
 
 
-class _Timeout(Exception):
-    pass
+class _Unavailable(Exception):
+    def __init__(self, reason: str):
+        self.reason = reason
 
 
 def _parse(reply: str) -> Narration | str:
@@ -94,8 +99,8 @@ class NarrationPipeline:
             if draft is None:
                 return self._template(payload, locale, mode, "ungrounded")
             final = self._stage("localizer", payload, locale, mode, draft)
-        except _Timeout:
-            return self._template(payload, locale, mode, "timeout")
+        except _Unavailable as exc:
+            return self._template(payload, locale, mode, exc.reason)
         if final is None:
             return self._template(payload, locale, mode, "ungrounded")
         return Card(final.headline, final.reason, "model")
@@ -116,7 +121,9 @@ class NarrationPipeline:
                     system, json.dumps(request, ensure_ascii=False), timeout_s=self._timeout_s
                 )
             except (ModelTimeout, TimeoutError) as exc:
-                raise _Timeout from exc
+                raise _Unavailable("timeout") from exc
+            except ModelError as exc:
+                raise _Unavailable("error") from exc
             parsed = _parse(reply)
             errors = [parsed] if isinstance(parsed, str) else check_narration(parsed, payload, locale)
             if not errors:
