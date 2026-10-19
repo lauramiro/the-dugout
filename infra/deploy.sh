@@ -3,14 +3,13 @@
 # Container Apps (stub engine) and a budget alert.
 #
 # Dry run by default: prints every az command and runs nothing.
-#   REGION=... SWA_REGION=... BUDGET_EMAIL=... infra/deploy.sh
+#   BUDGET_EMAIL=... infra/deploy.sh
 # Create resources only after review and explicit approval:
-#   REGION=... SWA_REGION=... BUDGET_EMAIL=... infra/deploy.sh --apply
+#   BUDGET_EMAIL=... infra/deploy.sh --apply
 #
-# Required:  REGION        region for everything except Static Web Apps (no default, open question)
-#            SWA_REGION    Static Web Apps metadata region (it supports only a few; check `az staticwebapp create -h`)
-#            BUDGET_EMAIL  address that receives the budget alert
-# Optional:  BUDGET_USD (default 20), PREFIX (default dugout)
+# Required:  BUDGET_EMAIL  address that receives the budget alert
+# Optional:  REGION and SWA_REGION (both default westeurope), BUDGET_USD (default 20),
+#            PREFIX (default dugout)
 #
 # Idempotent: each create is an upsert or is skipped when the resource exists.
 # Secrets are read into shell variables and passed on, never echoed or written to disk,
@@ -38,8 +37,8 @@ if [[ "${CHECK_HELP:-0}" == 1 ]]; then
   exit 0
 fi
 
-: "${REGION:?set REGION}"
-: "${SWA_REGION:?set SWA_REGION}"
+REGION="${REGION:-westeurope}"
+SWA_REGION="${SWA_REGION:-westeurope}"
 : "${BUDGET_EMAIL:?set BUDGET_EMAIL}"
 BUDGET_USD="${BUDGET_USD:-20}"
 PREFIX="${PREFIX:-dugout}"
