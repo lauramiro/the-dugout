@@ -40,6 +40,14 @@ TREND_MS = 5 * MIN_MS
 BAND_HALF = 0.08
 LOW_SPRINT_ROLES = frozenset({"CB", "CM"})
 LOW_SPRINT_BAND = 1.5  # band multiplier where sprints say little
+# Threat by channel: share of the opponent's xG down each of a team's channels over the last
+# 15 played minutes, shrunk towards the first-half split (an even split before half-time) by a
+# pseudo-count, since a 15-minute window often holds no shots.
+THREAT_WINDOW_MS = 15 * MIN_MS
+THREAT_PSEUDO_XG = 0.15
+CHANNELS = ("left", "centre", "right")
+MIRROR = {"left": "right", "centre": "centre", "right": "left"}
+
 DEAD_BALL = frozenset({"foul", "out", "goal"})
 DEAD_SHOT = frozenset({"off_target", "saved"})  # goal kick, keeper's ball or corner
 
@@ -260,7 +268,8 @@ class StateEngine:
             "windows_left": {t: MAX_WINDOWS - len(self.windows[t]) for t in self.teams},
             "rates": self._rates(now),
             "players": [self._player_dict(p, now) for p in self.players.values() if p.on_pitch],
-            "threat_by_channel": {},
+            "threat_by_channel": self._threat(now),
+            "threat_by_channel_first_half": self._threat_first_half(),
         }
 
     def _rates(self, now: int) -> dict:
@@ -279,6 +288,40 @@ class StateEngine:
         return {t: {"for90": blend(per90[t]),
                     "against90": blend(sum(v for u, v in per90.items() if u != t))}
                 for t in self.teams}
+
+    def _against(self, team: str, keep) -> dict[str, float]:
+        """Opponent xG by the channel it came down, from `team`'s own view."""
+        xg = dict.fromkeys(CHANNELS, 0.0)
+        for played, period, shooter, channel, x in self.shots:
+            if shooter != team and channel in MIRROR and keep(played, period):
+                xg[MIRROR[channel]] += x
+        return xg
+
+    @staticmethod
+    def _shares(xg: dict[str, float], ref: dict[str, float], pseudo: float) -> dict[str, float]:
+        total = sum(xg.values()) + pseudo
+        return {c: (xg[c] + pseudo * ref[c]) / total if total else ref[c] for c in CHANNELS}
+
+    def _first_half_split(self, team: str) -> dict[str, float]:
+        even = dict.fromkeys(CHANNELS, 1 / 3)
+        if self._period == 1:
+            return even
+        return self._shares(self._against(team, lambda _, period: period == 1), even, 0.0)
+
+    def _threat(self, now: int) -> dict[str, float]:
+        out = {}
+        for team in self.teams:
+            recent = self._against(team, lambda played, _: now - THREAT_WINDOW_MS <= played < now)
+            shares = self._shares(recent, self._first_half_split(team), THREAT_PSEUDO_XG)
+            out.update({f"{team}_{c}": round(v, 3) for c, v in shares.items()})
+        return out
+
+    def _threat_first_half(self) -> dict[str, float]:
+        out = {}
+        for team in self.teams:
+            shares = self._first_half_split(team)
+            out.update({f"{team}_{c}": round(v, 3) for c, v in shares.items()})
+        return out
 
     def _player_dict(self, p: _Player, now: int) -> dict:
         start = max(p.on_since, now - RECENT_MS)

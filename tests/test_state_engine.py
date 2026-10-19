@@ -276,3 +276,41 @@ def test_midweek_left_back_reads_lowest_at_62_and_estimate_tracks_hidden_conditi
           f"{r_all:.2f} over every minute after the baselines (n={len(pooled)})")
     assert valid >= 15 and below > valid / 2
     assert r_all > 0
+
+
+# --- item 4: threat by channel ----------------------------------------------------
+
+def shots(team, channel, times_s, seq0, period=None):
+    return [ev(seq0 + i, t, "shot", team, period=period, channel=channel, outcome="blocked", xg=0.1)
+            for i, t in enumerate(times_s)]
+
+
+def test_no_shots_means_an_even_split_for_both_teams():
+    (snap, _), = StateEngine(TWO_GK).feed(ev(1, 0, "restart", "A", outcome="kickoff"))
+    assert snap["threat_by_channel"] == {f"{t}_{c}": pytest.approx(1 / 3, abs=0.001)
+                                         for t in ("A", "B") for c in ("left", "centre", "right")}
+
+
+def test_shots_down_one_flank_give_that_key_the_largest_share():
+    # B attacks down its own left, which is A's right
+    events = [ev(1, 0, "restart", "A", outcome="kickoff")] + shots("B", "left", [300, 400, 500], 2)
+    events.append(ev(10, 600, "pass", "A"))
+    threat = at(run_engine(StateEngine(TWO_GK), events), 1, 600)["threat_by_channel"]
+    a = {c: threat[f"A_{c}"] for c in ("left", "centre", "right")}
+    assert max(a, key=a.get) == "right" and a["right"] > 0.5
+    assert threat["B_left"] == threat["B_centre"] == threat["B_right"]  # A has not shot
+
+
+def test_threat_is_the_last_15_minutes_against_the_first_half():
+    events = [ev(1, 0, "restart", "A", outcome="kickoff")]
+    events += shots("B", "right", [600, 900, 1200], 2)  # first half: A's left
+    events += [ev(10, 2690, "pass", "A", period=1), ev(11, 2700, "restart", "B", period=2, outcome="kickoff")]
+    events += shots("B", "left", [4000, 4100], 20)  # after 66': A's right
+    events.append(ev(30, 4200, "pass", "A"))
+    snap = at(run_engine(StateEngine(TWO_GK), events), 2, 4200)
+    now, first = snap["threat_by_channel"], snap["threat_by_channel_first_half"]
+    assert max(("A_left", "A_centre", "A_right"), key=now.get) == "A_right"
+    assert max(("A_left", "A_centre", "A_right"), key=first.get) == "A_left"
+    early = at(run_engine(StateEngine(TWO_GK), events), 2, 3600)["threat_by_channel"]
+    # nothing in the last 15 minutes: the split falls back to the first half
+    assert max(("A_left", "A_centre", "A_right"), key=early.get) == "A_left"
