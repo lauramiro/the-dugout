@@ -1,33 +1,54 @@
 "use client";
 
-import { fromPos, formatClock, lastAtOrBefore } from "../lib/clock";
-import { SPEEDS } from "../lib/datasource";
+import { useMemo } from "react";
+import { Pitch } from "../components/Pitch";
+import { Controls, Scoreboard, Ticker } from "../components/MatchZone";
+import { fromPos, lastAtOrBefore } from "../lib/clock";
+import { score, tickerEvents } from "../lib/derive";
+import { translator } from "../lib/i18n";
 import { useDataSource, useFeed } from "../lib/useFeed";
+
+const TICKER_LENGTH = 8;
 
 export default function Page() {
   const source = useDataSource();
   const feed = useFeed(source);
-  const { log, playhead } = feed;
-  const { tMs } = fromPos(playhead, log.firstHalfEnd);
-  const goals = log.events.slice(0, lastAtOrBefore(log.events, playhead) + 1).filter((e) => e.item.type === "goal");
-  const score = (team: string) => goals.filter((g) => g.item.team === team).length;
+  const { log, playhead, status } = feed;
+  const { roster } = log;
+  const t = translator("en");
+
+  const teams = useMemo(() => (roster ? [roster.home, roster.away] : []), [roster]);
+  const { period, tMs } = fromPos(playhead, log.firstHalfEnd);
+  const finished = source.kind === "replay" && status === "ready" && playhead >= log.duration;
+
+  const evIdx = lastAtOrBefore(log.events, playhead);
+  const goals = useMemo(() => score(log.events, evIdx, teams), [log.events, evIdx, teams]);
+  const ticker = useMemo(() => tickerEvents(log.events, evIdx, TICKER_LENGTH), [log.events, evIdx]);
 
   return (
-    <main>
-      <h1>The Dugout</h1>
-      <p>
-        {feed.status} {formatClock(tMs)} RFC {score("RFC")} - {score("CAS")} CAS
-      </p>
-      {source.controls && (
-        <p>
-          <button onClick={feed.playing ? source.controls.pause : source.controls.play}>{feed.playing ? "Pause" : "Play"}</button>
-          {SPEEDS.map((s) => (
-            <button key={s} aria-pressed={feed.speed === s} onClick={() => source.controls?.setSpeed(s)}>
-              {s}x
-            </button>
-          ))}
-        </p>
-      )}
+    <main className="screen">
+      <header className="topbar">
+        <div className="brand">
+          <h1>The Dugout</h1>
+          <span className="tagline">{t("tagline")}</span>
+        </div>
+      </header>
+
+      <section className="match" aria-label={roster ? `${roster.teams[roster.home].name} v ${roster.teams[roster.away].name}` : undefined}>
+        <Scoreboard roster={roster} score={goals} period={period} tMs={tMs} finished={finished} t={t} />
+        <div className="pitch-wrap">
+          <Pitch frame={source.frameAt(playhead)} roster={roster} highlight={null} label={t("pitch")} />
+          {status !== "ready" && (
+            <div className="pitch-status" role="status">
+              {status === "error" ? t("loadError", { error: feed.error ?? "" }) : source.kind === "live" ? t("waitingLive") : t("loading")}
+            </div>
+          )}
+        </div>
+        <Controls controls={source.controls} playing={feed.playing} speed={feed.speed} finished={finished} t={t} />
+        <Ticker events={ticker} roster={roster} t={t} />
+      </section>
+
+      <p className="foot">{t("demoNote")}</p>
     </main>
   );
 }
