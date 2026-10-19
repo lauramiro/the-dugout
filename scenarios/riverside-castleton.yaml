@@ -1,0 +1,50 @@
+# Riverside FC v Castleton Athletic. Fictional clubs and players.
+# The first 11 players of each team start; the other 7 are on the bench.
+# Ratings run from 0 to 1. Sides: left, centre, right (from the player's own team's view).
+match_id_prefix: rfc-cas
+
+home:
+  code: RFC
+  name: Riverside FC
+  players:
+    - {id: RFC-01, name: Owen Marsh,     role: GK, side: centre, attack: 0.10, defence: 0.74, pace: 0.40, stamina: 0.80, work_rate: 0.50}
+    - {id: RFC-02, name: Danny Okafor,   role: FB, side: right,  attack: 0.58, defence: 0.68, pace: 0.74, stamina: 0.78, work_rate: 0.75}
+    - {id: RFC-03, name: Leon Varga,     role: FB, side: left,   attack: 0.60, defence: 0.66, pace: 0.76, stamina: 0.70, work_rate: 0.85}
+    - {id: RFC-04, name: Sam Brannigan,  role: CB, side: centre, attack: 0.30, defence: 0.74, pace: 0.60, stamina: 0.80, work_rate: 0.60}
+    - {id: RFC-05, name: Joel Pereira,   role: CB, side: centre, attack: 0.32, defence: 0.72, pace: 0.62, stamina: 0.80, work_rate: 0.60}
+    - {id: RFC-06, name: Matty Coyle,    role: CM, side: centre, attack: 0.55, defence: 0.68, pace: 0.60, stamina: 0.82, work_rate: 0.80}
+    - {id: RFC-07, name: Rhys Adeyemi,   role: W,  side: right,  attack: 0.72, defence: 0.40, pace: 0.82, stamina: 0.72, work_rate: 0.65}
+    - {id: RFC-08, name: Tomas Lindqvist, role: CM, side: right, attack: 0.64, defence: 0.60, pace: 0.62, stamina: 0.80, work_rate: 0.75}
+    - {id: RFC-09, name: Kai Thornton,   role: ST, side: centre, attack: 0.76, defence: 0.30, pace: 0.74, stamina: 0.74, work_rate: 0.60}
+    - {id: RFC-10, name: Nico Ferraz,    role: CM, side: left,   attack: 0.68, defence: 0.56, pace: 0.64, stamina: 0.78, work_rate: 0.70}
+    - {id: RFC-11, name: Ellis Mbeki,    role: W,  side: left,   attack: 0.70, defence: 0.42, pace: 0.80, stamina: 0.74, work_rate: 0.70}
+    - {id: RFC-12, name: Harry Quayle,   role: GK, side: centre, attack: 0.08, defence: 0.66, pace: 0.38, stamina: 0.80, work_rate: 0.50}
+    - {id: RFC-13, name: Ben Ashdown,    role: CB, side: centre, attack: 0.28, defence: 0.68, pace: 0.58, stamina: 0.80, work_rate: 0.60}
+    - {id: RFC-14, name: Luca Benedetti, role: CM, side: centre, attack: 0.58, defence: 0.60, pace: 0.60, stamina: 0.80, work_rate: 0.75}
+    - {id: RFC-15, name: Femi Osei,      role: FB, side: left,   attack: 0.54, defence: 0.64, pace: 0.72, stamina: 0.80, work_rate: 0.75}
+    - {id: RFC-16, name: Jordan Pryce,   role: W,  side: right,  attack: 0.66, defence: 0.38, pace: 0.80, stamina: 0.76, work_rate: 0.65}
+    - {id: RFC-17, name: Aaron Stile,    role: ST, side: centre, attack: 0.70, defence: 0.28, pace: 0.70, stamina: 0.78, work_rate: 0.60}
+    - {id: RFC-18, name: Cian Doherty,   role: FB, side: right,  attack: 0.52, defence: 0.64, pace: 0.70, stamina: 0.80, work_rate: 0.70}
+
+away:
+  code: CAS
+  name: Castleton Athletic
+  players:
+    - {id: CAS-01, name: Viktor Hale,    role: GK, side: centre, attack: 0.10, defence: 0.72, pace: 0.40, stamina: 0.80, work_rate: 0.50}
+    - {id: CAS-02, name: Marcus Lowe,    role: FB, side: right,  attack: 0.60, defence: 0.64, pace: 0.78, stamina: 0.76, work_rate: 0.80}
+    - {id: CAS-03, name: Pablo Iturbe,   role: FB, side: left,   attack: 0.56, defence: 0.66, pace: 0.72, stamina: 0.78, work_rate: 0.70}
+    - {id: CAS-04, name: Gareth Pell,    role: CB, side: centre, attack: 0.30, defence: 0.72, pace: 0.58, stamina: 0.80, work_rate: 0.60}
+    - {id: CAS-05, name: Idris Kamara,   role: CB, side: centre, attack: 0.30, defence: 0.70, pace: 0.64, stamina: 0.80, work_rate: 0.60}
+    - {id: CAS-06, name: Noah Fairbrook, role: CM, side: centre, attack: 0.54, defence: 0.66, pace: 0.58, stamina: 0.82, work_rate: 0.85}
+    - {id: CAS-07, name: Dion Salter,    role: W,  side: right,  attack: 0.72, defence: 0.40, pace: 0.84, stamina: 0.74, work_rate: 0.70}
+    - {id: CAS-08, name: Felix Arnaud,   role: CM, side: right,  attack: 0.62, defence: 0.58, pace: 0.62, stamina: 0.80, work_rate: 0.75}
+    - {id: CAS-09, name: Jonah Wrexley,  role: ST, side: centre, attack: 0.74, defence: 0.30, pace: 0.72, stamina: 0.74, work_rate: 0.65}
+    - {id: CAS-10, name: Ollie Brandt,   role: CM, side: left,   attack: 0.64, defence: 0.56, pace: 0.62, stamina: 0.78, work_rate: 0.70}
+    - {id: CAS-11, name: Tariq Holm,     role: W,  side: left,   attack: 0.68, defence: 0.42, pace: 0.78, stamina: 0.74, work_rate: 0.70}
+    - {id: CAS-12, name: Rory Gallen,    role: GK, side: centre, attack: 0.08, defence: 0.66, pace: 0.38, stamina: 0.80, work_rate: 0.50}
+    - {id: CAS-13, name: Will Escott,    role: CB, side: centre, attack: 0.28, defence: 0.66, pace: 0.58, stamina: 0.80, work_rate: 0.60}
+    - {id: CAS-14, name: Aleks Duric,    role: CM, side: centre, attack: 0.58, defence: 0.60, pace: 0.60, stamina: 0.80, work_rate: 0.75}
+    - {id: CAS-15, name: Kofi Mensah,    role: FB, side: left,   attack: 0.52, defence: 0.62, pace: 0.72, stamina: 0.80, work_rate: 0.75}
+    - {id: CAS-16, name: Luis Carmona,   role: W,  side: right,  attack: 0.68, defence: 0.38, pace: 0.82, stamina: 0.76, work_rate: 0.70}
+    - {id: CAS-17, name: Ethan Royle,    role: ST, side: centre, attack: 0.70, defence: 0.28, pace: 0.72, stamina: 0.78, work_rate: 0.60}
+    - {id: CAS-18, name: Sean Tolley,    role: FB, side: right,  attack: 0.50, defence: 0.62, pace: 0.70, stamina: 0.80, work_rate: 0.70}
