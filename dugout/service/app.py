@@ -30,6 +30,7 @@ class DecisionRequest(BaseModel):
     snapshot: dict
     team: str
     trigger: str
+    decision_id: str | None = None  # the decision point's id; derived from the clock when absent
     locale: Locale = "en"
     mode: Mode = "casual"
 
@@ -83,7 +84,7 @@ def open_decision(req: DecisionRequest, cards: CardService = Depends(get_cards),
     for key in ("rates", "score"):
         if req.team not in req.snapshot.get(key, {}):
             raise HTTPException(422, f"team {req.team!r} is not in snapshot[{key!r}]")
-    payload = cards.open(req.snapshot, req.team, req.trigger)
+    payload = cards.open(req.snapshot, req.team, req.trigger, req.decision_id)
     card = cards.card(payload["decision_id"], req.locale, req.mode)
     if publisher is None:
         return {"pushed": False, "reason": "WEBPUBSUB_CONNECTION_STRING not set", "card": card}

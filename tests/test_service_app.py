@@ -127,3 +127,20 @@ def test_negotiate_and_healthz_keep_the_stub_shapes(env):
     assert client.get("/healthz").json() == {"ok": True}
     app.dependency_overrides[get_publisher] = lambda: None
     assert client.get("/negotiate").json() == {"url": None}
+
+
+def test_post_decisions_uses_the_decision_points_id():
+    from dugout.engine.payload import decide
+    cards = CardService(lambda s, t, g, **kw: decide(s, t, g, n=2_000, **kw),
+                        NarrationPipeline(StubClient()), MemoryStore())
+    pub = FakePublisher()
+    app.dependency_overrides[get_publisher] = lambda: pub
+    app.dependency_overrides[get_cards] = lambda: cards
+    try:
+        snap = {**SNAPSHOT, "subs_left": {"RFC": 5, "CAS": 5}, "players": [], "threat_by_channel": {}}
+        body = {"snapshot": snap, "team": "RFC", "trigger": "manager_sub", "decision_id": "rfc-62-03"}
+        card = TestClient(app).post("/decisions", json=body).json()["card"]
+    finally:
+        app.dependency_overrides.clear()
+    assert card["decision_id"] == card["payload"]["decision_id"] == "rfc-62-03"
+    assert pub.sent == [card] and cards.payload("rfc-62-03") is not None

@@ -127,3 +127,8 @@ def test_snapshot_without_trend_per_min():
     snap = {**SNAPSHOT, "players": [player]}
     ev = decide(snap, "RFC", "t", SeedSequence(5), n=500)["evidence"][0]
     assert ev["trend_per_min"] == 0.0
+
+
+def test_decision_id_override_is_kept():
+    p = payload(decision_id="rfc-62-07")
+    assert p["decision_id"] == "rfc-62-07"

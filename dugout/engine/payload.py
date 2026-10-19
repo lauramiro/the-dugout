@@ -49,7 +49,9 @@ def _option_dict(r: OptionResult) -> dict:
 
 
 def decide(snapshot: dict, team: str, trigger: str, seed: SeedSequence | None = None, *,
-           n: int = 20_000) -> dict:
+           n: int = 20_000, decision_id: str | None = None) -> dict:
+    """`decision_id` is the decision point's own id when there is one; without it the id is
+    derived from the team and the snapshot clock."""
     opp = next(t for t in snapshot["score"] if t != team)
     minute = snapshot["t_ms"] // 60_000
     player = _exposed_player(snapshot, team)
@@ -77,6 +79,8 @@ def decide(snapshot: dict, team: str, trigger: str, seed: SeedSequence | None = 
         if channel is not None:
             evidence.append({"type": "flank_threat", "channel": channel[0], "share": channel[1]})
     second = snapshot["t_ms"] // 1000 % 60
-    return {"decision_id": f"{team.lower()}-{minute}-{second:02d}", "t_ms": snapshot["t_ms"], "team": team,
+    if decision_id is None:
+        decision_id = f"{team.lower()}-{minute}-{second:02d}"
+    return {"decision_id": decision_id, "t_ms": snapshot["t_ms"], "team": team,
             "trigger": trigger, "options": [_option_dict(r) for r in results],
             "recommendation": _recommend(results), "evidence": evidence, "manager_action": None}

@@ -18,7 +18,7 @@ from dugout.service.store import MemoryStore, Store
 LOCALES = ("en", "es", "ca")
 MODES = ("casual", "analyst")
 
-Engine = Callable[[dict, str, str], dict]
+Engine = Callable[..., dict]  # (snapshot, team, trigger, *, decision_id=None)
 
 
 class Narrator(Protocol):
@@ -33,9 +33,11 @@ class CardService:
         self._locks: defaultdict[tuple[str, str, str], Lock] = defaultdict(Lock)
         self._locks_guard = Lock()
 
-    def open(self, snapshot: dict, team: str, trigger: str) -> dict:
-        """Run the engine for one decision point and keep its payload."""
-        payload = self._engine(snapshot, team, trigger)
+    def open(self, snapshot: dict, team: str, trigger: str, decision_id: str | None = None) -> dict:
+        """Run the engine for one decision point and keep its payload. A decision point's
+        own id, when given, is the payload's id."""
+        payload = (self._engine(snapshot, team, trigger) if decision_id is None
+                   else self._engine(snapshot, team, trigger, decision_id=decision_id))
         self.store.put_decision(payload)
         return payload
 
@@ -68,5 +70,5 @@ class CardService:
 
 def default_service(store: Store | None = None) -> CardService:
     """Engine with its default sample count, narration through the stub model client."""
-    return CardService(lambda snapshot, team, trigger: decide(snapshot, team, trigger),
+    return CardService(lambda snapshot, team, trigger, **kw: decide(snapshot, team, trigger, **kw),
                        NarrationPipeline(StubClient()), store or MemoryStore())
