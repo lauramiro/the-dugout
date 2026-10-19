@@ -2,9 +2,10 @@
 import subprocess
 import sys
 
+import numpy as np
 import pytest
 
-from dugout.sim.match import run_match
+from dugout.sim.match import new_match, run_match, step
 from dugout.sim.state import HALF_S
 from dugout.stream.state_engine import MAX_SUBS, MAX_WINDOWS, StateEngine
 
@@ -164,3 +165,114 @@ def test_rolling_rate_forgets_shots_older_than_20_minutes():
     assert at(snaps, 1, 20 * 60)["rates"]["A"]["for90"] > 1.35
     late = at(snaps, 1, 22 * 60)["rates"]["A"]
     assert late["for90"] == late["against90"] < 1.35
+
+
+# --- item 3: condition estimate ---------------------------------------------------
+
+SQUAD = [{"id": "A-01", "team": "A", "role": "GK", "side": "centre", "starting": True},
+         {"id": "A-02", "team": "A", "role": "FB", "side": "left", "starting": True},
+         {"id": "A-03", "team": "A", "role": "CB", "side": "centre", "starting": True},
+         {"id": "A-12", "team": "A", "role": "FB", "side": "left", "starting": False},
+         {"id": "B-01", "team": "B", "role": "GK", "side": "centre", "starting": True}]
+
+
+def running(gaps, until_s=2690):
+    """Kick-off, then each of A-02 and A-03 runs every gaps(t) seconds: hsr 20 m, every
+    third run a sprint instead."""
+    events, seq = [ev(1, 0, "restart", "A", outcome="kickoff")], 1
+    for pid in ("A-02", "A-03"):
+        t, k = 5, 0
+        while t < until_s:
+            seq += 1
+            kind = "sprint" if k % 3 == 2 else "hsr"
+            events.append(ev(seq, t, kind, "A", player_id=pid, dist_m=20.0 if kind == "hsr" else 25.0))
+            t, k = t + gaps(t), k + 1
+    events.sort(key=lambda e: e["t_ms"])
+    for i, e in enumerate(events):
+        e["seq"] = i + 1
+    return events
+
+
+def player(snap, pid):
+    return next(p for p in snap["players"] if p["id"] == pid)
+
+
+def test_steady_running_keeps_the_estimate_near_full():
+    snaps = run_engine(StateEngine(SQUAD), running(lambda t: 30))
+    p = player(at(snaps, 1, 40 * 60), "A-02")
+    assert p["condition_est"] > 0.95 and abs(p["trend_per_min"]) < 0.005
+    assert p["baseline_hsr_m_10m"] == pytest.approx(p["hsr_m_10m"], rel=0.1)
+
+
+def test_estimate_falls_when_running_drops_below_his_own_baseline():
+    snaps = run_engine(StateEngine(SQUAD), running(lambda t: 30 if t < 25 * 60 else 75))
+    early, late = player(at(snaps, 1, 25 * 60), "A-02"), player(at(snaps, 1, 44 * 60), "A-02")
+    assert early["condition_est"] > 0.95
+    assert late["condition_est"] < 0.85 and late["trend_per_min"] < 0
+    assert late["condition_band"][0] < late["condition_est"] < late["condition_band"][1]
+    assert late["hsr_m_10m"] < late["baseline_hsr_m_10m"]
+
+
+def test_estimate_is_clipped_and_band_wider_for_low_sprint_roles():
+    snaps = run_engine(StateEngine(SQUAD), running(lambda t: 30 if t < 21 * 60 else 9000)
+                       + [ev(10_000, 2695, "pass", "B"),
+                          ev(10_001, 2700, "restart", "B", period=2, outcome="kickoff"),
+                          ev(10_002, 4500, "pass", "B")])
+    last = at(snaps, 2, 4500)
+    fb, cb = player(last, "A-02"), player(last, "A-03")
+    assert fb["condition_est"] == cb["condition_est"] == 0.3
+    width = lambda p: p["condition_band"][1] - p["condition_band"][0]  # noqa: E731
+    mid = at(snaps, 1, 10 * 60)
+    assert width(player(mid, "A-03")) > width(player(mid, "A-02"))
+    assert player(last, "A-01")["condition_est"] is None
+
+
+def test_substitute_sets_his_baseline_from_when_he_comes_on():
+    events = [ev(1, 0, "restart", "A", outcome="kickoff"), ev(2, 2690, "pass", "A", period=1),
+              ev(3, 2700, "sub", "A", period=2, player_id="A-02", player_in_id="A-12"),
+              ev(4, 2700, "restart", "B", period=2, outcome="kickoff")]
+    seq = 4
+    for t in range(2705, 2700 + 30 * 60, 30):
+        seq += 1
+        events.append(ev(seq, t, "hsr", "A", player_id="A-12", dist_m=20.0))
+    snaps = run_engine(StateEngine(SQUAD), events)
+    at_10 = player(at(snaps, 2, 2700 + 10 * 60), "A-12")
+    assert at_10["condition_est"] == 1.0 and at_10["baseline_hsr_m_10m"] is None
+    at_25 = player(at(snaps, 2, 2700 + 25 * 60), "A-12")
+    assert at_25["baseline_hsr_m_10m"] is not None and at_25["condition_est"] > 0.95
+
+
+def test_midweek_left_back_reads_lowest_at_62_and_estimate_tracks_hidden_condition(scenario):
+    """Seeds 1-20 with the played-midweek lever on RFC-03. Hidden condition is read here only."""
+    lineup, t62 = lineup_of(scenario), 62 * 60
+    below = valid = 0
+    at62, pooled = [], []
+    for seed in range(1, 21):
+        s, events = new_match(scenario, seed)
+        hidden = {}
+        while not s.finished and (s.period, s.clock_s) <= (2, t62 + 120):
+            events += step(s)
+            if s.clock_s % 60 == 0:
+                hidden[(s.period, s.clock_s * 1000)] = {p.id: p.condition for p in s.players.values()}
+        snaps = run_engine(StateEngine(lineup), [e.to_dict() for e in events])
+        for snap in snaps:
+            h = hidden.get((snap["period"], snap["t_ms"]))
+            ests = {p["id"]: p["condition_est"] for p in snap["players"]
+                    if p["condition_est"] is not None and p["baseline_hsr_m_10m"] is not None}
+            if h is None:
+                continue
+            pooled += [(v, h[pid]) for pid, v in ests.items()]
+            if (snap["period"], snap["t_ms"]) != (2, t62 * 1000):
+                continue
+            at62 += [(v, h[pid]) for pid, v in ests.items()]
+            starters = {p.id for p in scenario.home.starters}
+            others = [v for pid, v in ests.items() if pid in starters and pid != "RFC-03"]
+            if "RFC-03" in ests:
+                valid += 1
+                below += ests["RFC-03"] < np.median(others)
+    r62, r_all = (float(np.corrcoef(np.array(x).T)[0, 1]) for x in (at62, pooled))
+    print(f"\nRFC-03 below the median of the other Riverside starters at 62' in {below}/{valid} seeds; "
+          f"correlation with hidden condition: {r62:.2f} at 62' (n={len(at62)}), "
+          f"{r_all:.2f} over every minute after the baselines (n={len(pooled)})")
+    assert valid >= 15 and below > valid / 2
+    assert r_all > 0
