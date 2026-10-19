@@ -1,0 +1,350 @@
+{
+ "fixture": true,
+ "cards": [
+  {
+   "period": 2,
+   "payload": {
+    "decision_id": "rfc-62-01",
+    "t_ms": 3720000,
+    "team": "RFC",
+    "trigger": "condition_below_60",
+    "options": [
+     {
+      "id": "no_change",
+      "label": "No change",
+      "win": 0.786,
+      "draw": 0.171,
+      "loss": 0.043,
+      "xpts": 2.53,
+      "delta_win": 0.0
+     },
+     {
+      "id": "sub_like_for_like",
+      "label": "Like-for-like substitution for RFC-03",
+      "win": 0.818,
+      "draw": 0.15,
+      "loss": 0.031,
+      "xpts": 2.6,
+      "delta_win": 0.032,
+      "ci90": [
+       0.03,
+       0.034
+      ]
+     },
+     {
+      "id": "attacking",
+      "label": "Attacking change",
+      "win": 0.79,
+      "draw": 0.165,
+      "loss": 0.045,
+      "xpts": 2.54,
+      "delta_win": 0.004,
+      "ci90": [
+       0.002,
+       0.006
+      ]
+     },
+     {
+      "id": "defensive",
+      "label": "Defensive change",
+      "win": 0.785,
+      "draw": 0.174,
+      "loss": 0.04,
+      "xpts": 2.53,
+      "delta_win": -0.001,
+      "ci90": [
+       -0.003,
+       0.001
+      ]
+     }
+    ],
+    "recommendation": {
+     "option_id": "sub_like_for_like",
+     "strength": "strong"
+    },
+    "evidence": [
+     {
+      "type": "condition",
+      "player_id": "RFC-03",
+      "value": 0.6,
+      "trend_per_min": -0.0095
+     },
+     {
+      "type": "flank_threat",
+      "channel": "RFC_left",
+      "share": 0.33
+     }
+    ],
+    "manager_action": null
+   },
+   "narration": {
+    "en": {
+     "casual": {
+      "headline": "RFC-03 is fading (60%).",
+      "reason": "The model rates changing now about 3 points better (strong).",
+      "source": "template"
+     },
+     "analyst": {
+      "headline": "RFC-03 is fading (60%).",
+      "reason": "Changing now: +3.2 pts win probability, 90% interval +3.0 to +3.4 (strong).",
+      "source": "template"
+     }
+    },
+    "es": {
+     "casual": {
+      "headline": "RFC-03 se está agotando (60%).",
+      "reason": "El modelo valora cambiar ahora unos 3 puntos mejor (fuerte).",
+      "source": "template"
+     },
+     "analyst": {
+      "headline": "RFC-03 se está agotando (60%).",
+      "reason": "Cambiar ahora: +3,2 pts de probabilidad de victoria, intervalo del 90%: +3,0 a +3,4 (fuerte).",
+      "source": "template"
+     }
+    },
+    "ca": {
+     "casual": {
+      "headline": "RFC-03 s'està esgotant (60%).",
+      "reason": "El model valora canviar ara uns 3 punts millor (forta).",
+      "source": "template"
+     },
+     "analyst": {
+      "headline": "RFC-03 s'està esgotant (60%).",
+      "reason": "Canviar ara: +3,2 punts de probabilitat de victòria, interval del 90%: +3,0 a +3,4 (forta).",
+      "source": "template"
+     }
+    }
+   }
+  },
+  {
+   "period": 2,
+   "payload": {
+    "decision_id": "cas-70-01",
+    "t_ms": 4200000,
+    "team": "CAS",
+    "trigger": "manager_sub",
+    "options": [
+     {
+      "id": "no_change",
+      "label": "No change",
+      "win": 0.023,
+      "draw": 0.182,
+      "loss": 0.796,
+      "xpts": 0.25,
+      "delta_win": 0.0
+     },
+     {
+      "id": "sub_like_for_like",
+      "label": "Like-for-like substitution for CAS-07",
+      "win": 0.023,
+      "draw": 0.186,
+      "loss": 0.791,
+      "xpts": 0.25,
+      "delta_win": 0.0,
+      "ci90": [
+       0.0,
+       0.001
+      ]
+     },
+     {
+      "id": "attacking",
+      "label": "Attacking change",
+      "win": 0.026,
+      "draw": 0.195,
+      "loss": 0.779,
+      "xpts": 0.27,
+      "delta_win": 0.004,
+      "ci90": [
+       0.003,
+       0.004
+      ]
+     },
+     {
+      "id": "defensive",
+      "label": "Defensive change",
+      "win": 0.019,
+      "draw": 0.167,
+      "loss": 0.814,
+      "xpts": 0.22,
+      "delta_win": -0.004,
+      "ci90": [
+       -0.005,
+       -0.003
+      ]
+     }
+    ],
+    "recommendation": {
+     "option_id": "attacking",
+     "strength": "toss_up"
+    },
+    "evidence": [
+     {
+      "type": "condition",
+      "player_id": "CAS-07",
+      "value": 0.62,
+      "trend_per_min": -0.0075
+     },
+     {
+      "type": "flank_threat",
+      "channel": "CAS_left",
+      "share": 0.33
+     }
+    ],
+    "manager_action": null
+   },
+   "narration": {
+    "en": {
+     "casual": {
+      "headline": "CAS-07 is fading (62%).",
+      "reason": "The options are close: the model sees almost no difference (toss-up).",
+      "source": "template"
+     },
+     "analyst": {
+      "headline": "CAS-07 is fading (62%).",
+      "reason": "The options are close: changing now moves win probability by +0.4 pts, 90% interval +0.3 to +0.4 (toss-up).",
+      "source": "template"
+     }
+    },
+    "es": {
+     "casual": {
+      "headline": "CAS-07 se está agotando (62%).",
+      "reason": "Las opciones están muy parejas: el modelo no ve apenas diferencia (igualado).",
+      "source": "template"
+     },
+     "analyst": {
+      "headline": "CAS-07 se está agotando (62%).",
+      "reason": "Las opciones están muy parejas: cambiar ahora mueve la probabilidad de victoria +0,4 pts, intervalo del 90%: +0,3 a +0,4 (igualado).",
+      "source": "template"
+     }
+    },
+    "ca": {
+     "casual": {
+      "headline": "CAS-07 s'està esgotant (62%).",
+      "reason": "Les opcions estan molt igualades: el model gairebé no hi veu diferència (igualat).",
+      "source": "template"
+     },
+     "analyst": {
+      "headline": "CAS-07 s'està esgotant (62%).",
+      "reason": "Les opcions estan molt igualades: canviar ara mou la probabilitat de victòria +0,4 punts, interval del 90%: +0,3 a +0,4 (igualat).",
+      "source": "template"
+     }
+    }
+   }
+  },
+  {
+   "period": 2,
+   "payload": {
+    "decision_id": "rfc-78-01",
+    "t_ms": 4699000,
+    "team": "RFC",
+    "trigger": "manager_sub",
+    "options": [
+     {
+      "id": "no_change",
+      "label": "No change",
+      "win": 0.801,
+      "draw": 0.178,
+      "loss": 0.02,
+      "xpts": 2.58,
+      "delta_win": 0.0
+     },
+     {
+      "id": "sub_like_for_like",
+      "label": "Like-for-like substitution for RFC-03",
+      "win": 0.834,
+      "draw": 0.152,
+      "loss": 0.014,
+      "xpts": 2.65,
+      "delta_win": 0.032,
+      "ci90": [
+       0.03,
+       0.034
+      ]
+     },
+     {
+      "id": "attacking",
+      "label": "Attacking change",
+      "win": 0.792,
+      "draw": 0.185,
+      "loss": 0.023,
+      "xpts": 2.56,
+      "delta_win": -0.01,
+      "ci90": [
+       -0.011,
+       -0.008
+      ]
+     },
+     {
+      "id": "defensive",
+      "label": "Defensive change",
+      "win": 0.812,
+      "draw": 0.17,
+      "loss": 0.018,
+      "xpts": 2.61,
+      "delta_win": 0.01,
+      "ci90": [
+       0.009,
+       0.012
+      ]
+     }
+    ],
+    "recommendation": {
+     "option_id": "sub_like_for_like",
+     "strength": "strong"
+    },
+    "evidence": [
+     {
+      "type": "condition",
+      "player_id": "RFC-03",
+      "value": 0.44,
+      "trend_per_min": -0.0095
+     },
+     {
+      "type": "flank_threat",
+      "channel": "RFC_left",
+      "share": 0.43
+     }
+    ],
+    "manager_action": null
+   },
+   "narration": {
+    "en": {
+     "casual": {
+      "headline": "RFC-03 is fading (44%).",
+      "reason": "The model rates changing now about 3 points better (strong).",
+      "source": "template"
+     },
+     "analyst": {
+      "headline": "RFC-03 is fading (44%).",
+      "reason": "Changing now: +3.2 pts win probability, 90% interval +3.0 to +3.4 (strong).",
+      "source": "template"
+     }
+    },
+    "es": {
+     "casual": {
+      "headline": "RFC-03 se está agotando (44%).",
+      "reason": "El modelo valora cambiar ahora unos 3 puntos mejor (fuerte).",
+      "source": "template"
+     },
+     "analyst": {
+      "headline": "RFC-03 se está agotando (44%).",
+      "reason": "Cambiar ahora: +3,2 pts de probabilidad de victoria, intervalo del 90%: +3,0 a +3,4 (fuerte).",
+      "source": "template"
+     }
+    },
+    "ca": {
+     "casual": {
+      "headline": "RFC-03 s'està esgotant (44%).",
+      "reason": "El model valora canviar ara uns 3 punts millor (forta).",
+      "source": "template"
+     },
+     "analyst": {
+      "headline": "RFC-03 s'està esgotant (44%).",
+      "reason": "Canviar ara: +3,2 punts de probabilitat de victòria, interval del 90%: +3,0 a +3,4 (forta).",
+      "source": "template"
+     }
+    }
+   }
+  }
+ ]
+}

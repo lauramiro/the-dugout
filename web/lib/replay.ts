@@ -1,0 +1,185 @@
+// Plays the recorded match from the static files in public/demo.
+//
+// FIXTURE: snapshots.jsonl, cards.json and winprob.jsonl are stand-ins built by
+// web/scripts/build_demo_fixtures.py until wave 3 writes the real files. The event
+// file and the 1 Hz tracking chunks come straight from the simulator (seed 2).
+
+import { toPos, lastAtOrBefore } from "./clock";
+import type { DecisionCard, MatchEvent, Roster, Snapshot, TrackingFrame, WinProbPoint } from "./contracts";
+import {
+  emptyLog,
+  interpolate,
+  type DataSource,
+  type FeedState,
+  type PitchFrame,
+  type PlaybackControls,
+  type Speed,
+  type Timed,
+} from "./datasource";
+
+interface TrackingIndex {
+  hz: number;
+  period_end_t_ms: Record<"1" | "2", number>;
+  chunks: { file: string; period: 1 | 2; from_t_ms: number; to_t_ms: number }[];
+}
+
+async function getJson<T>(url: string): Promise<T> {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`${url}: HTTP ${res.status}`);
+  return (await res.json()) as T;
+}
+
+async function getJsonl<T>(url: string): Promise<T[]> {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`${url}: HTTP ${res.status}`);
+  const text = await res.text();
+  return text
+    .split("\n")
+    .filter((line) => line.trim() !== "")
+    .map((line) => JSON.parse(line) as T);
+}
+
+export class ReplayDataSource implements DataSource {
+  readonly kind = "replay" as const;
+  readonly controls: PlaybackControls;
+
+  private state: FeedState = {
+    status: "loading",
+    error: null,
+    log: emptyLog(),
+    playhead: 0,
+    playing: false,
+    speed: 1,
+  };
+  private listeners = new Set<() => void>();
+  private frames: Timed<TrackingFrame>[] = [];
+  private raf = 0;
+  private lastTick = 0;
+  private disposed = false;
+  private loading: Promise<void> | null = null;
+
+  constructor(private readonly base = "/demo") {
+    this.controls = {
+      play: () => {
+        const { playhead, log } = this.state;
+        this.set({ playing: true, playhead: playhead >= log.duration ? 0 : playhead });
+        this.loop();
+      },
+      pause: () => this.set({ playing: false }),
+      setSpeed: (speed: Speed) => this.set({ speed }),
+      seek: (pos: number) => this.set({ playhead: Math.min(Math.max(0, pos), this.state.log.duration) }),
+    };
+  }
+
+  getState = (): FeedState => this.state;
+
+  subscribe = (listener: () => void): (() => void) => {
+    this.listeners.add(listener);
+    return () => this.listeners.delete(listener);
+  };
+
+  // React's dev mode runs effects twice (start, dispose, start), so start must resume.
+  start(): void {
+    this.disposed = false;
+    this.loading ??= this.load();
+    if (this.state.playing) this.loop();
+  }
+
+  dispose(): void {
+    this.disposed = true;
+    cancelAnimationFrame(this.raf);
+  }
+
+  frameAt(pos: number): PitchFrame | null {
+    const i = lastAtOrBefore(this.frames, pos);
+    if (i < 0) return null;
+    const a = this.frames[i];
+    const b = this.frames[i + 1];
+    // Do not bridge a gap over unloaded chunks or half-time.
+    if (!b || b.pos - a.pos > 2000) return pos - a.pos <= 2000 ? interpolate(a, a, pos) : null;
+    return interpolate(a, b, pos);
+  }
+
+  private set(patch: Partial<FeedState>): void {
+    this.state = { ...this.state, ...patch };
+    for (const l of this.listeners) l();
+  }
+
+  private loop(): void {
+    cancelAnimationFrame(this.raf);
+    this.lastTick = performance.now();
+    const tick = (now: number) => {
+      if (this.disposed || !this.state.playing) return;
+      const dt = Math.min(now - this.lastTick, 1000); // a tab coming back from the background should not leap ahead
+      this.lastTick = now;
+      const { playhead, speed, log } = this.state;
+      const next = playhead + dt * speed;
+      if (next >= log.duration) {
+        this.set({ playhead: log.duration, playing: false });
+        return;
+      }
+      this.set({ playhead: next });
+      this.raf = requestAnimationFrame(tick);
+    };
+    this.raf = requestAnimationFrame(tick);
+  }
+
+  private async load(): Promise<void> {
+    try {
+      const [index, roster, events, snapshots, cardFile, winprob] = await Promise.all([
+        getJson<TrackingIndex>(`${this.base}/tracking/index.json`),
+        getJson<Roster>(`${this.base}/roster.json`),
+        getJsonl<MatchEvent>(`${this.base}/match.jsonl`),
+        getJsonl<Snapshot>(`${this.base}/snapshots.jsonl`),
+        getJson<{ cards: DecisionCard[] }>(`${this.base}/cards.json`),
+        getJsonl<WinProbPoint>(`${this.base}/winprob.jsonl`),
+      ]);
+      const end1 = index.period_end_t_ms["1"];
+      const pos = (period: 1 | 2, t: number) => toPos(period, t, end1);
+
+      // Snapshots carry no period: within a half t_ms only rises, so the first one
+      // that does not marks the second half.
+      let period: 1 | 2 = 1;
+      let prev = -1;
+      const timedSnapshots = snapshots.map((s) => {
+        if (period === 1 && s.t_ms <= prev) period = 2;
+        prev = s.t_ms;
+        return { pos: pos(period, s.t_ms), item: s };
+      });
+
+      const byPos = <T>(a: Timed<T>, b: Timed<T>) => a.pos - b.pos;
+      this.set({
+        status: "ready",
+        log: {
+          roster,
+          firstHalfEnd: end1,
+          duration: pos(2, index.period_end_t_ms["2"]),
+          events: events
+            .slice()
+            .sort((a, b) => a.seq - b.seq)
+            .map((e) => ({ pos: pos(e.period, e.t_ms), item: e })),
+          snapshots: timedSnapshots,
+          cards: cardFile.cards.map((c) => ({ pos: pos(c.period, c.payload.t_ms), item: c })).sort(byPos),
+          winprob: winprob.map((w) => ({ pos: pos(w.period, w.t_ms), item: w })).sort(byPos),
+        },
+      });
+      await this.loadTracking(index, pos);
+    } catch (err) {
+      this.set({ status: "error", error: err instanceof Error ? err.message : String(err) });
+    }
+  }
+
+  /** Fetch the chunk under the playhead first, then the rest in match order. */
+  private async loadTracking(index: TrackingIndex, pos: (p: 1 | 2, t: number) => number): Promise<void> {
+    const pending = index.chunks.map((c) => ({ ...c, from: pos(c.period, c.from_t_ms), to: pos(c.period, c.to_t_ms) }));
+    while (pending.length && !this.disposed) {
+      const at = this.state.playhead;
+      const i = Math.max(0, pending.findIndex((c) => c.to >= at));
+      const [chunk] = pending.splice(i, 1);
+      const rows = await getJsonl<TrackingFrame>(`${this.base}/tracking/${chunk.file}`);
+      const timed = rows.map((f) => ({ pos: pos(f.period, f.t_ms), item: f }));
+      this.frames = [...this.frames, ...timed].sort((a, b) => a.pos - b.pos);
+      if (!this.state.playing) this.set({}); // redraw a paused pitch once its frames arrive
+    }
+  }
+}

@@ -1,0 +1,69 @@
+{
+ "hz": 1,
+ "period_end_t_ms": {
+  "1": 2879500,
+  "2": 5699500
+ },
+ "chunks": [
+  {
+   "file": "p1-00.jsonl",
+   "period": 1,
+   "from_t_ms": 0,
+   "to_t_ms": 599000
+  },
+  {
+   "file": "p1-01.jsonl",
+   "period": 1,
+   "from_t_ms": 600000,
+   "to_t_ms": 1199000
+  },
+  {
+   "file": "p1-02.jsonl",
+   "period": 1,
+   "from_t_ms": 1200000,
+   "to_t_ms": 1799000
+  },
+  {
+   "file": "p1-03.jsonl",
+   "period": 1,
+   "from_t_ms": 1800000,
+   "to_t_ms": 2399000
+  },
+  {
+   "file": "p1-04.jsonl",
+   "period": 1,
+   "from_t_ms": 2400000,
+   "to_t_ms": 2879000
+  },
+  {
+   "file": "p2-00.jsonl",
+   "period": 2,
+   "from_t_ms": 2700000,
+   "to_t_ms": 3299000
+  },
+  {
+   "file": "p2-01.jsonl",
+   "period": 2,
+   "from_t_ms": 3300000,
+   "to_t_ms": 3899000
+  },
+  {
+   "file": "p2-02.jsonl",
+   "period": 2,
+   "from_t_ms": 3900000,
+   "to_t_ms": 4499000
+  },
+  {
+   "file": "p2-03.jsonl",
+   "period": 2,
+   "from_t_ms": 4500000,
+   "to_t_ms": 5099000
+  },
+  {
+   "file": "p2-04.jsonl",
+   "period": 2,
+   "from_t_ms": 5100000,
+   "to_t_ms": 5699000
+  }
+ ]
+}

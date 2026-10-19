@@ -1,0 +1,230 @@
+{
+ "home": "RFC",
+ "away": "CAS",
+ "teams": {
+  "RFC": {
+   "name": "Riverside FC"
+  },
+  "CAS": {
+   "name": "Castleton Athletic"
+  }
+ },
+ "players": {
+  "RFC-01": {
+   "team": "RFC",
+   "name": "Owen Marsh",
+   "role": "GK",
+   "side": "centre"
+  },
+  "RFC-02": {
+   "team": "RFC",
+   "name": "Danny Okafor",
+   "role": "FB",
+   "side": "right"
+  },
+  "RFC-03": {
+   "team": "RFC",
+   "name": "Leon Varga",
+   "role": "FB",
+   "side": "left"
+  },
+  "RFC-04": {
+   "team": "RFC",
+   "name": "Sam Brannigan",
+   "role": "CB",
+   "side": "centre"
+  },
+  "RFC-05": {
+   "team": "RFC",
+   "name": "Joel Pereira",
+   "role": "CB",
+   "side": "centre"
+  },
+  "RFC-06": {
+   "team": "RFC",
+   "name": "Matty Coyle",
+   "role": "CM",
+   "side": "centre"
+  },
+  "RFC-07": {
+   "team": "RFC",
+   "name": "Rhys Adeyemi",
+   "role": "W",
+   "side": "right"
+  },
+  "RFC-08": {
+   "team": "RFC",
+   "name": "Tomas Lindqvist",
+   "role": "CM",
+   "side": "right"
+  },
+  "RFC-09": {
+   "team": "RFC",
+   "name": "Kai Thornton",
+   "role": "ST",
+   "side": "centre"
+  },
+  "RFC-10": {
+   "team": "RFC",
+   "name": "Nico Ferraz",
+   "role": "CM",
+   "side": "left"
+  },
+  "RFC-11": {
+   "team": "RFC",
+   "name": "Ellis Mbeki",
+   "role": "W",
+   "side": "left"
+  },
+  "RFC-12": {
+   "team": "RFC",
+   "name": "Harry Quayle",
+   "role": "GK",
+   "side": "centre"
+  },
+  "RFC-13": {
+   "team": "RFC",
+   "name": "Ben Ashdown",
+   "role": "CB",
+   "side": "centre"
+  },
+  "RFC-14": {
+   "team": "RFC",
+   "name": "Luca Benedetti",
+   "role": "CM",
+   "side": "centre"
+  },
+  "RFC-15": {
+   "team": "RFC",
+   "name": "Femi Osei",
+   "role": "FB",
+   "side": "left"
+  },
+  "RFC-16": {
+   "team": "RFC",
+   "name": "Jordan Pryce",
+   "role": "W",
+   "side": "right"
+  },
+  "RFC-17": {
+   "team": "RFC",
+   "name": "Aaron Stile",
+   "role": "ST",
+   "side": "centre"
+  },
+  "RFC-18": {
+   "team": "RFC",
+   "name": "Cian Doherty",
+   "role": "FB",
+   "side": "right"
+  },
+  "CAS-01": {
+   "team": "CAS",
+   "name": "Viktor Hale",
+   "role": "GK",
+   "side": "centre"
+  },
+  "CAS-02": {
+   "team": "CAS",
+   "name": "Marcus Lowe",
+   "role": "FB",
+   "side": "right"
+  },
+  "CAS-03": {
+   "team": "CAS",
+   "name": "Pablo Iturbe",
+   "role": "FB",
+   "side": "left"
+  },
+  "CAS-04": {
+   "team": "CAS",
+   "name": "Gareth Pell",
+   "role": "CB",
+   "side": "centre"
+  },
+  "CAS-05": {
+   "team": "CAS",
+   "name": "Idris Kamara",
+   "role": "CB",
+   "side": "centre"
+  },
+  "CAS-06": {
+   "team": "CAS",
+   "name": "Noah Fairbrook",
+   "role": "CM",
+   "side": "centre"
+  },
+  "CAS-07": {
+   "team": "CAS",
+   "name": "Dion Salter",
+   "role": "W",
+   "side": "right"
+  },
+  "CAS-08": {
+   "team": "CAS",
+   "name": "Felix Arnaud",
+   "role": "CM",
+   "side": "right"
+  },
+  "CAS-09": {
+   "team": "CAS",
+   "name": "Jonah Wrexley",
+   "role": "ST",
+   "side": "centre"
+  },
+  "CAS-10": {
+   "team": "CAS",
+   "name": "Ollie Brandt",
+   "role": "CM",
+   "side": "left"
+  },
+  "CAS-11": {
+   "team": "CAS",
+   "name": "Tariq Holm",
+   "role": "W",
+   "side": "left"
+  },
+  "CAS-12": {
+   "team": "CAS",
+   "name": "Rory Gallen",
+   "role": "GK",
+   "side": "centre"
+  },
+  "CAS-13": {
+   "team": "CAS",
+   "name": "Will Escott",
+   "role": "CB",
+   "side": "centre"
+  },
+  "CAS-14": {
+   "team": "CAS",
+   "name": "Aleks Duric",
+   "role": "CM",
+   "side": "centre"
+  },
+  "CAS-15": {
+   "team": "CAS",
+   "name": "Kofi Mensah",
+   "role": "FB",
+   "side": "left"
+  },
+  "CAS-16": {
+   "team": "CAS",
+   "name": "Luis Carmona",
+   "role": "W",
+   "side": "right"
+  },
+  "CAS-17": {
+   "team": "CAS",
+   "name": "Ethan Royle",
+   "role": "ST",
+   "side": "centre"
+  },
+  "CAS-18": {
+   "team": "CAS",
+   "name": "Sean Tolley",
+   "role": "FB",
+   "side": "right"
+  }
+ }
+}

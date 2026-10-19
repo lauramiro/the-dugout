@@ -1,0 +1,2 @@
+# Raw 2 Hz simulator output; build_demo_fixtures.py thins it into public/demo/tracking/
+public/demo/match.tracking.jsonl
