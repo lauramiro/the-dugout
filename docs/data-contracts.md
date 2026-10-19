@@ -12,6 +12,14 @@ Types: `pass`, `carry`, `duel`, `press`, `shot`, `goal`, `foul`, `card`, `out`, 
 
 `sprint` and `hsr` (high-speed running) are the only fatigue signals the engine receives. Real tracking providers deliver the same counts.
 
+Running events carry one extra field, `dist_m`: the metres covered in that run (a sprint is above 7 m/s, a high-speed run is the band below it; a sprint's metres are not counted again as `hsr`). Their `t_ms` is the second the run starts; `channel`, `x`, `y`, `end_x`, `end_y`, `outcome` and `xg` are null. Every other type leaves `dist_m` out of the JSON entirely, so their shape is unchanged; readers should treat a missing `dist_m` as null. `hsr_m_10m` in the snapshot is the sum of `dist_m` over a player's `hsr` events in the last 10 minutes.
+
+```json
+{"match_id": "rfc-cas-0001", "seq": 4813, "t_ms": 3725000, "period": 2,
+ "type": "sprint", "team": "RFC", "player_id": "RFC-03", "channel": null,
+ "x": null, "y": null, "end_x": null, "end_y": null, "outcome": null, "xg": null, "dist_m": 21.4}
+```
+
 ```json
 {"match_id": "rfc-cas-0001", "seq": 4812, "t_ms": 3725000, "period": 2,
  "type": "pass", "team": "RFC", "player_id": "RFC-03", "channel": "left",

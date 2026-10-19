@@ -246,6 +246,23 @@ def _corner(s: MatchState) -> None:
     _dead(s, "corner")
 
 
+def _running(s: MatchState) -> list[Event]:
+    """Off-ball sprints and high-speed runs this second, one draw per player on the pitch."""
+    ps = [p for p in s.players.values() if p.on_pitch]
+    events = []
+    for p, u in zip(ps, s.rng.random(len(ps))):
+        p_sprint, p_hsr = fatigue.run_rates(p)
+        if u < p_sprint:
+            kind, (median, sigma, lo, hi) = "sprint", fatigue.SPRINT_M
+        elif u < p_sprint + p_hsr:
+            kind, (median, sigma, lo, hi) = "hsr", fatigue.HSR_M
+        else:
+            continue
+        dist = min(hi, max(lo, median * math.exp(sigma * s.rng.standard_normal())))
+        events.append(_event(s, kind, p.team, player_id=p.id, dist_m=round(dist, 1)))
+    return events
+
+
 def _play(s: MatchState) -> list[Event]:
     team, z, ch = s.possession, s.third, s.channel
     f = math.exp(K_EDGE * edge(s, team, z, ch))
@@ -316,6 +333,7 @@ def step(s: MatchState) -> list[Event]:
     else:
         s.in_play_s += 1
         events = _play(s)
+        events += _running(s)
     fatigue.add_load(s, events)
     s.clock_s += 1
     if s.clock_s % 60 == 0:
