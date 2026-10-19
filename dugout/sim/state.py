@@ -54,6 +54,7 @@ class MatchState:
     seq: int = 0
     in_play_s: int = 0
     finished: bool = False
+    load: dict[str, float] = field(default_factory=dict)  # this minute's high-intensity cost, by player
 
     def opponent(self, team: str) -> str:
         return self.away if team == self.home else self.home

@@ -19,6 +19,7 @@ import math
 import numpy as np
 
 from dugout.contracts import CHANNELS, PITCH_LENGTH, PITCH_WIDTH, Event
+from dugout.sim import fatigue
 from dugout.sim.scenario import Scenario
 from dugout.sim.state import HALF_S, MatchState, Player
 
@@ -278,6 +279,8 @@ def _restart_event(s: MatchState) -> Event:
 
 
 def _start_period(s: MatchState, period: int) -> list[Event]:
+    if period == 2:
+        fatigue.half_time(s)
     s.period = period
     s.clock_s = 0 if period == 1 else HALF_S
     lo, hi = ADDED_MIN[period]
@@ -295,7 +298,8 @@ def new_match(scenario: Scenario, seed: int) -> tuple[MatchState, list[Event]]:
         for i, p in enumerate(team.players):
             players[p.id] = Player(id=p.id, team=team.code, name=p.name, role=p.role, side=p.side,
                                    attack=p.attack, defence=p.defence, pace=p.pace,
-                                   stamina=p.stamina, work_rate=p.work_rate, on_pitch=i < 11)
+                                   stamina=p.stamina, work_rate=p.work_rate,
+                                   condition=scenario.levers.start_condition.get(p.id, 1.0), on_pitch=i < 11)
     s = MatchState(match_id=f"{scenario.match_id_prefix}-{seed:04d}", entropy=[seed],
                    home=scenario.home.code, away=scenario.away.code, players=players, rng=rng,
                    score={scenario.home.code: 0, scenario.away.code: 0})
@@ -312,7 +316,10 @@ def step(s: MatchState) -> list[Event]:
     else:
         s.in_play_s += 1
         events = _play(s)
+    fatigue.add_load(s, events)
     s.clock_s += 1
+    if s.clock_s % 60 == 0:
+        fatigue.drain_minute(s)
     if s.clock_s >= s.period_end_s:
         if s.period == 1:
             events += _start_period(s, 2)

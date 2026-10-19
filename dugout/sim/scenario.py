@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 import yaml
@@ -40,10 +40,18 @@ class TeamSpec:
 
 
 @dataclass(frozen=True, slots=True)
+class Levers:
+    """Story levers set in the scenario. All default to off."""
+
+    start_condition: dict[str, float] = field(default_factory=dict)  # "played midweek"
+
+
+@dataclass(frozen=True, slots=True)
 class Scenario:
     match_id_prefix: str
     home: TeamSpec
     away: TeamSpec
+    levers: Levers = Levers()
 
 
 def _team(raw: dict) -> TeamSpec:
@@ -68,9 +76,21 @@ def _team(raw: dict) -> TeamSpec:
     return TeamSpec(code=code, name=raw["name"], players=players)
 
 
+def _levers(raw: dict, home: TeamSpec, away: TeamSpec) -> Levers:
+    ids = {p.id for team in (home, away) for p in team.players}
+    start = {str(k): float(v) for k, v in (raw.get("played_midweek") or {}).items()}
+    for pid, c in start.items():
+        if pid not in ids:
+            raise ValueError(f"played_midweek: unknown player {pid}")
+        if not 0.0 < c <= 1.0:
+            raise ValueError(f"played_midweek: {pid} condition must be in (0, 1]")
+    return Levers(start_condition=start)
+
+
 def load_scenario(path: str | Path) -> Scenario:
     raw = yaml.safe_load(Path(path).read_text(encoding="utf-8"))
     home, away = _team(raw["home"]), _team(raw["away"])
     if home.code == away.code:
         raise ValueError("home and away codes must differ")
-    return Scenario(match_id_prefix=raw["match_id_prefix"], home=home, away=away)
+    return Scenario(match_id_prefix=raw["match_id_prefix"], home=home, away=away,
+                    levers=_levers(raw.get("levers") or {}, home, away))

@@ -55,10 +55,11 @@ def test_fork_sees_changed_condition(scenario):
     """A fork is a real counterfactual: changing hidden state in one branch changes its future."""
     s, _ = new_match(scenario, 11)
     advance(s, 3700)
+    before = s.players["RFC-03"].condition
     a, b = s.fork(1), s.fork(1)
     b.players["RFC-03"].condition = 0.4
     assert dicts(run_to_end(a)) != dicts(run_to_end(b))
-    assert s.players["RFC-03"].condition == 1.0
+    assert s.players["RFC-03"].condition == before
 
 
 @pytest.mark.parametrize("seed", [1, 2, 3])
