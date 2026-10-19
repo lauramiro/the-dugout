@@ -1,61 +1,50 @@
-"""Build the replay fixtures in web/public/demo from a simulator run.
+"""Build the replay files in web/public/demo from the recorded demo match (seed 73).
 
-FIXTURE: the snapshots, decision cards and win-probability series written here stand in
-for the state engine, decision engine and agents output until wave 3 replaces them with
-real files. Snapshot condition estimates are hand-shaped curves (not the state engine);
-hsr, sprint, score, subs and threat come from the events. Decision payloads come from
-dugout.engine.payload.decide on those snapshots, and narrations from the template
-fallback, so every number on a card is engine output.
+Everything here is pipeline output; nothing is hand-shaped:
 
-    uv run python -m dugout.sim run --seed 2 --out web/public/demo/match.jsonl
+- snapshots and decision points from dugout.stream (state engine and triggers), fed the
+  recorded events in seq order, exactly as `python -m dugout.stream.snapshots` does;
+- one card per decision point: the payload from dugout.engine.payload.decide on the
+  point's own snapshot, narrated by dugout.agents.pipeline with the stub client (which
+  answers with the template text, so every line still goes through the grounding check);
+- manager_action on each payload from the deciding team's sub events (see manager_action);
+- a review block per card for the full-time screen: the manager's call priced by the
+  engine on the same draws as the card, the gap to the model's call, and a recap line
+  (template until the recap writer lands);
+- the home win-probability series from the engine's no-change run once a minute.
+
     uv run python web/scripts/build_demo_fixtures.py
 
-Writes tracking/ (1 Hz chunks plus index.json), roster.json, snapshots.jsonl,
-cards.json and winprob.jsonl, and deletes the raw 2 Hz tracking file.
+Writes match.jsonl, tracking/ (1 Hz chunks plus index.json), roster.json,
+snapshots.jsonl, cards.json and winprob.jsonl.
 """
 from __future__ import annotations
 
-import hashlib
 import json
+import shutil
 from pathlib import Path
 
 import yaml
 from numpy.random import SeedSequence
 
-from dugout.agents.templates import MODES, template_narration
-from dugout.agents.lexicon import LOCALES
-from dugout.engine.payload import decide, _exposed_player
+from dugout.agents.lexicon import DECIMAL_SEPARATOR, LOCALES
+from dugout.agents.pipeline import NarrationPipeline, StubClient
+from dugout.agents.templates import MODES
+from dugout.engine.options import Option, evaluate
+from dugout.engine.payload import _exposed_player, decide
 from dugout.engine.wp import Flank, simulate_diff, summarize
+from dugout.stream.replay import read_events
+from dugout.stream.snapshots import lineup_from_scenario, process
 
 ROOT = Path(__file__).resolve().parents[2]
 DEMO = ROOT / "web" / "public" / "demo"
+EVENTS = ROOT / "data" / "demo-rfc-cas-0073.jsonl"
+TRACKING = ROOT / "data" / "demo-rfc-cas-0073.tracking.jsonl"
+SCENARIO = ROOT / "scenarios" / "riverside-castleton.yaml"
 HALF_MS = 2_700_000
 MIN_MS = 60_000
 CHUNK_MS = 10 * MIN_MS
-PRIOR = {"RFC": (1.5, 1.2), "CAS": (1.2, 1.5)}  # xG/90 for, against (illustrative)
-SUBS, WINDOWS = 5, 3
-
-# Hand-shaped condition curves: 1.0 through the 20-minute baseline, then a linear drain.
-# RFC-03 (played midweek) crosses 0.60 at 62'; others drain by role with a small spread.
-DRAIN = {"FB": 0.0062, "W": 0.0064, "CM": 0.0058, "CB": 0.0042, "ST": 0.0060}
-DRAIN_OVERRIDE = {"RFC-03": 0.40 / 42}
-BAND = {"FB": 0.08, "W": 0.08, "CM": 0.09, "ST": 0.09, "CB": 0.12}  # wider for low-sprint roles
-
-# Decision points in seed 2: (period, t_ms, team, trigger).
-DECISIONS = [
-    (2, 62 * MIN_MS, "RFC", "condition_below_60"),
-    (2, 70 * MIN_MS, "CAS", "manager_sub"),
-    (2, 78 * MIN_MS + 19_000, "RFC", "manager_sub"),
-]
-
-
-def key(period: int, t_ms: int) -> int:
-    """Elapsed playing time: the second half follows the first half's final frame."""
-    return t_ms if period == 1 else END[1] + 500 + (t_ms - HALF_MS)
-
-
-def jitter(pid: str) -> float:
-    return int(hashlib.sha1(pid.encode()).hexdigest()[:4], 16) / 0xFFFF - 0.5
+ATTACK_OFF, ATTACK_ON = {"CM", "FB"}, {"ST", "W"}  # the simulated manager's attacking change
 
 
 def read_jsonl(path: Path) -> list[dict]:
@@ -66,182 +55,233 @@ def write_jsonl(path: Path, rows: list[dict]) -> None:
     path.write_text("".join(json.dumps(r, separators=(",", ":")) + "\n" for r in rows), encoding="utf-8")
 
 
-raw_tracking = DEMO / "match.tracking.jsonl"
-events = read_jsonl(DEMO / "match.jsonl")
-END: dict[int, int] = {}
-frames = []
-if raw_tracking.exists():
-    for f in read_jsonl(raw_tracking):
-        END[f["period"]] = f["t_ms"]
-        if f["t_ms"] % 1000 == 0:
-            frames.append(f)
-else:
-    index = json.loads((DEMO / "tracking" / "index.json").read_text(encoding="utf-8"))
-    END = {int(p): t for p, t in index["period_end_t_ms"].items()}
-
-scenario = yaml.safe_load((ROOT / "scenarios" / "riverside-castleton.yaml").read_text(encoding="utf-8"))
-roster = {"home": scenario["home"]["code"], "away": scenario["away"]["code"], "teams": {}, "players": {}}
-for side in ("home", "away"):
-    team = scenario[side]
-    roster["teams"][team["code"]] = {"name": team["name"]}
-    for p in team["players"]:
-        roster["players"][p["id"]] = {"team": team["code"], "name": p["name"], "role": p["role"], "side": p["side"]}
-ROLE = {pid: p["role"] for pid, p in roster["players"].items()}
+def order(period: int, t_ms: int) -> tuple[int, int]:
+    return period, t_ms
 
 
-def condition(pid: str, minute_on: float, minute: float) -> float:
-    if ROLE[pid] == "GK":
-        return None
-    drain = DRAIN_OVERRIDE.get(pid, DRAIN[ROLE[pid]] * (1 + 0.5 * jitter(pid)))
-    worked = max(0.0, minute - max(20.0, minute_on + 10.0))
-    return max(0.3, min(1.0, 1.0 - drain * worked))
-
-
-def snapshot_at(period: int, t_ms: int, before: bool = False) -> dict:
-    """State after every event up to (period, t_ms); before=True leaves out that instant's
-    events, so a manager_sub decision sees the player still on."""
-    now = key(period, t_ms)
-    past = [e for e in events if key(e["period"], e["t_ms"]) < now or (not before and key(e["period"], e["t_ms"]) == now)]
-    minute = now / MIN_MS
-    on = {pid: 0.0 for pid in roster["players"] if int(pid[-2:]) <= 11}
-    subs_used = {"RFC": 0, "CAS": 0}
-    windows = {"RFC": set(), "CAS": set()}
-    score = {"RFC": 0, "CAS": 0}
-    for e in past:
-        if e["type"] == "goal":
-            score[e["team"]] += 1
-        elif e["type"] == "sub":
-            on.pop(e["player_id"], None)
-            on[e["player_in_id"]] = e["t_ms"] / MIN_MS
-            subs_used[e["team"]] += 1
-            if (e["period"], e["t_ms"]) != (2, HALF_MS):
-                windows[e["team"]].add((e["period"], e["t_ms"]))
-
-    def run_stats(pid: str, lo: float, hi: float) -> tuple[float, int]:
-        hsr, sprints = 0.0, 0
-        for e in past:
-            if e["player_id"] == pid and lo <= key(e["period"], e["t_ms"]) / MIN_MS < hi:
-                if e["type"] == "hsr":
-                    hsr += e["dist_m"]
-                elif e["type"] == "sprint":
-                    sprints += 1
-        return hsr, sprints
-
-    clock = t_ms / MIN_MS  # condition curves run on the match clock, windows on elapsed time
-    players = []
-    for pid, minute_on in on.items():
-        c = condition(pid, minute_on, clock)
-        hsr, sprints = run_stats(pid, minute - 10, minute + 1e-9)
-        base_from = 0.0 if minute_on == 0.0 else key(2, int(minute_on * MIN_MS)) / MIN_MS
-        b_hsr, b_spr = run_stats(pid, base_from, base_from + 20)
-        p = {"id": pid, "condition_est": None if c is None else round(c, 2), "condition_band": None,
-             "trend_per_min": None, "hsr_m_10m": round(hsr), "baseline_hsr_m_10m": round(b_hsr / 2),
-             "sprints_10m": sprints, "baseline_sprints_10m": round(b_spr / 2)}
-        if c is not None:
-            prev = condition(pid, minute_on, clock - 1)
-            band = BAND[ROLE[pid]]
-            p["condition_band"] = [round(max(0.3, c - band), 2), round(min(1.0, c + band), 2)]
-            p["trend_per_min"] = round(c - prev, 4)
-        players.append(p)
-
-    rates = {}
-    threat = {}
-    for team, opp in (("RFC", "CAS"), ("CAS", "RFC")):
-        recent = [e for e in past if e["type"] == "shot" and key(e["period"], e["t_ms"]) / MIN_MS > minute - 20]
-        xg_for = sum(e["xg"] for e in recent if e["team"] == team) * 90 / 20
-        xg_against = sum(e["xg"] for e in recent if e["team"] == opp) * 90 / 20
-        weight = min(1.0, minute / 20) * 0.5
-        rates[team] = {"for90": round((1 - weight) * PRIOR[team][0] + weight * xg_for, 2),
-                       "against90": round((1 - weight) * PRIOR[team][1] + weight * xg_against, 2)}
-        # Opponent xG by channel over the last 15 minutes, seen from this team's side
-        # (the opponent's left is this team's right), smoothed towards an even split.
-        mirror = {"left": "right", "right": "left", "centre": "centre"}
-        shares = {c: 0.05 for c in ("left", "centre", "right")}
-        for e in past:
-            if e["type"] == "shot" and e["team"] == opp and key(e["period"], e["t_ms"]) / MIN_MS > minute - 15:
-                shares[mirror[e["channel"]]] += e["xg"]
-        total = sum(shares.values())
-        for c in ("left", "centre", "right"):
-            threat[f"{team}_{c}"] = round(shares[c] / total, 2)
-
-    return {"t_ms": t_ms, "score": score,
-            "subs_left": {t: SUBS - n for t, n in subs_used.items()},
-            "windows_left": {t: WINDOWS - len(w) for t, w in windows.items()},
-            "rates": rates, "players": players, "threat_by_channel": threat}
-
-
-def for_team(snapshot: dict, team: str) -> dict:
-    """Keep only the deciding team's rates and flank threat."""
-    s = dict(snapshot)
-    s["rates"] = {team: snapshot["rates"][team]}
-    s["threat_by_channel"] = {k: v for k, v in snapshot["threat_by_channel"].items() if k.startswith(team)}
-    return s
-
-
-def main() -> None:
-    # Tracking: 1 Hz frames in 10-minute chunks per period.
-    if frames:
-        out = DEMO / "tracking"
-        out.mkdir(exist_ok=True)
-        for old in out.glob("*.jsonl"):
-            old.unlink()
-        chunks = []
-        for period in (1, 2):
-            rows = [f for f in frames if f["period"] == period]
-            start = 0 if period == 1 else HALF_MS
-            i = 0
-            while rows:
-                hi = start + (i + 1) * CHUNK_MS
-                part = [f for f in rows if f["t_ms"] < hi]
-                rows = rows[len(part):]
+def write_tracking() -> dict[int, int]:
+    """1 Hz frames in 10-minute chunks per period; returns each period's last frame t_ms."""
+    out = DEMO / "tracking"
+    out.mkdir(exist_ok=True)
+    for old in out.glob("*.jsonl"):
+        old.unlink()
+    end: dict[int, int] = {}
+    rows: dict[int, list[dict]] = {1: [], 2: []}
+    with TRACKING.open(encoding="utf-8") as f:
+        for line in f:
+            frame = json.loads(line)
+            end[frame["period"]] = frame["t_ms"]
+            if frame["t_ms"] % 1000 == 0:
+                rows[frame["period"]].append(frame)
+    chunks = []
+    for period in (1, 2):
+        left = rows[period]
+        start = 0 if period == 1 else HALF_MS
+        i = 0
+        while left:
+            hi = start + (i + 1) * CHUNK_MS
+            part = [f for f in left if f["t_ms"] < hi]
+            left = left[len(part):]
+            if part:
                 name = f"p{period}-{i:02d}.jsonl"
                 write_jsonl(out / name, part)
                 chunks.append({"file": name, "period": period, "from_t_ms": part[0]["t_ms"], "to_t_ms": part[-1]["t_ms"]})
-                i += 1
-        index = {"hz": 1, "period_end_t_ms": {str(p): t for p, t in END.items()}, "chunks": chunks}
-        (out / "index.json").write_text(json.dumps(index, indent=1), encoding="utf-8")
-        raw_tracking.unlink()
+            i += 1
+    index = {"hz": 1, "period_end_t_ms": {str(p): t for p, t in end.items()}, "chunks": chunks}
+    (out / "index.json").write_text(json.dumps(index, indent=1), encoding="utf-8")
+    return end
 
+
+def build_roster() -> dict:
+    scenario = yaml.safe_load(SCENARIO.read_text(encoding="utf-8"))
+    roster = {"home": scenario["home"]["code"], "away": scenario["away"]["code"], "teams": {}, "players": {}}
+    for side in ("home", "away"):
+        team = scenario[side]
+        roster["teams"][team["code"]] = {"name": team["name"]}
+        for p in team["players"]:
+            roster["players"][p["id"]] = {"team": team["code"], "name": p["name"], "role": p["role"], "side": p["side"]}
+    return roster
+
+
+def sub_windows(events: list[dict]) -> list[dict]:
+    """Each team's substitution windows in match order: subs at the same instant are one window."""
+    windows: dict[tuple, dict] = {}
+    for e in events:
+        if e["type"] == "sub":
+            w = windows.setdefault((e["team"], e["period"], e["t_ms"]),
+                                   {"team": e["team"], "period": e["period"], "t_ms": e["t_ms"], "subs": []})
+            w["subs"].append({"off": e["player_id"], "on": e["player_in_id"]})
+    return sorted(windows.values(), key=lambda w: order(w["period"], w["t_ms"]))
+
+
+def classify(window: dict, exposed: str | None, roles: dict[str, str]) -> str | None:
+    """The card option a window matches: the exposed player taken off is the like-for-like
+    option, a midfielder or full-back off for a forward is the attacking change; anything
+    else is a change the card did not price (None)."""
+    if exposed is not None and any(s["off"] == exposed for s in window["subs"]):
+        return "sub_like_for_like"
+    if any(roles[s["off"]] in ATTACK_OFF and roles[s["on"]] in ATTACK_ON for s in window["subs"]):
+        return "attacking"
+    return None
+
+
+def manager_action(point: dict, payload: dict, windows: list[dict], events: list[dict],
+                   end: tuple[int, int], roles: dict[str, str]) -> dict:
+    """What the deciding team's manager did about this decision point.
+
+    manager_sub: the change that raised the point. condition_below_60: the change that took
+    the flagged player off, or no change if he stayed on to the end. goal_after_55: the
+    team's next change before the next goal, or no change. `period`/`t_ms` mark when the
+    call became known (the change, the next goal, or full time)."""
+    team, trigger = point["team"], point["trigger"]
+    at = order(point["period"], point["raised_t_ms"])
+    exposed = next((e["player_id"] for e in payload["evidence"] if e["type"] == "condition"), None)
+    later = [w for w in windows if w["team"] == team and order(w["period"], w["t_ms"]) >= at]
+    until = end
+    if trigger == "manager_sub":
+        found = next((w for w in later if order(w["period"], w["t_ms"]) == at), None)
+    elif trigger == "condition_below_60":
+        player = point["detail"]["player_id"]
+        found = next((w for w in later if any(s["off"] == player for s in w["subs"])), None)
+    else:
+        goals = [order(e["period"], e["t_ms"]) for e in events if e["type"] == "goal"
+                 and order(e["period"], e["t_ms"]) > at]
+        until = goals[0] if goals else end
+        found = next((w for w in later if order(w["period"], w["t_ms"]) < until), None)
+    if found is None:
+        return {"period": until[0], "t_ms": until[1], "subs": [], "option_id": "no_change"}
+    option = None if trigger == "manager_sub" else classify(found, exposed, roles)
+    return {"period": found["period"], "t_ms": found["t_ms"], "subs": found["subs"], "option_id": option}
+
+
+def situation(snapshot: dict, team: str) -> dict:
+    """The same situation decide() builds for this snapshot and team."""
+    opp = next(t for t in snapshot["score"] if t != team)
+    player = _exposed_player(snapshot, team)
+    flank = None
+    if player is not None:
+        flank = Flank(c0=player["condition_est"], drain=max(0.0, -player.get("trend_per_min", 0.0)))
+    return dict(t0=snapshot["t_ms"] // MIN_MS, home_goals=snapshot["score"][team], away_goals=snapshot["score"][opp],
+                lam_home90=snapshot["rates"][team]["for90"], lam_away90=snapshot["rates"][team]["against90"], flank=flank)
+
+
+def manager_option(snapshot: dict, payload: dict, action: dict) -> dict | None:
+    """The manager's call as an option on the card's own draws (decide's default seed), so
+    its gap to the card's options is a paired difference. A like-for-like change made later
+    than the card is priced as that change at its minute; a manager_sub card was opened after
+    the change, so his call is the card's no-change option. None when the engine has no
+    option for what he did."""
+    by_id = {o["id"]: o for o in payload["options"]}
+    if payload["trigger"] == "manager_sub":
+        o = by_id["no_change"]
+    elif action["option_id"] == "sub_like_for_like" and action["t_ms"] // MIN_MS > payload["t_ms"] // MIN_MS:
+        minute = action["t_ms"] // MIN_MS
+        options = [Option("no_change", "No change"), Option("manager", "Manager's change", sub_at=minute)]
+        r = evaluate(situation(snapshot, payload["team"]), options, SeedSequence(snapshot["t_ms"]))[1]
+        return {"id": "manager_later", "minute": minute, "win": round(r.win, 3), "xpts": round(r.xpts, 2)}
+    elif action["option_id"] in by_id:
+        o = by_id[action["option_id"]]
+    else:
+        return None
+    return {"id": o["id"], "win": o["win"], "xpts": o["xpts"]}
+
+
+# Recap lines until dugout.agents.recap lands. Options and trade-offs, never verdicts.
+RECAP = {
+    "en": {
+        "same": "Manager and model chose the same option.",
+        "gap": "The model's option rated {win} pts of win probability and {xpts} expected points above the manager's.",
+        "behind": "The manager's call rated {win} pts of win probability and {xpts} expected points above the model's option.",
+        "unpriced": "The manager made a change the card did not price, so there is no gap to show.",
+    },
+    "es": {
+        "same": "El entrenador y el modelo eligieron la misma opción.",
+        "gap": "La opción del modelo valía {win} pts de probabilidad de victoria y {xpts} puntos esperados más que la del entrenador.",
+        "behind": "La decisión del entrenador valía {win} pts de probabilidad de victoria y {xpts} puntos esperados más que la opción del modelo.",
+        "unpriced": "El entrenador hizo un cambio que la tarjeta no valoraba, así que no hay diferencia que mostrar.",
+    },
+    "ca": {
+        "same": "L'entrenador i el model van triar la mateixa opció.",
+        "gap": "L'opció del model valia {win} punts de probabilitat de victòria i {xpts} punts esperats més que la de l'entrenador.",
+        "behind": "La decisió de l'entrenador valia {win} punts de probabilitat de victòria i {xpts} punts esperats més que l'opció del model.",
+        "unpriced": "L'entrenador va fer un canvi que la targeta no valorava, així que no hi ha diferència a mostrar.",
+    },
+}
+
+
+def fmt(value: float, digits: int, locale: str) -> str:
+    return f"{abs(value):.{digits}f}".replace(".", DECIMAL_SEPARATOR[locale])
+
+
+def review(payload: dict, manager: dict | None) -> dict:
+    model = next(o for o in payload["options"] if o["id"] == payload["recommendation"]["option_id"])
+    if manager is None:
+        gap_win = gap_xpts = None
+        kind = "unpriced"
+    else:
+        gap_win = round(model["win"] - manager["win"], 3)
+        gap_xpts = round(model["xpts"] - manager["xpts"], 2)
+        kind = "same" if manager["id"] == model["id"] else "gap" if gap_win >= 0 else "behind"
+    recap = {loc: RECAP[loc][kind].format(win=fmt((gap_win or 0) * 100, 1, loc), xpts=fmt(gap_xpts or 0, 2, loc))
+             for loc in LOCALES}
+    return {"model": {"id": model["id"], "win": model["win"], "xpts": model["xpts"]}, "manager": manager,
+            "gap_win": gap_win, "gap_xpts": gap_xpts, "recap": recap, "recap_source": "template"}
+
+
+def main() -> None:
+    end = write_tracking()
+    shutil.copyfile(EVENTS, DEMO / "match.jsonl")
+    roster = build_roster()
     (DEMO / "roster.json").write_text(json.dumps(roster, indent=1), encoding="utf-8")
+    roles = {pid: p["role"] for pid, p in roster["players"].items()}
 
-    grid = [(1, t) for t in range(0, END[1] + 1, MIN_MS)] + [(2, t) for t in range(HALF_MS, END[2] + 1, MIN_MS)]
-    grid += [(p, t) for p, t, _, _ in DECISIONS if t % MIN_MS]
-    grid.sort(key=lambda pt: key(*pt))
-    snapshots = [snapshot_at(p, t) for p, t in grid]
+    events = list(read_events(EVENTS))
+    records = list(process(events, lineup_from_scenario(SCENARIO)))
+    snapshots = [r["snapshot"] for r in records if r["kind"] == "snapshot"]
+    points = [r for r in records if r["kind"] == "decision_point"]
+    closed = {r["id"]: r for r in records if r["kind"] == "card_closed"}
     write_jsonl(DEMO / "snapshots.jsonl", snapshots)
 
-    by_time = {(p, t): s for (p, t), s in zip(grid, snapshots)}
+    windows = sub_windows(events)
+    full_time = (2, end[2])
+    pipeline = NarrationPipeline(StubClient())
     cards = []
-    for period, t_ms, team, trigger in DECISIONS:
-        snapshot = snapshot_at(period, t_ms, before=True) if trigger == "manager_sub" else by_time[(period, t_ms)]
-        payload = decide(for_team(snapshot, team), team, trigger)
+    for point in points:
+        payload = decide(point["snapshot"], point["team"], point["trigger"])
+        payload["manager_action"] = manager_action(point, payload, windows, events, full_time, roles)
         narration = {}
         for loc in LOCALES:
             narration[loc] = {}
             for mode in MODES:
-                n = template_narration(payload, loc, mode)
-                narration[loc][mode] = {"headline": n.headline, "reason": n.reason, "source": "template"}
-        cards.append({"period": period, "payload": payload, "narration": narration})
-    (DEMO / "cards.json").write_text(json.dumps({"fixture": True, "cards": cards}, indent=1, ensure_ascii=False),
-                                     encoding="utf-8")
+                card = pipeline.run(payload, loc, mode)
+                # The stub client returns the template text; label it as such, not as a model.
+                narration[loc][mode] = {"headline": card.headline, "reason": card.reason, "source": "template"}
+        c = closed[point["id"]]
+        cards.append({"period": point["period"], "point_id": point["id"], "payload": payload, "narration": narration,
+                      "closed": {"period": c["period"], "t_ms": c["t_ms"], "reason": c["reason"]},
+                      "review": review(payload, manager_option(point["snapshot"], payload, payload["manager_action"]))})
+    (DEMO / "cards.json").write_text(json.dumps({"cards": cards}, indent=1, ensure_ascii=False), encoding="utf-8")
 
-    # Home win probability, same call as decide()'s no-change option from the home side.
+    # Home win probability once a minute, the same call as decide()'s no-change option.
     series = []
-    for (period, t_ms), s in zip(grid, snapshots):
-        home = for_team(s, "RFC")
-        player = _exposed_player(home, "RFC")
-        flank = None if player is None else Flank(c0=player["condition_est"],
-                                                  drain=max(0.0, -player.get("trend_per_min", 0.0)))
-        minute = min(t_ms // MIN_MS, 90) if period == 2 else min(t_ms // MIN_MS, 45)
-        diff = simulate_diff(minute, s["score"]["RFC"], s["score"]["CAS"], home["rates"]["RFC"]["for90"],
-                             home["rates"]["RFC"]["against90"], SeedSequence(t_ms), n=20_000, flank=flank)
+    home = roster["home"]
+    for s in snapshots:
+        if s["t_ms"] % MIN_MS:
+            continue
+        at = situation(s, home)
+        if s["period"] == 1:
+            at["t0"] = min(at["t0"], 45)  # first-half added time still has a whole half to come
+        diff = simulate_diff(**at, seed=SeedSequence(s["t_ms"]), n=20_000)
         o = summarize(diff)
-        series.append({"period": period, "t_ms": t_ms, "team": "RFC",
+        series.append({"period": s["period"], "t_ms": s["t_ms"], "team": home,
                        "win": round(o.win, 3), "draw": round(o.draw, 3), "loss": round(o.loss, 3)})
     write_jsonl(DEMO / "winprob.jsonl", series)
+
     for c in cards:
-        p = c["payload"]
-        print(p["decision_id"], p["recommendation"], [(o["id"], o["win"], o["delta_win"]) for o in p["options"]])
+        p, a, r = c["payload"], c["payload"]["manager_action"], c["review"]
+        print(f"{p['t_ms'] // MIN_MS:>3}' {p['decision_id']:<11} {p['trigger']:<19} model {p['recommendation']['option_id']}"
+              f" ({p['recommendation']['strength']}); manager {a['option_id']} at {a['t_ms'] // MIN_MS}' {a['subs']};"
+              f" gap {r['gap_win']} / {r['gap_xpts']}")
 
 
 main()

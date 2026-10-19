@@ -1,5 +1,5 @@
 // The UI reads the match only through a DataSource. ReplayDataSource plays the static
-// fixture files; LiveDataSource will take the Web PubSub feed. Both expose the same log
+// demo files; LiveDataSource will take the Web PubSub feed. Both expose the same log
 // of everything known so far plus a playhead, so the screen never knows which it has.
 
 import type { DecisionCard, MatchEvent, Roster, Snapshot, TrackingFrame, WinProbPoint } from "./contracts";

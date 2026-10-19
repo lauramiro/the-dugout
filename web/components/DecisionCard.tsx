@@ -158,11 +158,11 @@ export const DecisionCard = memo(function DecisionCard({ card, snapshot, roster,
             <>
               <dt>{t("hsr")}</dt>
               <dd>
-                {flaggedStats.hsr_m_10m} m <span className="sub">({t("baseline", { v: `${flaggedStats.baseline_hsr_m_10m} m` })})</span>
+                {flaggedStats.hsr_m_10m} m <span className="sub">({t("baseline", { v: flaggedStats.baseline_hsr_m_10m === null ? t("na") : `${flaggedStats.baseline_hsr_m_10m} m` })})</span>
               </dd>
               <dt>{t("sprints")}</dt>
               <dd>
-                {flaggedStats.sprints_10m} <span className="sub">({t("baseline", { v: flaggedStats.baseline_sprints_10m })})</span>
+                {flaggedStats.sprints_10m} <span className="sub">({t("baseline", { v: flaggedStats.baseline_sprints_10m ?? t("na") })})</span>
               </dd>
             </>
           )}

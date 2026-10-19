@@ -37,18 +37,24 @@ export interface TrackingFrame {
 }
 
 // 3. Snapshot
+// The state engine adds team and role, and leaves the baselines null until a player's
+// first 20 minutes are in.
 export interface SnapshotPlayer {
   id: string;
+  team?: TeamCode;
+  role?: string;
   condition_est: number | null;
   condition_band: [number, number] | null;
   trend_per_min: number | null;
   hsr_m_10m: number;
-  baseline_hsr_m_10m: number;
+  baseline_hsr_m_10m: number | null;
   sprints_10m: number;
-  baseline_sprints_10m: number;
+  baseline_sprints_10m: number | null;
 }
 
 export interface Snapshot {
+  match_id?: string;
+  period?: 1 | 2;
   t_ms: number;
   score: Record<TeamCode, number>;
   subs_left: Record<TeamCode, number>;
@@ -85,7 +91,19 @@ export interface DecisionPayload {
   options: DecisionOption[];
   recommendation: { option_id: string; strength: Strength };
   evidence: Evidence[];
-  manager_action: unknown;
+  manager_action: ManagerAction | null;
+}
+
+// What the deciding team's manager did about the decision, filled from the sub events by
+// web/scripts/build_demo_fixtures.py (the contract leaves it null). period/t_ms is when
+// the call became known: the change itself, or the moment "no change" was settled.
+// option_id is the card option the change matches, or null for a change the card did
+// not price (and for the change that raised a manager_sub card).
+export interface ManagerAction {
+  period: 1 | 2;
+  t_ms: number;
+  subs: { off: string; on: string }[];
+  option_id: string | null;
 }
 
 // Agent output per locale and mode (dugout.agents.pipeline.Card).
@@ -102,10 +120,37 @@ export interface DecisionCard {
   period: 1 | 2; // the payload's t_ms alone is ambiguous in first-half added time
   payload: DecisionPayload;
   narration: Partial<Record<Locale, Partial<Record<Mode, Narration>>>>;
+  /** The trigger's id ("rfc-62-01"); replay files only. */
+  point_id?: string;
+  /** When the card closed (dugout.stream.triggers); replay files only. */
+  closed?: { period: 1 | 2; t_ms: number; reason: "change" | "timeout" | "full_time" };
+  /** The full-time review row; replay files only. */
+  review?: Review;
 }
 
-// Home win probability over time. Not one of the four contracts: the fixture
-// series comes from the engine's no-change run at each snapshot.
+// One full-time review row, priced by the engine in the build script. The UI shows these
+// numbers as given and never derives a gap of its own.
+export interface ReviewOption {
+  /** A card option id, or "manager_later" for a like-for-like change made after the card. */
+  id: string;
+  /** "manager_later" only: the minute of the change. */
+  minute?: number;
+  win: number;
+  xpts: number;
+}
+
+export interface Review {
+  model: ReviewOption;
+  /** null: the manager made a change the card did not price. */
+  manager: ReviewOption | null;
+  gap_win: number | null; // model minus manager
+  gap_xpts: number | null;
+  recap: Partial<Record<Locale, string>>;
+  recap_source: "model" | "template";
+}
+
+// Home win probability over time. Not one of the four contracts: the replay series
+// is the engine's no-change run on each minute's snapshot.
 export interface WinProbPoint {
   period: 1 | 2;
   t_ms: number;

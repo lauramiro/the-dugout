@@ -1,5 +1,5 @@
 // UI strings in English, Spanish and Catalan. Narration text comes from the agents
-// (or the fixture's template fallback); only the chrome around it lives here.
+// (or their template fallback); only the chrome around it lives here.
 
 import type { Locale, Strength, Trigger } from "./contracts";
 
