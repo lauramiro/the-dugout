@@ -228,6 +228,21 @@ p {
   color: var(--panel);
 }
 
+@media (max-width: 640px) {
+  /* The groups keep their aria-label; the visible label gives way to fit two rows. */
+  .switch-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .mode-switcher {
+    gap: 8px;
+  }
+}
+
 /* ---------- Match zone ---------- */
 
 .match {
