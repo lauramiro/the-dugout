@@ -77,7 +77,8 @@ export const DecisionCard = memo(function DecisionCard({ card, snapshot, roster,
   const narration = card.narration[locale]?.[mode] ?? card.narration.en?.[mode];
   const strength = payload.recommendation.strength;
   const ours = payload.team === focus;
-  const best = payload.recommendation.option_id;
+  // A toss-up says the options are close instead of recommending one.
+  const best = strength === "toss_up" ? null : payload.recommendation.option_id;
   const flaggedStats = flagged ? snapshot?.players.find((p) => p.id === flagged) : undefined;
   const rates = snapshot?.rates[payload.team];
 

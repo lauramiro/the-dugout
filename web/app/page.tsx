@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import { DecisionCard } from "../components/DecisionCard";
 import { ConditionBars, WindowChips } from "../components/Dugout";
 import { Pitch } from "../components/Pitch";
+import { Timeline } from "../components/Timeline";
 import { Controls, Scoreboard, Ticker } from "../components/MatchZone";
 import { fromPos, lastAtOrBefore } from "../lib/clock";
 import type { DecisionCard as Card, Locale, Mode } from "../lib/contracts";
@@ -41,6 +42,7 @@ export default function Page() {
   const flagged = card?.payload.evidence.find((e) => e.type === "condition");
   const flaggedId = flagged && flagged.type === "condition" ? flagged.player_id : null;
   const focus = roster?.home ?? "";
+  const allGoals = useMemo(() => log.events.filter((e) => e.item.type === "goal"), [log.events]);
 
   return (
     <main className="screen">
@@ -70,6 +72,19 @@ export default function Page() {
         <WindowChips snapshot={snapshot} roster={roster} teams={teams} t={t} />
         <ConditionBars snapshot={snapshot} roster={roster} teams={teams} mode={mode} locale={locale} flagged={flaggedId} t={t} />
       </aside>
+
+      <Timeline
+        winprob={log.winprob}
+        goals={allGoals}
+        cards={log.cards}
+        playhead={playhead}
+        duration={log.duration}
+        firstHalfEnd={log.firstHalfEnd}
+        roster={roster}
+        focus={focus}
+        onSeek={source.controls?.seek ?? null}
+        t={t}
+      />
 
       <p className="foot">{t("demoNote")}</p>
     </main>
