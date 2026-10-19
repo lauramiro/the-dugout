@@ -4,7 +4,7 @@
   {
    "period": 2,
    "payload": {
-    "decision_id": "rfc-62-01",
+    "decision_id": "rfc-62-00",
     "t_ms": 3720000,
     "team": "RFC",
     "trigger": "condition_below_60",
@@ -119,7 +119,7 @@
   {
    "period": 2,
    "payload": {
-    "decision_id": "cas-70-01",
+    "decision_id": "cas-70-00",
     "t_ms": 4200000,
     "team": "CAS",
     "trigger": "manager_sub",
@@ -234,7 +234,7 @@
   {
    "period": 2,
    "payload": {
-    "decision_id": "rfc-78-01",
+    "decision_id": "rfc-78-19",
     "t_ms": 4699000,
     "team": "RFC",
     "trigger": "manager_sub",

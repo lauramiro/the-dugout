@@ -171,7 +171,7 @@ def snapshot_at(period: int, t_ms: int, before: bool = False) -> dict:
 
 
 def for_team(snapshot: dict, team: str) -> dict:
-    """decide() takes the first rates key as the deciding team."""
+    """Keep only the deciding team's rates and flank threat."""
     s = dict(snapshot)
     s["rates"] = {team: snapshot["rates"][team]}
     s["threat_by_channel"] = {k: v for k, v in snapshot["threat_by_channel"].items() if k.startswith(team)}
@@ -214,7 +214,7 @@ def main() -> None:
     cards = []
     for period, t_ms, team, trigger in DECISIONS:
         snapshot = snapshot_at(period, t_ms, before=True) if trigger == "manager_sub" else by_time[(period, t_ms)]
-        payload = decide(for_team(snapshot, team), trigger)
+        payload = decide(for_team(snapshot, team), team, trigger)
         narration = {}
         for loc in LOCALES:
             narration[loc] = {}
