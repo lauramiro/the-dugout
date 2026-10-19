@@ -213,7 +213,7 @@ def test_estimate_falls_when_running_drops_below_his_own_baseline():
     assert late["hsr_m_10m"] < late["baseline_hsr_m_10m"]
 
 
-def test_estimate_is_clipped_and_band_wider_for_low_sprint_roles():
+def test_estimate_is_clipped():
     snaps = run_engine(StateEngine(SQUAD), running(lambda t: 30 if t < 21 * 60 else 9000)
                        + [ev(10_000, 2695, "pass", "B"),
                           ev(10_001, 2700, "restart", "B", period=2, outcome="kickoff"),
@@ -221,10 +221,24 @@ def test_estimate_is_clipped_and_band_wider_for_low_sprint_roles():
     last = at(snaps, 2, 4500)
     fb, cb = player(last, "A-02"), player(last, "A-03")
     assert fb["condition_est"] == cb["condition_est"] == 0.3
-    width = lambda p: p["condition_band"][1] - p["condition_band"][0]  # noqa: E731
-    mid = at(snaps, 1, 10 * 60)
-    assert width(player(mid, "A-03")) > width(player(mid, "A-02"))
+    assert fb["condition_band"][0] == 0.3
     assert player(last, "A-01")["condition_est"] is None
+
+
+def test_band_is_null_during_the_baseline_and_wider_with_fewer_runs():
+    events = [ev(1, 0, "restart", "A", outcome="kickoff")]
+    for pid, gap in (("A-02", 20), ("A-03", 80)):  # A-03 runs a quarter as often
+        events += [ev(0, t, "hsr", "A", player_id=pid, dist_m=20.0) for t in range(5, 2690, gap)]
+    events.sort(key=lambda e: e["t_ms"])
+    for i, e in enumerate(events):
+        e["seq"] = i + 1
+    snaps = run_engine(StateEngine(SQUAD), events)
+    assert player(at(snaps, 1, 10 * 60), "A-02")["condition_band"] is None
+    width = lambda p: p["condition_band"][1] - p["condition_band"][0]  # noqa: E731
+    fb, cb = player(at(snaps, 1, 40 * 60), "A-02"), player(at(snaps, 1, 40 * 60), "A-03")
+    for p in (fb, cb):
+        assert p["condition_band"][0] <= p["condition_est"] <= p["condition_band"][1]
+    assert width(cb) > 1.5 * width(fb) > 0
 
 
 def test_substitute_sets_his_baseline_from_when_he_comes_on():
@@ -245,8 +259,9 @@ def test_substitute_sets_his_baseline_from_when_he_comes_on():
 def test_midweek_left_back_reads_lowest_at_62_and_estimate_tracks_hidden_condition(scenario):
     """Seeds 1-20 with the played-midweek lever on RFC-03. Hidden condition is read here only."""
     lineup, t62 = lineup_of(scenario), 62 * 60
-    below = valid = 0
-    at62, pooled = [], []
+    below = valid = covered = 0
+    at62, pooled, widths = [], [], {}
+    starters = {p.id for t in (scenario.home, scenario.away) for p in t.starters}
     for seed in range(1, 21):
         s, events = new_match(scenario, seed)
         hidden = {}
@@ -255,6 +270,8 @@ def test_midweek_left_back_reads_lowest_at_62_and_estimate_tracks_hidden_conditi
             if s.clock_s % 60 == 0:
                 hidden[(s.period, s.clock_s * 1000)] = {p.id: p.condition for p in s.players.values()}
         snaps = run_engine(StateEngine(lineup), [e.to_dict() for e in events])
+        # what the estimate aims at: condition relative to his own during the baseline
+        own = {pid: np.mean([hidden[(1, m * 60_000)][pid] for m in range(1, 21)]) for pid in starters}
         for snap in snaps:
             h = hidden.get((snap["period"], snap["t_ms"]))
             ests = {p["id"]: p["condition_est"] for p in snap["players"]
@@ -262,20 +279,31 @@ def test_midweek_left_back_reads_lowest_at_62_and_estimate_tracks_hidden_conditi
             if h is None:
                 continue
             pooled += [(v, h[pid]) for pid, v in ests.items()]
+            for p in snap["players"]:
+                if p["id"] in ests and p["id"] in starters:
+                    lo, hi = p["condition_band"]
+                    covered += lo <= min(1.0, max(0.3, h[p["id"]] / own[p["id"]])) <= hi
             if (snap["period"], snap["t_ms"]) != (2, t62 * 1000):
                 continue
             at62 += [(v, h[pid]) for pid, v in ests.items()]
-            starters = {p.id for p in scenario.home.starters}
-            others = [v for pid, v in ests.items() if pid in starters and pid != "RFC-03"]
+            for p in snap["players"]:
+                if p["condition_band"] is not None:
+                    widths.setdefault(p["role"], []).append(p["condition_band"][1] - p["condition_band"][0])
+            others = [v for pid, v in ests.items()
+                      if pid in starters and pid.startswith("RFC") and pid != "RFC-03"]
             if "RFC-03" in ests:
                 valid += 1
                 below += ests["RFC-03"] < np.median(others)
     r62, r_all = (float(np.corrcoef(np.array(x).T)[0, 1]) for x in (at62, pooled))
     print(f"\nRFC-03 below the median of the other Riverside starters at 62' in {below}/{valid} seeds; "
           f"correlation with hidden condition: {r62:.2f} at 62' (n={len(at62)}), "
-          f"{r_all:.2f} over every minute after the baselines (n={len(pooled)})")
+          f"{r_all:.2f} over every minute after the baselines (n={len(pooled)}); "
+          f"90% band covers condition relative to his own baseline {covered / len(pooled):.2f}")
     assert valid >= 15 and below > valid / 2
     assert r_all > 0
+    assert covered / len(pooled) >= 0.85
+    median = {role: np.median(w) for role, w in widths.items()}
+    assert median["CB"] > max(median["FB"], median["W"])
 
 
 # --- item 4: threat by channel ----------------------------------------------------
