@@ -48,9 +48,8 @@ def _option_dict(r: OptionResult) -> dict:
     return d
 
 
-def decide(snapshot: dict, trigger: str, seed: SeedSequence | None = None, *,
+def decide(snapshot: dict, team: str, trigger: str, seed: SeedSequence | None = None, *,
            n: int = 20_000) -> dict:
-    team = next(iter(snapshot["rates"]))
     opp = next(t for t in snapshot["score"] if t != team)
     minute = snapshot["t_ms"] // 60_000
     player = _exposed_player(snapshot, team)
@@ -73,10 +72,11 @@ def decide(snapshot: dict, trigger: str, seed: SeedSequence | None = None, *,
     evidence = []
     if player is not None:
         evidence.append({"type": "condition", "player_id": player["id"],
-                         "value": player["condition_est"], "trend_per_min": player["trend_per_min"]})
+                         "value": player["condition_est"], "trend_per_min": player.get("trend_per_min", 0.0)})
         channel = _flank_channel(snapshot, team)
         if channel is not None:
             evidence.append({"type": "flank_threat", "channel": channel[0], "share": channel[1]})
-    return {"decision_id": f"{team.lower()}-{minute}-01", "t_ms": snapshot["t_ms"], "team": team,
+    second = snapshot["t_ms"] // 1000 % 60
+    return {"decision_id": f"{team.lower()}-{minute}-{second:02d}", "t_ms": snapshot["t_ms"], "team": team,
             "trigger": trigger, "options": [_option_dict(r) for r in results],
             "recommendation": _recommend(results), "evidence": evidence, "manager_action": None}
