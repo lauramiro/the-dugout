@@ -8,7 +8,8 @@
 #   BUDGET_EMAIL=... infra/deploy.sh --apply
 #
 # Required:  BUDGET_EMAIL  address that receives the budget alert
-# Optional:  REGION and SWA_REGION (both default westeurope), BUDGET_USD (default 20),
+# Optional:  REGION (default northeurope; westeurope refused new customers on the free
+#            subscription), SWA_REGION (default westeurope), BUDGET_USD (default 20),
 #            PREFIX (default dugout)
 #
 # Idempotent: each create is an upsert or is skipped when the resource exists.
@@ -38,7 +39,7 @@ if [[ "${CHECK_HELP:-0}" == 1 ]]; then
   exit 0
 fi
 
-REGION="${REGION:-westeurope}"
+REGION="${REGION:-northeurope}"
 SWA_REGION="${SWA_REGION:-westeurope}"
 : "${BUDGET_EMAIL:?set BUDGET_EMAIL}"
 BUDGET_USD="${BUDGET_USD:-20}"
@@ -80,7 +81,12 @@ run az extension add --name containerapp --upgrade --only-show-errors
 run az extension add --name webpubsub --upgrade --only-show-errors
 
 echo "# 1. resource group"
-run az group create --name "$RG" --location "$REGION" --output none
+# An existing group keeps its location (changing it is an error); resources can sit elsewhere.
+if [[ $APPLY == 1 && "$(az group exists --name "$RG")" == true ]]; then
+  echo "resource group $RG exists, keeping it"
+else
+  run az group create --name "$RG" --location "$REGION" --output none
+fi
 
 echo "# 2. Event Hubs namespace and hub"
 run az eventhubs namespace create --name "$EH_NS" --resource-group "$RG" --location "$REGION" --sku Basic --output none
