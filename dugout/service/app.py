@@ -84,6 +84,11 @@ def open_decision(req: DecisionRequest, cards: CardService = Depends(get_cards),
     for key in ("rates", "score"):
         if req.team not in req.snapshot.get(key, {}):
             raise HTTPException(422, f"team {req.team!r} is not in snapshot[{key!r}]")
+    return open_and_publish(cards, publisher, req)
+
+
+def open_and_publish(cards: CardService, publisher: Publisher | None, req: DecisionRequest) -> dict:
+    """What POST /decisions does, callable without HTTP (the pipeline runner uses it in process)."""
     payload = cards.open(req.snapshot, req.team, req.trigger, req.decision_id)
     card = cards.card(payload["decision_id"], req.locale, req.mode)
     if publisher is None:
