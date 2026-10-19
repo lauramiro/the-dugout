@@ -29,36 +29,36 @@ class CardService:
     def __init__(self, engine: Engine, pipeline: Narrator, store: Store) -> None:
         self._engine = engine
         self._pipeline = pipeline
-        self._store = store
+        self.store = store
         self._locks: defaultdict[tuple[str, str, str], Lock] = defaultdict(Lock)
         self._locks_guard = Lock()
 
     def open(self, snapshot: dict, team: str, trigger: str) -> dict:
         """Run the engine for one decision point and keep its payload."""
         payload = self._engine(snapshot, team, trigger)
-        self._store.put_decision(payload)
+        self.store.put_decision(payload)
         return payload
 
     def payload(self, decision_id: str) -> dict | None:
-        return self._store.get_decision(decision_id)
+        return self.store.get_decision(decision_id)
 
     def card(self, decision_id: str, locale: str, mode: str) -> dict | None:
         if locale not in LOCALES or mode not in MODES:
             raise ValueError(f"unsupported locale {locale!r} or mode {mode!r}")
         key = (decision_id, locale, mode)
-        cached = self._store.get_card(key)
+        cached = self.store.get_card(key)
         if cached is not None:
             return cached
-        payload = self._store.get_decision(decision_id)
+        payload = self.store.get_decision(decision_id)
         if payload is None:
             return None
         with self._key_lock(key):
-            cached = self._store.get_card(key)
+            cached = self.store.get_card(key)
             if cached is None:
                 narration = self._pipeline.run(payload, locale, mode)
                 cached = {"decision_id": decision_id, "locale": locale, "mode": mode,
                           "payload": payload, **asdict(narration)}
-                self._store.put_card(key, cached)
+                self.store.put_card(key, cached)
         return cached
 
     def _key_lock(self, key: tuple[str, str, str]) -> Lock:
