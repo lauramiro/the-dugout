@@ -1,12 +1,18 @@
-"""Item 1: the engine reproduces the wiki sanity table within 1 point."""
+"""Item 1: the engine reproduces the wiki sanity table within 1 point.
+
+The table was made with the illustrative fatigue constants, so these tests set them
+explicitly; the constants in wp.py are calibrated (docs/evaluation.md).
+"""
 import numpy as np
 import pytest
 from numpy.random import SeedSequence
 
+from dugout.engine import wp
 from dugout.engine.wp import Flank, simulate_diff, summarize
 
 N = 100_000
 TOL = 0.01
+ILLUSTRATIVE_SLOPE, ILLUSTRATIVE_FLOOR, ILLUSTRATIVE_BENCH = 0.6, 0.8, 1.03
 
 # situation kwargs, (win, draw, loss) from the wiki sanity table
 ROWS = {
@@ -28,6 +34,12 @@ LB_ROWS = {
 }
 
 
+@pytest.fixture(autouse=True)
+def illustrative_constants(monkeypatch):
+    monkeypatch.setattr(wp, "FATIGUE_SLOPE", ILLUSTRATIVE_SLOPE)
+    monkeypatch.setattr(wp, "FATIGUE_FLOOR", ILLUSTRATIVE_FLOOR)
+
+
 def check(diff, expected):
     out = summarize(diff)
     for got, want in zip((out.win, out.draw, out.loss), expected):
@@ -45,7 +57,7 @@ def test_baseline_rows(name):
 @pytest.mark.parametrize("name", list(LB_ROWS))
 def test_left_back_rows(name):
     extra, expected = LB_ROWS[name]
-    check(simulate_diff(**LB, **extra, seed=SeedSequence(7), n=N), expected)
+    check(simulate_diff(**LB, **extra, seed=SeedSequence(7), n=N, sub_quality=ILLUSTRATIVE_BENCH), expected)
 
 
 def test_same_seed_is_reproducible():

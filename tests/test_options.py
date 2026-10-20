@@ -1,12 +1,28 @@
-"""Items 2 and 3: options on common random numbers, and strength labels."""
+"""Items 2 and 3: options on common random numbers, and strength labels.
+
+Run with the illustrative fatigue constants, so the expectations below do not move
+when wp.py's calibrated constants are refitted.
+"""
+from functools import partial
+
 import pytest
 from numpy.random import SeedSequence
 
-from dugout.engine.options import Option, default_options, evaluate, strength_label
+from dugout.engine import options, wp
+from dugout.engine.options import Option, default_options, strength_label
 from dugout.engine.wp import Flank
 
 SITUATION = dict(t0=62, home_goals=1, away_goals=0, lam_home90=1.5, lam_away90=1.2,
                  flank=Flank(c0=0.60, drain=0.008))
+
+
+evaluate = partial(options.evaluate, sub_quality=1.03)
+
+
+@pytest.fixture(autouse=True)
+def illustrative_constants(monkeypatch):
+    monkeypatch.setattr(wp, "FATIGUE_SLOPE", 0.6)
+    monkeypatch.setattr(wp, "FATIGUE_FLOOR", 0.8)
 
 
 def by_id(results):

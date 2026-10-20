@@ -18,10 +18,12 @@ from numpy.random import Generator, SeedSequence
 ADDED = 6  # assumed second-half added time, minutes
 LEAD_DAMP = 0.9  # leader sits deeper
 TRAIL_PUSH = 1.15  # trailer pushes
-FATIGUE_SLOPE = 0.6  # extra opponent rate per unit of condition below FATIGUE_FLOOR
-FATIGUE_FLOOR = 0.8
+# Fatigue constants fitted to true gaps on seeds 2-30 even (eval/counterfactual.py,
+# docs/evaluation.md); the illustrative values were 0.6, 0.8 and 1.03.
+FATIGUE_SLOPE = 0.3  # extra opponent rate per unit of condition below FATIGUE_FLOOR
+FATIGUE_FLOOR = 0.725
 CONDITION_MIN = 0.3
-BENCH_QUALITY = 1.03  # fresh but slightly weaker like-for-like bench player
+BENCH_QUALITY = 1.0  # opponent rate multiplier once a like-for-like bench player is on
 _MAX_GOALS = 4  # per team per minute; the tail beyond this is negligible at these rates
 
 
