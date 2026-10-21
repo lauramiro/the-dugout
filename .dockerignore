@@ -4,6 +4,7 @@
 web
 infra
 tests
-data
+data/*
+!data/demo-rfc-cas-0073.jsonl
 __pycache__
 .pytest_cache

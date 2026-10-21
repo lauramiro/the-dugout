@@ -215,4 +215,5 @@ rm -rf "$TMP"
 echo
 echo "page: https://$SWA_HOST"
 echo "service: https://$SERVICE_FQDN/healthz"
+echo "mcp: https://$SERVICE_FQDN/mcp"
 echo "runner: $RUNNER (logs: az containerapp logs show --name $RUNNER --resource-group $RG --follow)"

@@ -4,7 +4,7 @@ F1 explains the pit wall. The NFL explains fourth down. Football's dugout is sti
 
 The Dugout explains a football manager's decisions as they happen: who is tiring, when a change is due, what each option is worth in win probability, and at full time what a different call would have changed. It is an entry to the Microsoft x Premier League "Inside the Game" developer hackathon.
 
-**Try it:** https://ashy-ocean-03bdf100f.2.azurestaticapps.net (no login; the demo match replays in the browser). Decision service: https://dugout-service.wittypond-73564413.northeurope.azurecontainerapps.io/healthz
+**Try it:** https://ashy-ocean-03bdf100f.2.azurestaticapps.net (no login; the demo match replays in the browser). Decision service: https://dugout-service.wittypond-73564413.northeurope.azurecontainerapps.io/healthz. MCP server: https://dugout-service.wittypond-73564413.northeurope.azurecontainerapps.io/mcp
 
 **Demo video:** _link to be added before submission_
 
@@ -46,12 +46,33 @@ Narration is a Microsoft Agent Framework workflow (`dugout/agents/workflow.py`):
 
 Measured on 100 cards with the deployed gpt-5-mini model: 84% shown from the model, 85.8% of replies grounded on the first attempt, median 3.15 s per card ([narration eval](eval/results/narration.md)).
 
+### MCP server
+
+The decision service also serves a Model Context Protocol server at `/mcp` (`dugout/service/mcp_server.py`; Streamable HTTP, stateless, so it scales with the Container App). Any MCP client, such as GitHub Copilot agent mode, a Foundry agent or Claude, can work with the match through four read-only tools:
+
+| Tool | What it returns |
+| --- | --- |
+| `match_overview` | Clubs, final score, goals, substitutions and every decision point the triggers raised |
+| `match_state` | What a club could observe at a minute: score, substitutions left, scoring rates, each player's condition estimate |
+| `price_options` | The decision engine at any minute, for either team: every option's win probability and expected points, the gap to no change with a 90% interval, the recommendation and its strength |
+| `explain_decision` | A narrated card in English or Spanish, casual or analyst, written by the narration workflow and passed by the grounding check |
+
+The tools call the same state engine, decision engine and narration workflow as the live screen, so an agent gets the same numbers and the same checked text a viewer does. A producer can ask "what was the left-back change worth at 64'?" and get the engine's answer, not a model's guess.
+
+To connect GitHub Copilot in VS Code, add `.vscode/mcp.json`:
+
+```json
+{ "servers": { "the-dugout": { "type": "http", "url": "https://dugout-service.wittypond-73564413.northeurope.azurecontainerapps.io/mcp" } } }
+```
+
+Claude Code: `claude mcp add --transport http the-dugout https://dugout-service.wittypond-73564413.northeurope.azurecontainerapps.io/mcp`
+
 ## Microsoft technology
 
 - **Microsoft Foundry:** model deployment for the narration and recap agents (`infra/foundry.sh`, `dugout/agents/foundry.py`).
 - **Microsoft Agent Framework:** the narration workflow with grounding checks and retries (`dugout/agents/workflow.py`).
 - **Azure Event Hubs:** match event ingestion (`dugout/stream/replay.py`, `dugout/stream/consumer.py`).
-- **Azure Container Apps:** the decision service and the live pipeline runner, two apps from one image (`Dockerfile`, `infra/deploy.sh`).
+- **Azure Container Apps:** the decision service (with its MCP server) and the live pipeline runner, two apps from one image (`Dockerfile`, `infra/deploy.sh`).
 - **Azure Web PubSub:** cards, snapshots and events pushed to the page (`dugout/service/publisher.py`, `web/lib/live.ts`).
 - **Azure Static Web Apps:** the web page (`web/`, `infra/deploy.sh`).
 
@@ -68,7 +89,7 @@ dugout/
   stream/        state engine, triggers, Event Hubs replayer and consumer, live pipeline
   engine/        win-probability model, options, card payload
   agents/        narration workflow, Foundry client, grounding check, templates, recap
-  service/       decision service (FastAPI), card store, Web PubSub publisher
+  service/       decision service (FastAPI), MCP server, card store, Web PubSub publisher
 web/           Next.js page (static export)
 infra/         Azure deploy scripts (dry run by default)
 eval/          counterfactual check, condition estimate and narration evals, results
@@ -87,7 +108,7 @@ uv sync
 uv run pytest
 uv run python -m dugout.sim run --seed 1 --out data/rfc-cas-0001.jsonl
 uv run python -m dugout.stream.pipeline data/demo-rfc-cas-0073.jsonl --scenario scenarios/riverside-castleton.yaml
-uv run uvicorn dugout.service.app:app --port 8000
+uv run uvicorn dugout.service.app:app --port 8000   # MCP at http://localhost:8000/mcp
 
 cd web && npm install && npm run dev
 ```

@@ -5,6 +5,8 @@ COPY pyproject.toml uv.lock README.md ./
 RUN uv sync --frozen --no-dev --no-install-project
 COPY dugout ./dugout
 COPY scenarios ./scenarios
+# The MCP server's tools read the recorded demo match.
+COPY data/demo-rfc-cas-0073.jsonl ./data/
 RUN uv sync --frozen --no-dev
 ENV PATH="/app/.venv/bin:$PATH"
 EXPOSE 8000

@@ -5,13 +5,15 @@
 Settings (environment): WEBPUBSUB_CONNECTION_STRING, WEBPUBSUB_HUB (default "decisions"),
 STUB_CORS_ORIGINS (comma separated, default "*"; same name as the stub so the deployed
 setting carries over). Without a connection string the push is skipped and reported as such.
-The model client is still the stub until Foundry is set up.
+Narration goes through Foundry when FOUNDRY_ENDPOINT is set, else the stub client. The MCP
+server (dugout.service.mcp_server) is mounted at /mcp.
 """
 
 from __future__ import annotations
 
 import os
 from collections import Counter
+from contextlib import asynccontextmanager
 from functools import cache
 from typing import Literal
 
@@ -20,6 +22,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 from dugout.service.cards import CardService, default_service
+from dugout.service.mcp_server import server as mcp_server
 from dugout.service.publisher import Publisher, default_publisher
 
 Locale = Literal["en", "es"]
@@ -41,7 +44,19 @@ class VoteRequest(BaseModel):
     option_id: str
 
 
-app = FastAPI(title="dugout decision service")
+# Stateless with JSON responses, so any replica can answer any request (Container Apps scales
+# to zero and out). The Host check is for servers bound to localhost; this one sits behind ingress.
+mcp_app = mcp_server.streamable_http_app(streamable_http_path="/mcp", stateless_http=True,
+                                         json_response=True, host="0.0.0.0")
+
+
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    async with mcp_server.session_manager.run():
+        yield
+
+
+app = FastAPI(title="dugout decision service", lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=os.environ.get("STUB_CORS_ORIGINS", "*").split(","),
@@ -129,3 +144,7 @@ def _tally(cards: CardService, decision_id: str) -> dict:
     counts = Counter(cards.store.votes(decision_id).values())
     return {"decision_id": decision_id, "counts": dict(sorted(counts.items())),
             "total": sum(counts.values())}
+
+
+# Last, so the service's own routes match first.
+app.mount("/", mcp_app)
