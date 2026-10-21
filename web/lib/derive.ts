@@ -56,6 +56,15 @@ export function playerName(roster: Roster | null, id: string | null | undefined)
   return roster?.players[id]?.name ?? id;
 }
 
+// The agents name players by id only, since the grounding check verifies ids
+// (dugout.agents.grounding.PLAYER_ID); the screen shows names.
+const PLAYER_ID = /\b[A-Z]{2,4}-\d{2,3}\b/g;
+
+/** Narration or recap text with every known player id replaced by his roster name. */
+export function withNames(text: string, roster: Roster | null): string {
+  return roster ? text.replace(PLAYER_ID, (id) => roster.players[id]?.name ?? id) : text;
+}
+
 export function shirt(id: string): string {
   return String(Number(id.split("-").pop()));
 }

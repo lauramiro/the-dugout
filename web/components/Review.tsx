@@ -3,6 +3,7 @@ import { formatMinute } from "../lib/clock";
 import type { DecisionCard as Card, Locale, Mode, Roster } from "../lib/contracts";
 import type { Timed } from "../lib/datasource";
 import { agreement, managerOption, revealPos, type Vote } from "../lib/calls";
+import { withNames } from "../lib/derive";
 import { decimal, points, triggerKey, type Translate } from "../lib/i18n";
 import { optionLabel } from "./DecisionCard";
 import { managerCall, modelCall } from "./YourCall";
@@ -116,7 +117,7 @@ export function Review({ open, onClose, cards, votes, playhead, firstHalfEnd, fi
                           xpts: `${review.gap_xpts > 0 ? "+" : ""}${decimal(review.gap_xpts, locale, 2)}`,
                         })}
                 </span>
-                {known && recap && <p className="r-recap">{recap}</p>}
+                {known && recap && <p className="r-recap">{withNames(recap, roster)}</p>}
               </li>
             );
           })}

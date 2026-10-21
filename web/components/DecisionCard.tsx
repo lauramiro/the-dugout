@@ -1,7 +1,7 @@
 import { memo } from "react";
 import { formatMinute } from "../lib/clock";
 import type { DecisionCard as Card, DecisionOption, Evidence, Locale, Mode, Roster, Snapshot, TeamCode } from "../lib/contracts";
-import { playerName, shirt } from "../lib/derive";
+import { playerName, shirt, withNames } from "../lib/derive";
 import { decimal, pct, points, strengthKey, triggerKey, type StringKey, type Translate } from "../lib/i18n";
 
 interface Props {
@@ -100,8 +100,8 @@ export const DecisionCard = memo(function DecisionCard({ card, snapshot, roster,
 
       {narration && (
         <div className="narration">
-          <p className="headline">{narration.headline}</p>
-          <p className="reason">{narration.reason}</p>
+          <p className="headline">{withNames(narration.headline, roster)}</p>
+          <p className="reason">{withNames(narration.reason, roster)}</p>
         </div>
       )}
 
