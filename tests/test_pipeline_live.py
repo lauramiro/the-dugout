@@ -218,7 +218,7 @@ def test_published_snapshots_are_thinned_and_slim(run):
     assert all(t in opened_at for t in short), "a snapshot closer than 30 s must be one a card opened on"
     assert pairs and max(b["t_ms"] - a["t_ms"] for a, b in pairs) <= 30_000
     for s in snaps:
-        assert not {"match_id", "threat_by_channel"} & set(s)
+        assert "threat_by_channel" not in s
         assert all(not {"team", "role"} & set(p) for p in s["players"])
 
 
@@ -265,3 +265,21 @@ def test_one_winprob_point_per_match_minute(run):
     assert all(p["t_ms"] % 60_000 == 0 for p in points)
     assert len(points) >= 90
     assert all(p["team"] == "RFC" for p in points)
+
+
+def test_a_failing_winprob_point_does_not_stop_the_stream(monkeypatch):
+    def broken(snapshot, home, n=4000, seed=None):
+        raise KeyError("rates")
+
+    monkeypatch.setattr(live, "winprob_point", broken)
+    pub = FakePublisher()
+    runner = make_runner(pub)
+    runner.send(read_events(DEMO))
+    runner.end_run()
+    assert runner.publish_errors > 0
+    assert any(m.get("kind") == "card_closed" and m["reason"] == "full_time" for m in pub.sent)
+
+
+def test_slim_snapshots_keep_the_match_id(run):
+    snaps = [m for m in run[0] if "subs_left" in m]
+    assert all(s["match_id"] == "rfc-cas-0073" for s in snaps)

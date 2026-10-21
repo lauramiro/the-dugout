@@ -15,6 +15,28 @@ export function fromPos(pos: number, firstHalfEnd: number): { period: 1 | 2; tMs
   return { period: 2, tMs: Math.max(HALF_MS, pos - firstHalfEnd - HALF_TIME_GAP_MS + HALF_MS) };
 }
 
+/** Live: where to draw between messages. The last message's pos run on at `rate` (match ms
+ *  per wall ms) since `wall`, never more than `maxAheadMs` of match time past it. */
+export function aheadPos(pos: number, wall: number, rate: number, now: number, maxAheadMs: number): number {
+  return pos + Math.min(rate * Math.max(0, now - wall), maxAheadMs);
+}
+
+/** Live: what the feed has shown about the halves so far. */
+export interface LiveHalf {
+  /** The last period-1 t_ms seen (at least 45:00): the first half's final moment. */
+  firstHalfEnd: number;
+  /** Whether any period-2 message has arrived. */
+  secondHalf: boolean;
+}
+
+/** Live: a message's period (its own, or inferred) and the halves after it. Messages arrive in
+ *  match order, so every period-1 message comes before the first period-2 one. */
+export function liveHalf(half: LiveHalf, period: 1 | 2 | undefined, tMs: number): { period: 1 | 2; half: LiveHalf } {
+  const p: 1 | 2 = period ?? (tMs >= HALF_MS && half.secondHalf ? 2 : 1);
+  if (p === 2) return { period: 2, half: half.secondHalf ? half : { ...half, secondHalf: true } };
+  return { period: 1, half: tMs > half.firstHalfEnd ? { ...half, firstHalfEnd: tMs } : half };
+}
+
 /** Running clock, e.g. "62:14" (first-half added time keeps counting, "47:57"). */
 export function formatClock(tMs: number): string {
   const s = Math.floor(tMs / 1000);

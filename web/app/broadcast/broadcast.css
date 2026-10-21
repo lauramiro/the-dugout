@@ -589,3 +589,11 @@
   white-space: pre-wrap;
   word-break: break-word;
 }
+
+.bc-tag-label .bc-tag-detail {
+  font-family: var(--font-body), sans-serif;
+  font-size: 1.5px;
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: 0;
+}

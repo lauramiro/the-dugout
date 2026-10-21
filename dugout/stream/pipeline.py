@@ -59,7 +59,8 @@ MIN_MS = 60_000
 # Match events the broadcast graphics use (scorebug, goal flash, manager's call, focus cards);
 # passes, runs and duels stay off the feed.
 KEY_EVENT_TYPES = ("goal", "sub", "shot", "foul", "card")
-_UNREAD_SNAPSHOT_KEYS = ("match_id", "threat_by_channel")
+# match_id stays: a page opened mid-match matches recorded tracking by it.
+_UNREAD_SNAPSHOT_KEYS = ("threat_by_channel",)
 _UNREAD_PLAYER_KEYS = ("team", "role")
 
 
@@ -176,12 +177,22 @@ class PipelineRunner:
             minute = (snapshot.get("period", 1), snapshot["t_ms"])
             if snapshot["t_ms"] % MIN_MS == 0 and minute not in self._winprob_sent:
                 self._winprob_sent.add(minute)
-                self._publish(winprob_point(snapshot, self._home))
+                self._publish_winprob(snapshot)
             for record in records:
                 if record["kind"] == "card_closed":
                     self._publish(record)
                 else:
                     self._open(record)
+
+    def _publish_winprob(self, snapshot: dict) -> None:
+        # computed on the stream; a failure is counted like a failed publish and never stops it
+        try:
+            point = winprob_point(snapshot, self._home)
+        except Exception as err:
+            self.publish_errors += 1
+            print(f"win probability at {snapshot.get('t_ms')} failed: {err!r}", file=sys.stderr)
+            return
+        self._publish(point)
 
     def _due(self, snapshot: dict) -> bool:
         if self._last_published is None:

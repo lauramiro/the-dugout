@@ -5,7 +5,7 @@
 // ball, a snapshot by subs_left. The roster comes from the demo's team sheet; until the
 // pipeline sends period ends, only what arrives is shown.
 
-import { HALF_MS, lastAtOrBefore, toPos } from "./clock";
+import { HALF_MS, lastAtOrBefore, liveHalf, toPos, type LiveHalf } from "./clock";
 import type {
   CardClosed, CardMessage, DecisionCard, DecisionPayload, MatchEvent, Roster, Snapshot, TrackingFrame, WinProbMessage,
   WinProbPoint,
@@ -30,6 +30,7 @@ export class LiveDataSource implements DataSource {
   private disposed = false;
   private connecting: Promise<void> | null = null;
   private generation = 0;
+  private half: LiveHalf = { firstHalfEnd: HALF_MS, secondHalf: false };
 
   getState = (): FeedState => this.state;
 
@@ -101,18 +102,24 @@ export class LiveDataSource implements DataSource {
 
   private receive(msg: Record<string, unknown>): void {
     const log = this.state.log;
-    const end1 = log.firstHalfEnd;
     const add = <T>(list: Timed<T>[], item: T, pos: number) => [...list, { pos, item }].sort((a, b) => a.pos - b.pos);
+    // Each message's period (its own, or inferred) moves the learned end of the first half,
+    // so first-half added time and the second half never share positions.
+    const place = (period: 1 | 2 | undefined, tMs: number) => {
+      const r = liveHalf(this.half, period, tMs);
+      this.half = r.half;
+      return { period: r.period, pos: toPos(r.period, tMs, r.half.firstHalfEnd) };
+    };
     let pos: number;
     let next = log;
     if (msg.kind === "winprob") {
       const w = msg as unknown as WinProbMessage;
-      pos = toPos(w.period, w.t_ms, end1);
+      pos = place(w.period, w.t_ms).pos;
       const point: WinProbPoint = { period: w.period, t_ms: w.t_ms, team: w.team, win: w.win, draw: w.draw, loss: w.loss };
       next = { ...log, winprob: add(log.winprob, point, pos) };
     } else if (msg.kind === "card_closed") {
       const c = msg as unknown as CardClosed;
-      pos = toPos(c.period, c.t_ms, end1);
+      pos = place(c.period, c.t_ms).pos;
       const closed = { period: c.period, t_ms: c.t_ms, reason: c.reason };
       next = {
         ...log,
@@ -129,30 +136,30 @@ export class LiveDataSource implements DataSource {
           [full.mode]: { headline: full.headline, reason: full.reason, source: full.source },
         };
       }
-      // The payload's t_ms alone is ambiguous in first-half added time; cards carry no period yet.
-      const period = earlier?.period ?? (payload.t_ms >= HALF_MS ? 2 : 1);
-      const card: DecisionCard = { ...earlier, period, payload, narration };
-      pos = toPos(card.period, payload.t_ms, end1);
+      // Cards carry no period: a card keeps the one it got first, inferred from the halves so far.
+      const placed = place(earlier?.period, payload.t_ms);
+      const card: DecisionCard = { ...earlier, period: placed.period, payload, narration };
+      pos = placed.pos;
       // A card sent again (another mode, or once the manager has acted) replaces the earlier
       // copy and keeps its narrations and closing.
       const others = log.cards.filter((c) => c.item.payload.decision_id !== payload.decision_id);
       next = { ...log, cards: add(others, card, pos) };
     } else if ("seq" in msg) {
       const e = msg as unknown as MatchEvent;
-      pos = toPos(e.period, e.t_ms, end1);
+      pos = place(e.period, e.t_ms).pos;
       next = { ...log, events: add(log.events, e, pos) };
     } else if ("ball" in msg) {
       const f = msg as unknown as TrackingFrame;
-      pos = toPos(f.period, f.t_ms, end1);
+      pos = place(f.period, f.t_ms).pos;
       this.frames = add(this.frames, f, pos);
     } else if ("subs_left" in msg) {
       const s = msg as unknown as Snapshot;
-      pos = toPos(s.t_ms >= HALF_MS ? 2 : 1, s.t_ms, end1);
+      pos = place(s.period, s.t_ms).pos;
       next = { ...log, snapshots: add(log.snapshots, s, pos) };
     } else {
       return;
     }
     const duration = Math.max(log.duration, pos);
-    this.set({ log: { ...next, duration }, playhead: duration });
+    this.set({ log: { ...next, firstHalfEnd: this.half.firstHalfEnd, duration }, playhead: duration });
   }
 }

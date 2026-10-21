@@ -141,6 +141,7 @@ const en = {
   comesOn: "Comes on",
   whatIf: "What if",
   exportCues: "Export cue sheet",
+  tagStats: "{hsr} m fast running · {sprints} sprints, last 10 min",
 } as const;
 
 export type StringKey = keyof typeof en;
@@ -284,6 +285,7 @@ const es: Dict = {
   comesOn: "Entra al campo",
   whatIf: "¿Y si...?",
   exportCues: "Exportar guion de grafismos",
+  tagStats: "{hsr} m a alta velocidad · {sprints} sprints, últimos 10 min",
 };
 
 

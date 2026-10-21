@@ -48,6 +48,25 @@ export function activeCues(cues: readonly Cue[], pos: number): Cue[] {
   return cues.filter((c) => c.in_pos <= pos && pos < c.out_pos);
 }
 
+/** The score at `pos`: the latest snapshot's score as given, plus goals after it (a snapshot
+ *  corrects a goal message that was dropped or sent twice). Without snapshots, goals counted. */
+export function scoreAt(log: MatchLog, pos: number): Record<TeamCode, number> {
+  const teams = log.roster ? [log.roster.home, log.roster.away] : [];
+  let base: Record<TeamCode, number> = Object.fromEntries(teams.map((t) => [t, 0]));
+  let from = -Infinity;
+  for (const s of log.snapshots) {
+    if (s.pos > pos) break;
+    base = { ...base, ...s.item.score };
+    from = s.pos;
+  }
+  const out = { ...base };
+  for (const { pos: at, item } of log.events) {
+    if (at > pos) break;
+    if (item.type === "goal" && at > from) out[item.team] = (out[item.team] ?? 0) + 1;
+  }
+  return out;
+}
+
 /**
  * The cues to draw at `pos`: the active ones, plus any that started within the last
  * `minWallMs` of wall time, so a graphic stays readable at 20x. `firstSeen` (cue id ->

@@ -11,12 +11,12 @@ import {
   DEFAULT_PREFS, readPrefs, SettingsChip, writePrefs, type BroadcastPrefs,
 } from "../../components/broadcast/SettingsChip";
 import { Stage } from "../../components/broadcast/Stage";
-import { fromPos, lastAtOrBefore, toPos } from "../../lib/clock";
+import { aheadPos, fromPos, lastAtOrBefore, toPos } from "../../lib/clock";
 import type { Roster, Snapshot } from "../../lib/contracts";
-import { buildCues, cueSheet, type Cue } from "../../lib/cues";
+import { buildCues, cueSheet, scoreAt, type Cue } from "../../lib/cues";
 import type { DataSource, FeedState, MatchLog, PitchFrame } from "../../lib/datasource";
-import { playerName, score } from "../../lib/derive";
-import { translator } from "../../lib/i18n";
+import { playerName } from "../../lib/derive";
+import { translator, type Translate } from "../../lib/i18n";
 import { ReplayDataSource } from "../../lib/replay";
 import { useDataSource, useFeed } from "../../lib/useFeed";
 import "./broadcast.css";
@@ -68,14 +68,13 @@ export default function BroadcastPage() {
   const frame = live ? recorded.frame : source.frameAt(pos);
 
   const { tMs } = fromPos(pos, log.firstHalfEnd);
-  const teams = log.roster ? [log.roster.home, log.roster.away] : [];
-  const goals = score(log.events, lastAtOrBefore(log.events, pos), teams);
+  const goals = scoreAt(log, pos);
 
   const cues = useMemo(() => buildCues(log, prefs.player), [log, prefs.player]);
   const shown = useHeldCues(cues, pos);
   const snapshotAt = lastAtOrBefore(log.snapshots, pos);
   const snapshot = snapshotAt >= 0 ? log.snapshots[snapshotAt].item : null;
-  const tags = playerTags(shown, prefs.player, snapshot, log.roster);
+  const tags = playerTags(shown, prefs.player, snapshot, log.roster, t);
   const latest = (kind: Cue["kind"]) => [...shown].reverse().find((c) => c.kind === kind);
   const decision = latest("decision");
   const goalCue = latest("goal");
@@ -164,17 +163,21 @@ function downloadCueSheet(sheet: ReturnType<typeof cueSheet>): void {
 
 /** The focus player always; a fading player while the cue runs. The ring is the latest
  *  snapshot's condition estimate. */
-function playerTags(shown: readonly Cue[], focus: string | null, snapshot: Snapshot | null, roster: Roster | null): PlayerTag[] {
-  const condition = (id: string) => snapshot?.players.find((p) => p.id === id)?.condition_est ?? null;
+function playerTags(shown: readonly Cue[], focus: string | null, snapshot: Snapshot | null, roster: Roster | null,
+  t: Translate): PlayerTag[] {
+  const stats = (id: string) => snapshot?.players.find((p) => p.id === id);
+  const condition = (id: string) => stats(id)?.condition_est ?? null;
   const tags = new Map<string, PlayerTag>();
   for (const cue of shown) {
     if (cue.kind !== "fading") continue;
     const id = String(cue.data.player_id);
     const value = condition(id) ?? Number(cue.data.condition);
-    tags.set(id, { id, label: `${playerName(roster, id)} · ${Math.round(value * 100)}%`, ring: value, tone: "fading" });
+    tags.set(id, { id, label: `${playerName(roster, id)} · ${Math.round(value * 100)}%`, detail: null, ring: value, tone: "fading" });
   }
   if (focus && !tags.has(focus)) {
-    tags.set(focus, { id: focus, label: playerName(roster, focus), ring: condition(focus), tone: "focus" });
+    const p = stats(focus);
+    const detail = p ? t("tagStats", { hsr: p.hsr_m_10m, sprints: p.sprints_10m }) : null;
+    tags.set(focus, { id: focus, label: playerName(roster, focus), detail, ring: condition(focus), tone: "focus" });
   }
   return [...tags.values()];
 }
@@ -200,7 +203,7 @@ function useSmoothedPos(playhead: number, live: boolean): number {
     let raf = 0;
     const tick = () => {
       const { pos, wall, rate } = last.current;
-      setShown(pos + Math.min(rate * (performance.now() - wall), rate * MAX_AHEAD_MS));
+      setShown(aheadPos(pos, wall, rate, performance.now(), MAX_AHEAD_MS));
       raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
@@ -231,7 +234,7 @@ function useRecordedTracking(source: DataSource, log: MatchLog, pos: number): { 
   useEffect(() => {
     recorded?.controls.seek(bucket * 5000); // load the tracking chunk under the live clock first
   }, [recorded, bucket]);
-  const liveMatch = log.events[0]?.item.match_id;
+  const liveMatch = log.snapshots[0]?.item.match_id ?? log.events[0]?.item.match_id;
   const active = !!recorded && !!state && !!liveMatch && liveMatch === state.log.events[0]?.item.match_id;
   return { frame: active ? recorded.frameAt(recPos) : null, active };
 }

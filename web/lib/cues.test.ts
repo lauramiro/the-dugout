@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { activeCues, buildCues, cueSheet, holdCues, type Cue } from "./cues.ts";
+import { activeCues, buildCues, cueSheet, holdCues, scoreAt, type Cue } from "./cues.ts";
 import type { DecisionCard, MatchEvent, Review } from "./contracts.ts";
 import type { MatchLog, Timed } from "./datasource.ts";
 
@@ -193,4 +193,16 @@ test("a manager action with no subs is a settled no-change call", () => {
   const closed = { period: 2 as const, t_ms: 4_740_000, reason: "change" as const };
   const [live] = ofKind(buildCues(log([card({ id: "x", t_ms: 4_300_000, closed })]), null), "manager_call");
   assert.equal(live.data.no_change, false, "live: a change happened, the subs just did not arrive");
+});
+
+test("scoreAt starts from the latest snapshot's score and adds only later goals", () => {
+  const goals = [event(1, 1, 600_000, "goal", "RFC", "RFC-09"), event(2, 2, 3_000_000, "goal", "CAS", "CAS-09"),
+    event(2, 2, 3_000_000, "goal", "CAS", "CAS-09")];
+  const l = log([], goals);
+  const snap = { pos: pos(2, 3_010_000), item: { t_ms: 3_010_000, score: { RFC: 1, CAS: 1 } } };
+  l.snapshots = [snap as unknown as MatchLog["snapshots"][number]];
+  assert.deepEqual(scoreAt(l, pos(2, 3_020_000)), { RFC: 1, CAS: 1 }, "a goal sent twice does not count twice");
+  assert.deepEqual(scoreAt({ ...l, snapshots: [] }, pos(2, 3_020_000)), { RFC: 1, CAS: 2 }, "without snapshots, goals are counted");
+  const late = event(3, 2, 3_015_000, "goal", "RFC", "RFC-10");
+  assert.deepEqual(scoreAt({ ...l, events: [...goals, late] }, pos(2, 3_020_000)), { RFC: 2, CAS: 1 });
 });

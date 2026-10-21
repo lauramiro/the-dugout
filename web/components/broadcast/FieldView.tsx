@@ -7,6 +7,8 @@ import { Markings, PITCH_L, PITCH_W, sy } from "../Pitch";
 export interface PlayerTag {
   id: string;
   label: string;
+  /** A line above the name (the focus player's running stats), or null. */
+  detail: string | null;
   /** Condition 0..1 for the ring, or null for no ring. */
   ring: number | null;
   tone: "focus" | "fading";
@@ -74,6 +76,9 @@ function TagMark({ tag }: { tag: PlayerTag }) {
       )}
       <g className="bc-tag-label" transform={`translate(0 ${-RING_R - 1.4})`}>
         <text textAnchor="middle">{tag.label}</text>
+        {tag.detail && (
+          <text textAnchor="middle" y={-2.4} className="bc-tag-detail">{tag.detail}</text>
+        )}
       </g>
     </g>
   );
