@@ -48,6 +48,27 @@ export function activeCues(cues: readonly Cue[], pos: number): Cue[] {
   return cues.filter((c) => c.in_pos <= pos && pos < c.out_pos);
 }
 
+/**
+ * The cues to draw at `pos`: the active ones, plus any that started within the last
+ * `minWallMs` of wall time, so a graphic stays readable at 20x. `firstSeen` (cue id ->
+ * wall ms) is the caller's memory between frames; going back before a cue forgets it.
+ */
+export function holdCues(cues: readonly Cue[], pos: number, firstSeen: Map<string, number>, now: number,
+  minWallMs: number): Cue[] {
+  const out: Cue[] = [];
+  for (const c of cues) {
+    if (pos < c.in_pos) {
+      firstSeen.delete(c.id);
+      continue;
+    }
+    const active = pos < c.out_pos;
+    if (active && !firstSeen.has(c.id)) firstSeen.set(c.id, now);
+    const seen = firstSeen.get(c.id);
+    if (active || (seen !== undefined && now - seen < minWallMs)) out.push(c);
+  }
+  return out;
+}
+
 export function cueSheet(log: MatchLog, focus: string | null, source: "replay" | "live") {
   return { match_id: log.events[0]?.item.match_id ?? null, source, cues: buildCues(log, focus) };
 }

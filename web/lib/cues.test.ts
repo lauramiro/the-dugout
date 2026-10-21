@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { activeCues, buildCues, cueSheet, type Cue } from "./cues.ts";
+import { activeCues, buildCues, cueSheet, holdCues, type Cue } from "./cues.ts";
 import type { DecisionCard, MatchEvent, Review } from "./contracts.ts";
 import type { MatchLog, Timed } from "./datasource.ts";
 
@@ -158,4 +158,20 @@ test("cueSheet names the match from the first event", () => {
   assert.equal(sheet.match_id, "rfc-cas-0073");
   assert.equal(sheet.source, "replay");
   assert.equal(cueSheet(log(), null, "live").match_id, null);
+});
+
+test("holdCues keeps a cue on screen for a minimum wall time", () => {
+  const cue: Cue = { id: "g", kind: "goal", in_pos: 100, out_pos: 200, data: {} };
+  const seen = new Map<string, number>();
+  assert.deepEqual(holdCues([cue], 150, seen, 1000, 4000).map((c) => c.id), ["g"]);
+  assert.deepEqual(holdCues([cue], 900, seen, 3000, 4000).map((c) => c.id), ["g"], "ended in match time, held on wall time");
+  assert.deepEqual(holdCues([cue], 900, seen, 5001, 4000), [], "dropped once the minimum has passed");
+});
+
+test("holdCues forgets a cue when the playhead goes back before it", () => {
+  const cue: Cue = { id: "g", kind: "goal", in_pos: 100, out_pos: 200, data: {} };
+  const seen = new Map<string, number>();
+  holdCues([cue], 150, seen, 1000, 4000);
+  assert.deepEqual(holdCues([cue], 50, seen, 1500, 4000), []);
+  assert.equal(seen.has("g"), false);
 });

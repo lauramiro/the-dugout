@@ -1,15 +1,19 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
-import { FieldView } from "../../components/broadcast/FieldView";
+import { FieldView, type PlayerTag } from "../../components/broadcast/FieldView";
+import { LowerThird } from "../../components/broadcast/LowerThird";
+import { useHeldCues } from "../../components/broadcast/useHeldCues";
 import { Scorebug } from "../../components/broadcast/Scorebug";
 import {
   DEFAULT_PREFS, readPrefs, SettingsChip, writePrefs, type BroadcastPrefs,
 } from "../../components/broadcast/SettingsChip";
 import { Stage } from "../../components/broadcast/Stage";
 import { fromPos, lastAtOrBefore, toPos } from "../../lib/clock";
+import type { Roster, Snapshot } from "../../lib/contracts";
+import { buildCues, type Cue } from "../../lib/cues";
 import type { DataSource, FeedState, MatchLog, PitchFrame } from "../../lib/datasource";
-import { score } from "../../lib/derive";
+import { playerName, score } from "../../lib/derive";
 import { translator } from "../../lib/i18n";
 import { ReplayDataSource } from "../../lib/replay";
 import { useDataSource, useFeed } from "../../lib/useFeed";
@@ -63,9 +67,29 @@ export default function BroadcastPage() {
   const teams = log.roster ? [log.roster.home, log.roster.away] : [];
   const goals = score(log.events, lastAtOrBefore(log.events, pos), teams);
 
+  const cues = useMemo(() => buildCues(log, prefs.player), [log, prefs.player]);
+  const shown = useHeldCues(cues, pos);
+  const snapshotAt = lastAtOrBefore(log.snapshots, pos);
+  const snapshot = snapshotAt >= 0 ? log.snapshots[snapshotAt].item : null;
+  const tags = playerTags(shown, prefs.player, snapshot, log.roster);
+  const decision = [...shown].reverse().find((c) => c.kind === "decision");
+  const decisionCard = decision
+    ? log.cards.find((c) => c.item.payload.decision_id === decision.data.decision_id)?.item
+    : undefined;
+
   return (
     <Stage label={t("broadcastLabel")}>
-      <FieldView frame={frame} roster={log.roster} tags={[]} label={t("broadcastLabel")} />
+      <FieldView frame={frame} roster={log.roster} tags={tags} label={t("broadcastLabel")} />
+      {decisionCard && (
+        <LowerThird
+          key={decisionCard.payload.decision_id}
+          card={decisionCard}
+          roster={log.roster}
+          mode={prefs.mode}
+          locale={prefs.locale}
+          t={t}
+        />
+      )}
       <Scorebug roster={log.roster} score={goals} tMs={tMs} live={live} club={prefs.club} t={t} />
       <SettingsChip
         prefs={prefs}
@@ -78,6 +102,23 @@ export default function BroadcastPage() {
       />
     </Stage>
   );
+}
+
+/** The focus player always; a fading player while the cue runs. The ring is the latest
+ *  snapshot's condition estimate. */
+function playerTags(shown: readonly Cue[], focus: string | null, snapshot: Snapshot | null, roster: Roster | null): PlayerTag[] {
+  const condition = (id: string) => snapshot?.players.find((p) => p.id === id)?.condition_est ?? null;
+  const tags = new Map<string, PlayerTag>();
+  for (const cue of shown) {
+    if (cue.kind !== "fading") continue;
+    const id = String(cue.data.player_id);
+    const value = condition(id) ?? Number(cue.data.condition);
+    tags.set(id, { id, label: `${playerName(roster, id)} · ${Math.round(value * 100)}%`, ring: value, tone: "fading" });
+  }
+  if (focus && !tags.has(focus)) {
+    tags.set(focus, { id: focus, label: playerName(roster, focus), ring: condition(focus), tone: "focus" });
+  }
+  return [...tags.values()];
 }
 
 const MAX_RATE = 30; // match ms per wall ms: above the fastest replay speed (20x)
