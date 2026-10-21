@@ -1,8 +1,9 @@
 """Observable match state from the event stream, as a snapshot every 10 s (contract 3).
 
 Fed contract-1 event dicts one at a time in `seq` order, plus a lineup: one dict per
-squad player with `id`, `team`, `role`, `side` and `starting`. Nothing else about a
-player is known here, and this module never imports the simulator.
+squad player with `id`, `team`, `role`, `side`, `starting` and optionally `recent_minutes`
+(minutes played in the last 7 days, 0 if left out). Nothing else about a player is known
+here, and this module never imports the simulator.
 
 A snapshot at `(period, t_ms)` is the state at that instant: it covers every event
 of the period with a smaller `t_ms`. Snapshots run every 10 s from each period's
@@ -51,6 +52,16 @@ COND_MIN, COND_MAX = 0.3, 1.0
 TREND_MS = 5 * MIN_MS
 BAND_Z = 1.645  # 90%
 
+# Recent minutes: a player who played in the last 7 days starts below 1.0. Stated assumption,
+# not fitted: half of a full match's load is still there a few days later. FULL_MATCH_LOAD is
+# this module's own load over 90 minutes for an outfield starter (mean 0.283 over seeds 1-20,
+# half-time recovery included), so 90 recent minutes cost 0.14. The share is uncertain, anywhere
+# from about a quarter to three quarters, so the band widens by RECENT_CV of the residual.
+FULL_MATCH_LOAD = 0.28
+RECENT_SHARE = 0.5
+RECENT_COST_PER_MIN = RECENT_SHARE * FULL_MATCH_LOAD / 90
+RECENT_CV = 0.5
+
 # Threat by channel: share of the opponent's xG down each of a team's channels over the last
 # 15 played minutes, shrunk towards the first-half split (even until the first shot) by a
 # pseudo-count, since a 15-minute window often holds no shots.
@@ -74,6 +85,7 @@ class _Player:
     hsr_m: list[float] = field(default_factory=list)
     sprint_t: list[int] = field(default_factory=list)
     baseline: tuple[float, int, float] | None = None  # hsr m, runs (hsr and sprints), in-play ms
+    residual: float = 0.0  # condition still spent from his recent minutes
     load: float = 0.0  # condition spent since he came on
     ew_runs: float = 0.0  # exponentially weighted runs and in-play ms
     ew_inplay: float = 0.0
@@ -98,8 +110,11 @@ class StateEngine:
     def __init__(self, lineup: list[dict], prior90: float = 1.35) -> None:
         self.prior90 = prior90
         self.players = {p["id"]: _Player(p["id"], p["team"], p["role"], p["side"],
-                                         bool(p["starting"]), 0 if p["starting"] else None)
+                                         bool(p["starting"]), 0 if p["starting"] else None,
+                                         residual=RECENT_COST_PER_MIN * p.get("recent_minutes", 0))
                         for p in lineup}
+        for p in self.players.values():
+            p.est = self._clip(1.0 - p.residual)
         self.teams = list(dict.fromkeys(p["team"] for p in lineup))
         self.match_id: str | None = None
         self.score = dict.fromkeys(self.teams, 0)
@@ -240,8 +255,9 @@ class StateEngine:
     def _update_condition(self, p: _Player, now: int) -> None:
         """Advance one outfield player's load, estimate and band to a snapshot boundary.
 
-        Load counts minutes and runs since he came on. Exponentially weighted runs and in-play
-        time give his current running rate, compared with his own baseline rate."""
+        Load counts minutes and runs since he came on, on top of the residual from his recent
+        minutes. Exponentially weighted runs and in-play time give his current running rate,
+        compared with his own baseline rate."""
         prev = p.ew_at if p.ew_at is not None else p.on_since
         runs = p.hsr_runs_between(prev, now) + p.sprints_between(prev, now)
         p.load += (DRAIN_PER_MIN.get(p.role, DRAIN_DEFAULT) * (now - prev) / MIN_MS
@@ -252,7 +268,7 @@ class StateEngine:
         p.ew_inplay = p.ew_inplay * decay + d_inplay
         p.ew_inplay2 = p.ew_inplay2 * decay ** 2 + d_inplay
         p.ew_at = now
-        loaded = 1.0 - p.load
+        loaded = 1.0 - p.residual - p.load
         p.est = self._clip(loaded)
         p.history.append((now, p.est))
         on = p.on_since
@@ -275,7 +291,7 @@ class StateEngine:
             rate, rate_lo, rate_hi = (max(p.ratio + z * sd, 0.0) ** COND_EXP for z in (0.0, -BAND_Z, BAND_Z))
         p.est = self._clip((1 - RATE_WEIGHT) * loaded + RATE_WEIGHT * rate)
         p.history[-1] = (now, p.est)
-        drain = BAND_Z * DRAIN_CV * min(1.0, p.load)
+        drain = BAND_Z * math.hypot(DRAIN_CV * min(1.0, p.load), RECENT_CV * p.residual)
         lo = math.hypot(drain, RATE_WEIGHT * (rate - rate_lo))
         hi = math.hypot(drain, RATE_WEIGHT * (rate_hi - rate))
         p.band = (self._clip(p.est - lo), self._clip(p.est + hi))

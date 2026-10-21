@@ -13,10 +13,14 @@ Reports, over all seeds:
   below   seeds where RFC-03 reads below the median of the other Riverside starters at 62'
   cover   share of starter-minutes whose 90% band holds condition relative to his own
           baseline, clipped to 0.3-1.0
+  cover_abs  the same against hidden condition itself, which the estimate aims at once it
+          knows a player's recent minutes
   width   median band width, overall and by role, at 62'
   ceiling the same correlations for hidden relative condition itself (no noise at all)
 
-    uv run python eval/condition_estimate.py --seeds 20 [--out eval/results/x.json]
+    uv run python eval/condition_estimate.py --seeds 20 [--first 1] [--no-recent] [--out eval/results/x.json]
+
+--no-recent drops recent_minutes from the lineup, which gives the estimate before it knew them.
 """
 from __future__ import annotations
 
@@ -32,16 +36,12 @@ sys.path.insert(0, str(ROOT))
 
 from dugout.sim.match import new_match, step  # noqa: E402
 from dugout.sim.scenario import load_scenario  # noqa: E402
+from dugout.stream.snapshots import lineup_from_scenario  # noqa: E402
 from dugout.stream.state_engine import StateEngine  # noqa: E402
 
 SCENARIO = ROOT / "scenarios" / "riverside-castleton.yaml"
 T62 = 62 * 60
 FOCUS = "RFC-03"
-
-
-def lineup_of(scenario):
-    return [{"id": p.id, "team": t.code, "role": p.role, "side": p.side, "starting": i < 11}
-            for t in (scenario.home, scenario.away) for i, p in enumerate(t.players)]
 
 
 def play(scenario, seed):
@@ -66,12 +66,14 @@ def corr(pairs):
     return float(np.corrcoef(np.array(pairs).T)[0, 1]) if len(pairs) > 2 else float("nan")
 
 
-def measure(seeds):
+def measure(seeds, recent=True):
     scenario = load_scenario(SCENARIO)
-    lineup = lineup_of(scenario)
+    lineup = lineup_from_scenario(SCENARIO)
+    if not recent:
+        lineup = [{k: v for k, v in p.items() if k != "recent_minutes"} for p in lineup]
     starters = {p.id for t in (scenario.home, scenario.away) for p in t.starters}
     at62, pooled, rel62, ceil62, ceil_pooled = [], [], [], [], []
-    below = valid = covered = counted = 0
+    below = valid = covered = covered_abs = counted = 0
     widths: dict[str, list[float]] = {}
     for seed in seeds:
         events, hidden = play(scenario, seed)
@@ -89,6 +91,7 @@ def measure(seeds):
                 if pid in starters:
                     lo, hi = p["condition_band"]
                     covered += lo <= min(1.0, max(0.3, h[pid] / own[pid])) <= hi
+                    covered_abs += lo <= min(1.0, max(0.3, h[pid])) <= hi
                     counted += 1
             if key != (2, T62 * 1000):
                 continue
@@ -104,12 +107,13 @@ def measure(seeds):
                 below += ests[FOCUS]["condition_est"] < np.median(others)
     every = [w for ws in widths.values() for w in ws]
     return {
-        "seeds": [min(seeds), max(seeds)],
+        "seeds": [min(seeds), max(seeds)], "recent_minutes": recent,
         "r62": round(corr(at62), 3), "n62": len(at62),
         "pooled": round(corr(pooled), 3), "n_pooled": len(pooled),
         "rel62": round(corr(rel62), 3),
         "below": int(below), "valid": valid,
         "cover": round(covered / counted, 3) if counted else None,
+        "cover_abs": round(covered_abs / counted, 3) if counted else None,
         "width": round(float(np.median(every)), 3) if every else None,
         "width_by_role": {r: round(float(np.median(w)), 3) for r, w in sorted(widths.items())},
         "ceiling_r62": round(corr(ceil62), 3), "ceiling_pooled": round(corr(ceil_pooled), 3),
@@ -120,9 +124,10 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--seeds", type=int, default=20)
     ap.add_argument("--first", type=int, default=1)
+    ap.add_argument("--no-recent", action="store_true", help="lineup without recent_minutes")
     ap.add_argument("--out", type=Path)
     args = ap.parse_args()
-    result = measure(range(args.first, args.first + args.seeds))
+    result = measure(range(args.first, args.first + args.seeds), recent=not args.no_recent)
     print(json.dumps(result, indent=1))
     if args.out:
         args.out.parent.mkdir(parents=True, exist_ok=True)

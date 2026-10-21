@@ -64,3 +64,42 @@ fires. Demo seed 73 had six condition cards, all noise (two centre-backs at 36' 
 never had one), and now has none. The line needs to change to something that fits a
 calibrated estimate, for example a player more than a set margin below his team's median, or a
 line near 0.75.
+
+## Recent minutes in the lineup (done)
+
+Change 1 above is now made. The lineup carries each player's `recent_minutes`, the minutes he
+played in the last 7 days, which a real club knows before kick-off. In the scenario RFC-03 has 90
+(a full midweek cup tie) and everyone else 0. **The estimator now knows who played midweek, as a
+real club would.** It never reads the hidden `played_midweek` value.
+
+How much a recent minute costs is a stated assumption, not a fit: half of a full match's load is
+still there a few days later. A full match costs an outfield starter 0.283 in the estimator's own
+load terms (mean over seeds 1-20, half-time recovery included), so 90 recent minutes start a
+player at 1 - 0.14 = 0.86. The band widens by half of that residual, since the share could be
+anywhere from about a quarter to three quarters. Treat the 0.14 with care: it lands close to the
+hidden lever (RFC-03 starts at 0.85), so this is again an upper bound on what the field would do
+on real data, where the residual share would have to be fitted.
+
+Measured with `uv run python eval/condition_estimate.py [--no-recent]`. Before is the lineup
+without the field (it reproduces the "after" numbers above); raw numbers in
+`condition_estimate_recent.json` and `condition_estimate_recent_21-100.json`. No setting was
+chosen on any seed.
+
+| | before, 1-20 | after, 1-20 | before, 21-100 | after, 21-100 | target |
+| --- | --- | --- | --- | --- | --- |
+| correlation with hidden condition at 62' | 0.517 | 0.853 | 0.524 | 0.855 | 0.3 |
+| the same, pooled over minutes | 0.613 | 0.889 | 0.624 | 0.897 | |
+| at 62', against condition relative to his own baseline | 0.622 | 0.796 | 0.623 | 0.792 | |
+| RFC-03 below the other Riverside starters' median at 62' | 16/20 | 20/20 | 68/80 | 80/80 | 17/20 |
+| band coverage (relative condition) | 0.906 | 0.900 | 0.903 | 0.896 | 0.85 |
+| band coverage (hidden condition itself) | 0.942 | 0.992 | 0.946 | 0.996 | |
+| median band width at 62' | 0.14 | 0.14 | 0.14 | 0.14 | |
+
+Read the correlation jump carefully. Every other player has 0 recent minutes, so his estimate is
+unchanged; leaving RFC-03 out, the held-out correlation at 62' is 0.713 either way. The jump from
+0.52 to 0.85 is one player per match, the one the old estimate got most wrong, moving to where he
+belongs. Coverage against hidden condition itself is now the fairer band check, since the
+estimate aims at where a player started and not only at his own first 20 minutes.
+
+Not sensitive to the assumed share on held-out seeds 21-100: 0.25 gives r 0.748 and 80/80, 0.75
+gives r 0.894 and 80/80; relative coverage stays 0.89 to 0.90.

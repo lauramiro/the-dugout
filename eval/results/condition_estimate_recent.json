@@ -1,0 +1,26 @@
+{
+ "seeds": [
+  1,
+  20
+ ],
+ "recent_minutes": true,
+ "r62": 0.853,
+ "n62": 400,
+ "pooled": 0.889,
+ "n_pooled": 18940,
+ "rel62": 0.796,
+ "below": 20,
+ "valid": 20,
+ "cover": 0.9,
+ "cover_abs": 0.992,
+ "width": 0.142,
+ "width_by_role": {
+  "CB": 0.132,
+  "CM": 0.14,
+  "FB": 0.149,
+  "ST": 0.135,
+  "W": 0.146
+ },
+ "ceiling_r62": 0.946,
+ "ceiling_pooled": 0.881
+}

@@ -376,3 +376,30 @@ def test_lineup_from_scenario_carries_recent_minutes():
     by_id = {p["id"]: p for p in lineup}
     assert by_id["RFC-03"]["recent_minutes"] == 90
     assert set(by_id["RFC-03"]) == {"id", "team", "role", "side", "starting", "recent_minutes"}
+
+
+def test_recent_minutes_lower_the_starting_estimate_and_widen_the_band():
+    from dugout.stream.state_engine import RECENT_COST_PER_MIN
+
+    lineup = [{"id": "A-02", "team": "A", "role": "CM", "side": "centre", "starting": True, "recent_minutes": 90},
+              {"id": "A-03", "team": "A", "role": "CM", "side": "centre", "starting": True},
+              {"id": "B-01", "team": "B", "role": "GK", "side": "centre", "starting": True}]
+    events = [ev(1, 0, "restart", "A", outcome="kickoff")]
+    events += [ev(i + 2, 30 + 30 * i, "hsr", "A", player_id=pid, dist_m=15.0)
+               for i, pid in enumerate(["A-02", "A-03"] * 40)]
+    snaps = run_engine(StateEngine(lineup), events)
+    first = {p["id"]: p for p in snaps[0]["players"]}
+    assert first["A-03"]["condition_est"] == 1.0
+    assert first["A-02"]["condition_est"] == pytest.approx(1.0 - 90 * RECENT_COST_PER_MIN, abs=1e-3)
+    last = {p["id"]: p for p in snaps[-1]["players"]}
+    gap = last["A-03"]["condition_est"] - last["A-02"]["condition_est"]
+    assert gap == pytest.approx(90 * RECENT_COST_PER_MIN, abs=0.02)
+    width = {pid: p["condition_band"][1] - p["condition_band"][0] for pid, p in last.items() if p["condition_band"]}
+    assert width["A-02"] > width["A-03"]
+
+
+def test_recent_cost_is_half_a_full_match_of_load():
+    from dugout.stream.state_engine import FULL_MATCH_LOAD, RECENT_COST_PER_MIN, RECENT_SHARE
+
+    assert RECENT_SHARE == 0.5
+    assert RECENT_COST_PER_MIN * 90 == pytest.approx(RECENT_SHARE * FULL_MATCH_LOAD)
