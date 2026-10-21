@@ -115,3 +115,29 @@ def test_value_that_rounds_to_zero_matches_either_sign():
 def test_internal_names_are_reported(name):
     errors = check_grounding(f"The model favours {name}: +3.9 pts (strong).", SAMPLE_PAYLOAD, "en")
     assert errors == [f"internal name '{name}' in the text; use plain words"]
+
+
+# The tiring player in the condition evidence is the one who would come off.
+@pytest.mark.parametrize("locale, text", [
+    ("en", "Bring on RFC-03 as a like-for-like change (strong)."),
+    ("en", "Bring RFC-03 on now (strong)."),
+    ("en", "The model would send on RFC-03 (strong)."),
+    ("en", "RFC-03 comes on for the last half hour (strong)."),
+    ("en", "Introduce RFC-03 on the left (strong)."),
+    ("es", "Que entre RFC-03 por la banda (fuerte)."),
+    ("es", "Meter a RFC-03 ahora (fuerte)."),
+    ("es", "Dar entrada a RFC-03 (fuerte)."),
+])
+def test_player_named_as_coming_on_is_reported(locale, text):
+    assert check_grounding(text, SAMPLE_PAYLOAD, locale) == [
+        "player RFC-03 is the one who would come off, not on"]
+
+
+@pytest.mark.parametrize("locale, text", [
+    ("en", "Bring on a fresh player for RFC-03 (strong)."),
+    ("en", "Take RFC-03 off and bring on a like-for-like change (strong)."),
+    ("en", "Replace RFC-03 now (strong)."),
+    ("es", "Sacar a RFC-03 y que entre un jugador fresco (fuerte)."),
+])
+def test_player_coming_off_is_fine(locale, text):
+    assert check_grounding(text, SAMPLE_PAYLOAD, locale) == []

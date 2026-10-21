@@ -83,6 +83,7 @@ def test_error_classes_group_by_kind():
     classify = narration_eval.classify
     assert classify("number +4.9 does not match any payload field") == "number not in payload"
     assert classify("player RFC-99 is not in the payload") == "unknown player id"
+    assert classify("player RFC-03 is the one who would come off, not on") == "player on, not off"
     assert classify("strength label 'lean' contradicts the recommendation ('strong')") == "wrong strength label"
     assert classify("strength label 'strong' is missing") == "strength label missing"
     assert classify("headline is longer than 12 words") == "over the word limit"

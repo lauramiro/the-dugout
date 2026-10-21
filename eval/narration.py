@@ -139,6 +139,8 @@ def classify(error: str) -> str:
         return "wrong decimal separator"
     if error.startswith("number"):
         return "number not in payload"
+    if error.startswith("player") and "come off" in error:
+        return "player on, not off"
     if error.startswith("player"):
         return "unknown player id"
     if "contradicts" in error:

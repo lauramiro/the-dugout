@@ -12,13 +12,18 @@ import re
 from dataclasses import dataclass
 from decimal import ROUND_HALF_UP, Decimal
 
-from dugout.agents.lexicon import DECIMAL_SEPARATOR, LOCALES, STRENGTH_LABELS
+from dugout.agents.lexicon import COMING_ON, DECIMAL_SEPARATOR, LOCALES, STRENGTH_LABELS
 
 MAX_HEADLINE_WORDS = 12
 MAX_REASON_WORDS = 25
 INTERVAL_PERCENT = 90
 
 PLAYER_ID = re.compile(r"\b[A-Z]{2,4}-\d{2,3}\b")
+_COMING_ON = {
+    locale: tuple(re.compile(p.replace("{id}", rf"(?P<id>{PLAYER_ID.pattern})"), re.IGNORECASE)
+                  for p in patterns)
+    for locale, patterns in COMING_ON.items()
+}
 # Option ids and request keys (sub_like_for_like, delta_whole, numbers.delta) are not words for a viewer.
 _INTERNAL_NAME = re.compile(r"\bnumbers\.\w+|\b[A-Za-z]+(?:_[A-Za-z0-9]+)+\b")
 _NUMBER = re.compile(r"(?<!\w)([+\-−])?(\d+)(?:([.,])(\d+))?")
@@ -104,6 +109,12 @@ def check_grounding(text: str, payload: dict, locale: str) -> list[str]:
     for player_id in dict.fromkeys(PLAYER_ID.findall(text)):
         if player_id not in known_ids:
             errors.append(f"player {player_id} is not in the payload")
+    tiring = {item["player_id"] for item in payload.get("evidence", [])
+              if item.get("type") == "condition" and item.get("player_id")}
+    coming_on = dict.fromkeys(match.group("id") for pattern in _COMING_ON[locale]
+                              for match in pattern.finditer(text))
+    for player_id in (p for p in coming_on if p in tiring):
+        errors.append(f"player {player_id} is the one who would come off, not on")
 
     candidates = payload_numbers(payload)
     separator = DECIMAL_SEPARATOR[locale]
