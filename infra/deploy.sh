@@ -56,6 +56,9 @@ BUDGET_USD="${BUDGET_USD:-20}"
 PREFIX="${PREFIX:-dugout}"
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+# With path conversion off, Windows programs (az, npx) need C:/Users/... rather than /c/Users/...;
+# that form also works in Git Bash itself.
+if command -v cygpath >/dev/null; then ROOT="$(cygpath -m "$ROOT")"; fi
 RG="$PREFIX-rg"
 HUB="matchevents"
 PUBSUB_HUB="decisions"
