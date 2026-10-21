@@ -20,8 +20,9 @@
 # Checked against `az ... -h`: containerapp up/env create/secret set/update, staticwebapp secrets list,
 # eventhubs keys list, containerapp create --registry-identity. Verified by the 2026-10-21 apply:
 # webpubsub key show primaryConnectionString, the service app's image and registries[0].server (its
-# username is empty: it pulls with its system identity). Still UNVERIFIED: budget create-with-rg input
-# shapes and staticwebapp secrets list apiKey. `--check-help` prints the help for these.
+# username is empty: it pulls with its system identity). The same apply's web upload confirmed
+# staticwebapp secrets list properties.apiKey, and a budget create-with-rg run confirmed its
+# @file input shapes. `--check-help` prints the help for these.
 #
 # Two Container Apps from one image (built once, by `containerapp up` on the service): $PREFIX-service runs
 # the Dockerfile's decision service; $PREFIX-runner runs the live pipeline (Event Hubs in, Web PubSub out)
@@ -201,6 +202,8 @@ echo "# 8. Budget alert on the resource group"
 START="$(date -u +%Y-%m-01T00:00:00Z)"
 END="$(date -u -d '+1 year' +%Y-%m-01T00:00:00Z)"
 TMP="$(mktemp -d)"
+# az is a Windows program: give it the C:/ form of the temp folder, as for ROOT.
+if command -v cygpath >/dev/null; then TMP="$(cygpath -m "$TMP")"; fi
 cat > "$TMP/notifications.json" <<JSON
 {
   "actual80": {"enabled": true, "operator": "GreaterThan", "threshold": 80,
