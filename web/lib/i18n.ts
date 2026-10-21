@@ -131,6 +131,15 @@ const en = {
   playerFocus: "Player focus",
   none: "None",
   recordedTracking: "Recorded tracking",
+  managersCall: "Manager's call",
+  changeMade: "A change",
+  sameAsModel: "Same as the model's pick",
+  differentCall: "A different call",
+  minutesAfterCard: "{n} min after the card",
+  shot: "Shot",
+  foul: "Foul",
+  comesOn: "Comes on",
+  whatIf: "What if",
 } as const;
 
 export type StringKey = keyof typeof en;
@@ -264,6 +273,15 @@ const es: Dict = {
   playerFocus: "Jugador a seguir",
   none: "Ninguno",
   recordedTracking: "Seguimiento grabado",
+  managersCall: "Decisión del entrenador",
+  changeMade: "Un cambio",
+  sameAsModel: "Igual que la opción del modelo",
+  differentCall: "Otra decisión",
+  minutesAfterCard: "{n} min después de la tarjeta",
+  shot: "Tiro",
+  foul: "Falta",
+  comesOn: "Entra al campo",
+  whatIf: "¿Y si...?",
 };
 
 

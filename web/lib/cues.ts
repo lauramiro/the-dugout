@@ -95,13 +95,16 @@ function cardCues(cardPos: number, card: DecisionCard, events: readonly Timed<Ma
     }
   }
 
+  // A manager_sub card is raised by the change itself: that change is not a call on it.
+  if (payload.trigger === "manager_sub") return out;
   const action = payload.manager_action;
   if (action) {
     const callPos = Math.max(at(action.period, action.t_ms), cardPos);
     out.push({
       id: `manager_call:${id}`, kind: "manager_call", in_pos: callPos, out_pos: callPos + MANAGER_CALL_MS,
       data: {
-        decision_id: id, team: payload.team, subs: action.subs, option_id: action.option_id,
+        decision_id: id, team: payload.team, subs: action.subs, no_change: action.subs.length === 0,
+        option_id: action.option_id,
         matched: action.option_id === payload.recommendation.option_id,
         minutes_after: Math.round((callPos - cardPos) / MIN_MS),
       },
@@ -114,7 +117,7 @@ function cardCues(cardPos: number, card: DecisionCard, events: readonly Timed<Ma
       .map((e) => ({ off: e.item.player_id, on: e.item.player_in_id ?? null }));
     out.push({
       id: `manager_call:${id}`, kind: "manager_call", in_pos: closedPos, out_pos: closedPos + MANAGER_CALL_MS,
-      data: { decision_id: id, team: payload.team, subs, option_id: null, matched: null,
+      data: { decision_id: id, team: payload.team, subs, no_change: false, option_id: null, matched: null,
         minutes_after: Math.round((closedPos - cardPos) / MIN_MS) },
     });
   }

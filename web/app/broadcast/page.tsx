@@ -2,7 +2,9 @@
 
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { FieldView, type PlayerTag } from "../../components/broadcast/FieldView";
+import { FocusCard, GoalFlash, ManagerCall, WhatIf } from "../../components/broadcast/Graphics";
 import { LowerThird } from "../../components/broadcast/LowerThird";
+import { Worm } from "../../components/broadcast/Worm";
 import { useHeldCues } from "../../components/broadcast/useHeldCues";
 import { Scorebug } from "../../components/broadcast/Scorebug";
 import {
@@ -72,7 +74,13 @@ export default function BroadcastPage() {
   const snapshotAt = lastAtOrBefore(log.snapshots, pos);
   const snapshot = snapshotAt >= 0 ? log.snapshots[snapshotAt].item : null;
   const tags = playerTags(shown, prefs.player, snapshot, log.roster);
-  const decision = [...shown].reverse().find((c) => c.kind === "decision");
+  const latest = (kind: Cue["kind"]) => [...shown].reverse().find((c) => c.kind === kind);
+  const decision = latest("decision");
+  const goalCue = latest("goal");
+  const callCue = latest("manager_call");
+  const focusCue = latest("focus_event");
+  // Full time: replay's playhead stops at the end, so the segment shows from there on.
+  const whatifCue = cues.find((c) => c.kind === "whatif" && pos >= c.in_pos);
   const decisionCard = decision
     ? log.cards.find((c) => c.item.payload.decision_id === decision.data.decision_id)?.item
     : undefined;
@@ -90,6 +98,32 @@ export default function BroadcastPage() {
           t={t}
         />
       )}
+      {goalCue && <GoalFlash key={goalCue.id} cue={goalCue} roster={log.roster} t={t} />}
+      {callCue && <ManagerCall key={callCue.id} cue={callCue} roster={log.roster} t={t} />}
+      {focusCue && prefs.player && (
+        <FocusCard key={focusCue.id} cue={focusCue} focus={prefs.player} roster={log.roster} t={t} />
+      )}
+      {whatifCue && (
+        <WhatIf
+          cue={whatifCue}
+          cards={log.cards.map((c) => c.item)}
+          roster={log.roster}
+          locale={prefs.locale}
+          mode={prefs.mode}
+          t={t}
+        />
+      )}
+      <Worm
+        winprob={log.winprob}
+        cards={log.cards.map((c) => c.pos)}
+        playhead={pos}
+        duration={log.duration}
+        firstHalfEnd={log.firstHalfEnd}
+        roster={log.roster}
+        club={prefs.club}
+        locale={prefs.locale}
+        t={t}
+      />
       <Scorebug roster={log.roster} score={goals} tMs={tMs} live={live} club={prefs.club} t={t} />
       <SettingsChip
         prefs={prefs}

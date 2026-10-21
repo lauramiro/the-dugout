@@ -175,3 +175,22 @@ test("holdCues forgets a cue when the playhead goes back before it", () => {
   assert.deepEqual(holdCues([cue], 50, seen, 1500, 4000), []);
   assert.equal(seen.has("g"), false);
 });
+
+test("a card raised by the manager's own substitution gets no manager-call cue", () => {
+  const action = { period: 2 as const, t_ms: 4_740_000, subs: [{ off: "RFC-03", on: "RFC-15" }], option_id: null };
+  const raised = card({ id: "rfc-79-00", t_ms: 4_740_000, trigger: "manager_sub", manager_action: action });
+  const fading = card({ id: "rfc-60-20", t_ms: 3_620_000,
+    manager_action: { ...action, option_id: "sub_like_for_like" } });
+  const calls = ofKind(buildCues(log([fading, raised]), null), "manager_call");
+  assert.deepEqual(calls.map((c) => c.id), ["manager_call:rfc-60-20"]);
+});
+
+test("a manager action with no subs is a settled no-change call", () => {
+  const settled = card({ id: "cas-75-40", t_ms: 4_500_000, team: "CAS",
+    manager_action: { period: 2, t_ms: 4_900_000, subs: [], option_id: "no_change" } });
+  const [cue] = ofKind(buildCues(log([settled]), null), "manager_call");
+  assert.equal(cue.data.no_change, true);
+  const closed = { period: 2 as const, t_ms: 4_740_000, reason: "change" as const };
+  const [live] = ofKind(buildCues(log([card({ id: "x", t_ms: 4_300_000, closed })]), null), "manager_call");
+  assert.equal(live.data.no_change, false, "live: a change happened, the subs just did not arrive");
+});
