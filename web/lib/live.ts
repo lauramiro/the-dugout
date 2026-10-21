@@ -1,9 +1,11 @@
-// Web PubSub feed (open the page with ?source=live). The stub publishes bare contract
-// payloads with no envelope, so each message is recognised by its shape. Until the live
-// pipeline sends the roster and period ends, only what arrives is shown.
+// Web PubSub feed (open the page with ?source=live). Messages have no envelope, so each is
+// recognised by its shape: a closed card by its kind, a card by decision_id (the service's
+// card carries the payload under `payload`; the old stub sent a bare payload), an event by
+// seq, a tracking frame by ball, a snapshot by subs_left. Until the live pipeline sends the
+// roster and period ends, only what arrives is shown.
 
 import { HALF_MS, lastAtOrBefore, toPos } from "./clock";
-import type { DecisionCard, DecisionPayload, MatchEvent, Snapshot, TrackingFrame } from "./contracts";
+import type { CardClosed, CardMessage, DecisionCard, DecisionPayload, MatchEvent, Snapshot, TrackingFrame } from "./contracts";
 import { emptyLog, interpolate, type DataSource, type FeedState, type PitchFrame, type Timed } from "./datasource";
 
 // public/config.json is written at deploy time by infra/deploy.sh: {"stubUrl": "https://..."}
@@ -84,11 +86,31 @@ export class LiveDataSource implements DataSource {
     const add = <T>(list: Timed<T>[], item: T, pos: number) => [...list, { pos, item }].sort((a, b) => a.pos - b.pos);
     let pos: number;
     let next = log;
-    if ("decision_id" in msg) {
-      const payload = msg as unknown as DecisionPayload;
-      const card: DecisionCard = { period: payload.t_ms >= HALF_MS ? 2 : 1, payload, narration: {} };
+    if (msg.kind === "card_closed") {
+      const c = msg as unknown as CardClosed;
+      pos = toPos(c.period, c.t_ms, end1);
+      const closed = { period: c.period, t_ms: c.t_ms, reason: c.reason };
+      next = {
+        ...log,
+        cards: log.cards.map((x) => (x.item.payload.decision_id === c.id ? { ...x, item: { ...x.item, closed } } : x)),
+      };
+    } else if ("decision_id" in msg) {
+      const full = "payload" in msg ? (msg as unknown as CardMessage) : null;
+      const payload = full ? full.payload : (msg as unknown as DecisionPayload);
+      const earlier = log.cards.find((c) => c.item.payload.decision_id === payload.decision_id)?.item;
+      const narration = { ...earlier?.narration };
+      if (full) {
+        narration[full.locale] = {
+          ...narration[full.locale],
+          [full.mode]: { headline: full.headline, reason: full.reason, source: full.source },
+        };
+      }
+      // The payload's t_ms alone is ambiguous in first-half added time; cards carry no period yet.
+      const period = earlier?.period ?? (payload.t_ms >= HALF_MS ? 2 : 1);
+      const card: DecisionCard = { ...earlier, period, payload, narration };
       pos = toPos(card.period, payload.t_ms, end1);
-      // A card sent again (say, once the manager has acted) replaces the earlier copy.
+      // A card sent again (another mode, or once the manager has acted) replaces the earlier
+      // copy and keeps its narrations and closing.
       const others = log.cards.filter((c) => c.item.payload.decision_id !== payload.decision_id);
       next = { ...log, cards: add(others, card, pos) };
     } else if ("seq" in msg) {

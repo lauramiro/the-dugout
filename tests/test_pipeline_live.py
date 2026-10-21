@@ -139,9 +139,12 @@ def test_snapshot_messages_are_read_as_snapshots(run):
         assert isinstance(m["t_ms"], int)
 
 
-def test_card_closed_messages_are_ignored_by_live_ts(run):
+def test_card_closed_messages_carry_what_live_ts_reads(run):
     closed = [m for m in run[0] if m.get("kind") == "card_closed"]
     assert closed and not {"decision_id", "seq", "ball", "subs_left"} & set(closed[0])
+    cards = {m["decision_id"] for m in run[0] if "decision_id" in m}
+    for m in closed:
+        assert {"id", "t_ms", "period", "reason"} <= set(m) and m["id"] in cards
 
 
 def test_card_messages_carry_a_full_payload(run):
@@ -150,8 +153,10 @@ def test_card_messages_carry_a_full_payload(run):
     assert {"headline", "reason", "source", "locale", "mode"} <= set(card)
 
 
-@pytest.mark.xfail(strict=True, reason="live.ts reads t_ms and the options from the message itself, "
-                   "but the service publishes a card with them under 'payload' (see TASK.md, Blocked)")
 def test_card_messages_match_what_live_ts_reads(run):
-    card = next(m for m in run[0] if "decision_id" in m)
-    assert PAYLOAD_KEYS <= set(card)
+    """web/lib/live.ts: a card is recognised by decision_id and read from msg.payload, with
+    its narration from headline, reason and source under msg.locale and msg.mode."""
+    card = next(m for m in run[0] if "decision_id" in m and m.get("kind") != "card_closed")
+    assert PAYLOAD_KEYS <= set(card["payload"]) and card["payload"]["decision_id"] == card["decision_id"]
+    assert {"headline", "reason", "source"} <= set(card) and card["locale"] == "en"
+    assert isinstance(card["payload"]["t_ms"], int)

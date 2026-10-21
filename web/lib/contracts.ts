@@ -106,6 +106,28 @@ export interface ManagerAction {
   option_id: string | null;
 }
 
+// The live service's card message (dugout.service.app.open_and_publish): the engine payload
+// under `payload`, with one narration beside it.
+export interface CardMessage {
+  decision_id: string;
+  locale: Locale;
+  mode: Mode;
+  headline: string;
+  reason: string;
+  source: "model" | "template";
+  payload: DecisionPayload;
+}
+
+// A decision point's card closing (dugout.stream.triggers), published by the live pipeline.
+export interface CardClosed {
+  kind: "card_closed";
+  id: string; // the decision id
+  t_ms: number;
+  period: 1 | 2;
+  team: TeamCode;
+  reason: "change" | "timeout" | "full_time";
+}
+
 // Agent output per locale and mode (dugout.agents.pipeline.Card).
 export type Locale = "en"; // the project is English only
 export type Mode = "casual" | "analyst";
@@ -122,7 +144,7 @@ export interface DecisionCard {
   narration: Partial<Record<Locale, Partial<Record<Mode, Narration>>>>;
   /** The trigger's id ("rfc-62-01"); replay files only. */
   point_id?: string;
-  /** When the card closed (dugout.stream.triggers); replay files only. */
+  /** When the card closed (dugout.stream.triggers): from the replay files, or live from a CardClosed message. */
   closed?: { period: 1 | 2; t_ms: number; reason: "change" | "timeout" | "full_time" };
   /** The full-time review row; replay files only. */
   review?: Review;
