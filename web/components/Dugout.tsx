@@ -1,7 +1,9 @@
 import { memo } from "react";
 import type { Locale, Mode, Roster, Snapshot, SnapshotPlayer, TeamCode } from "../lib/contracts";
-import { band, forecasts, playerName, shirt, teamPlayers, trend, type Trend } from "../lib/derive";
+import { band, CONDITION_LINE, forecasts, playerName, shirt, teamPlayers, trend, type Trend } from "../lib/derive";
 import { pct, type Translate } from "../lib/i18n";
+
+const LINE_PCT = Math.round(CONDITION_LINE * 100);
 
 function TrendArrow({ value }: { value: Trend }) {
   // One glyph rotated: steady points right, falling 45 degrees down, steep straight down.
@@ -46,7 +48,7 @@ function ConditionRow({ p, roster, mode, locale, flagged, t }: { p: SnapshotPlay
               />
             )}
             <span className="fill" style={{ width: `${value * 100}%` }} />
-            <span className="line60" />
+            <span className="card-line" style={{ left: `${CONDITION_LINE * 100}%` }} />
           </span>
           <span className="cond-val">{pct(value, locale, 0)}%</span>
           <TrendArrow value={trend(p.trend_per_min)} />
@@ -63,7 +65,7 @@ export const ConditionBars = memo(function ConditionBars(props: BarsProps) {
       <div className="section-head">
         <h2 className="eyebrow">{t("condition")}</h2>
         <span className="legend" aria-hidden>
-          <i className="high" />75+ <i className="mid" />60-75 <i className="low" />&lt;60
+          <i className="high" />80+ <i className="mid" />{LINE_PCT}-80 <i className="low" />&lt;{LINE_PCT}
         </span>
       </div>
       <p className="help">{t("conditionHelp")}</p>

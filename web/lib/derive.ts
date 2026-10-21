@@ -4,14 +4,17 @@
 import type { MatchEvent, Roster, Snapshot, SnapshotPlayer, TeamCode } from "./contracts";
 import type { Timed } from "./datasource";
 
-export const CONDITION_LINE = 0.6;
+// The condition_drop trigger's constants (dugout/stream/triggers.py): a card opens when a
+// player is CONDITION_MARGIN below his team's outfield median and under CONDITION_LINE.
+export const CONDITION_LINE = 0.69;
+export const CONDITION_MARGIN = 0.1;
 const FORECAST_HORIZON_MIN = 15;
 
 export type Band = "high" | "mid" | "low";
 
-/** Three bands: 75% and up, 60 to 75, under 60. */
+/** Three bands: 80% and up, the card line (69%) to 80, under the line. */
 export function band(condition: number): Band {
-  if (condition >= 0.75) return "high";
+  if (condition >= 0.8) return "high";
   if (condition >= CONDITION_LINE) return "mid";
   return "low";
 }
@@ -62,14 +65,25 @@ export interface WindowForecast {
   minutes: number | null; // null: already below the line
 }
 
+function median(xs: number[]): number {
+  const s = [...xs].sort((a, b) => a - b);
+  const m = s.length >> 1;
+  return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
+}
+
 /**
- * Substitution windows: players under 60%, or heading there within 15 minutes on
- * their current trend (the snapshot's own condition_est and trend_per_min).
+ * Substitution windows, on the card's own rule: players at least 10 points below their
+ * team's outfield median who are under the 69% line, or heading there within 15 minutes
+ * on their current trend (the snapshot's own condition_est and trend_per_min).
  */
 export function forecasts(players: readonly SnapshotPlayer[], team: TeamCode): WindowForecast[] {
   const out: WindowForecast[] = [];
+  const ests = players.flatMap((p) => (p.id.startsWith(`${team}-`) && p.condition_est !== null ? [p.condition_est] : []));
+  if (ests.length === 0) return out;
+  const teamMedian = median(ests);
   for (const p of players) {
     if (!p.id.startsWith(`${team}-`) || p.condition_est === null) continue;
+    if (p.condition_est > teamMedian - CONDITION_MARGIN) continue;
     if (p.condition_est < CONDITION_LINE) {
       out.push({ playerId: p.id, minutes: null });
     } else if (p.trend_per_min !== null && p.trend_per_min < 0) {

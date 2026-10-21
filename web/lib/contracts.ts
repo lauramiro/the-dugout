@@ -65,7 +65,7 @@ export interface Snapshot {
 }
 
 // 4. Decision payload
-export type Trigger = "condition_below_60" | "goal_after_55" | "manager_sub";
+export type Trigger = "condition_drop" | "goal_after_55" | "manager_sub";
 export type Strength = "strong" | "lean" | "toss_up";
 
 export interface DecisionOption {

@@ -1029,9 +1029,8 @@ p {
   background: rgba(21, 33, 27, 0.14);
 }
 
-.bar .line60 {
+.bar .card-line {
   position: absolute;
-  left: 60%;
   top: -2px;
   bottom: -2px;
   width: 1px;

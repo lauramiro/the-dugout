@@ -129,7 +129,7 @@ def manager_action(point: dict, payload: dict, windows: list[dict], events: list
                    end: tuple[int, int], roles: dict[str, str]) -> dict:
     """What the deciding team's manager did about this decision point.
 
-    manager_sub: the change that raised the point. condition_below_60: the change that took
+    manager_sub: the change that raised the point. condition_drop: the change that took
     the flagged player off, or no change if he stayed on to the end. goal_after_55: the
     team's next change before the next goal, or no change. `period`/`t_ms` mark when the
     call became known (the change, the next goal, or full time)."""
@@ -140,7 +140,7 @@ def manager_action(point: dict, payload: dict, windows: list[dict], events: list
     until = end
     if trigger == "manager_sub":
         found = next((w for w in later if order(w["period"], w["t_ms"]) == at), None)
-    elif trigger == "condition_below_60":
+    elif trigger == "condition_drop":
         player = point["detail"]["player_id"]
         found = next((w for w in later if any(s["off"] == player for s in w["subs"])), None)
     else:
