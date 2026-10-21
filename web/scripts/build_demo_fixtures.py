@@ -195,18 +195,6 @@ RECAP = {
         "behind": "The manager's call rated {win} pts of win probability and {xpts} expected points above the model's option.",
         "unpriced": "The card has no option for the manager's change at the minute he made it, so there is no gap to show.",
     },
-    "es": {
-        "same": "El entrenador y el modelo eligieron la misma opción.",
-        "gap": "La opción del modelo valía {win} pts de probabilidad de victoria y {xpts} puntos esperados más que la del entrenador.",
-        "behind": "La decisión del entrenador valía {win} pts de probabilidad de victoria y {xpts} puntos esperados más que la opción del modelo.",
-        "unpriced": "La tarjeta no tiene ninguna opción para el cambio del entrenador en el minuto en que lo hizo, así que no hay diferencia que mostrar.",
-    },
-    "ca": {
-        "same": "L'entrenador i el model van triar la mateixa opció.",
-        "gap": "L'opció del model valia {win} punts de probabilitat de victòria i {xpts} punts esperats més que la de l'entrenador.",
-        "behind": "La decisió de l'entrenador valia {win} punts de probabilitat de victòria i {xpts} punts esperats més que l'opció del model.",
-        "unpriced": "La targeta no té cap opció per al canvi de l'entrenador al minut en què el va fer, així que no hi ha diferència a mostrar.",
-    },
 }
 
 

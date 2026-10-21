@@ -1,5 +1,5 @@
 import type { Locale, Mode, Roster, TeamCode } from "../lib/contracts";
-import { LOCALES, type Translate } from "../lib/i18n";
+import type { Translate } from "../lib/i18n";
 
 export interface Settings {
   mode: Mode;
@@ -52,12 +52,6 @@ export function ModeSwitcher({ settings, roster, onChange, t }: Props) {
         value={settings.focus}
         options={teams.map((code) => ({ value: code, label: roster?.teams[code]?.name.split(" ")[0] ?? code }))}
         onPick={(focus) => onChange({ ...settings, focus })}
-      />
-      <Segmented
-        label={t("language")}
-        value={settings.locale}
-        options={LOCALES.map((l) => ({ value: l, label: l.toUpperCase() }))}
-        onPick={(locale) => onChange({ ...settings, locale })}
       />
     </div>
   );
