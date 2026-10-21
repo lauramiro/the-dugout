@@ -105,4 +105,5 @@ def test_prompts_carry_the_narrator_rules():
     for rule in ("12 words", "25 words", "the model", "never \"will\"", "toss-up", "options are close"):
         assert rule in narrator
     localizer = load_prompt("localizer").lower()
-    assert "casual" in localizer and "analyst" in localizer and "decimal comma" in localizer
+    assert "casual" in localizer and "analyst" in localizer and "never a decimal comma" in localizer
+    assert not any(word in localizer for word in ("spanish", "catalan", "es or ca", "el modelo"))
