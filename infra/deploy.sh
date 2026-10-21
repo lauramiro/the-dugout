@@ -178,10 +178,13 @@ fi
 echo "# 6. Local .env for the replayer (git-ignored)"
 if [[ $APPLY == 1 ]]; then
   umask 077
-  { echo "EVENTHUB_CONNECTION_STRING=$EH_CONN"; echo "EVENTHUB_NAME=$HUB"; } > "$ROOT/.env"
-  echo "wrote $ROOT/.env"
+  # Replace only these two keys; other settings (FOUNDRY_*) stay.
+  OTHERS="$(grep -v -E '^(EVENTHUB_CONNECTION_STRING|EVENTHUB_NAME)=' "$ROOT/.env" 2>/dev/null || true)"
+  { [[ -n "$OTHERS" ]] && echo "$OTHERS"
+    echo "EVENTHUB_CONNECTION_STRING=$EH_CONN"; echo "EVENTHUB_NAME=$HUB"; } > "$ROOT/.env"
+  echo "updated EVENTHUB_* in $ROOT/.env"
 else
-  echo "+ (write EVENTHUB_CONNECTION_STRING and EVENTHUB_NAME to $ROOT/.env)"
+  echo "+ (set EVENTHUB_CONNECTION_STRING and EVENTHUB_NAME in $ROOT/.env, keeping other lines)"
 fi
 
 echo "# 7. Build and upload the web page"
