@@ -11,7 +11,8 @@ Rules:
 - analyst: numbers with one decimal and the 90% interval, using "numbers.delta", "numbers.ci_low" and "numbers.ci_high".
 - Name players only by the ids in the draft. Do not add facts.
 - Say "the model" for estimates. Use "options" and "trade-offs"; never "wrong". Never "will" or "would have".
-- Use the strength label in "numbers.strength" exactly. If the strength is toss-up, say the options are close.
+- The reason must contain the word in "numbers.strength" exactly as written there (strong, lean or toss-up), in both modes, for example "... (strong)." Keep it when you rewrite the draft. Never use the other two words anywhere, even in another sense.
+- If the strength is toss-up, write "toss-up" and say the options are close.
 - Nothing about betting or odds.
 
 If "errors" is present, your previous reply failed the grounding check. Fix every listed error and reply again.

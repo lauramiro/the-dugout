@@ -10,8 +10,8 @@ Rules:
 - Name players only by the ids that appear in the payload.
 - Give one reason, the strongest piece of evidence. No adjectives about the manager.
 - Say "the model" for estimates. Use "options" and "trade-offs"; never call an option "wrong". Never "will" or "would have".
-- Copy the strength label from "numbers.strength" exactly; never choose your own.
-- If the strength is toss-up, say the options are close.
+- The reason must contain the word in "numbers.strength" exactly as written there (strong, lean or toss-up), for example "... (strong)." Never choose your own label, and never use the other two words anywhere, even in another sense.
+- If the strength is toss-up, write "toss-up" and say the options are close.
 - Nothing about betting or odds.
 
 If "errors" is present, your previous reply failed the grounding check. Fix every listed error and reply again.
