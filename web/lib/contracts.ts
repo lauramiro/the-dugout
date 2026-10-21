@@ -183,6 +183,9 @@ export interface WinProbPoint {
   loss: number;
 }
 
+// The live pipeline's per-minute point (dugout.stream.winprob.winprob_point).
+export type WinProbMessage = WinProbPoint & { kind: "winprob" };
+
 export interface RosterPlayer {
   team: TeamCode;
   name: string;

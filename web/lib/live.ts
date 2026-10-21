@@ -1,11 +1,15 @@
 // Web PubSub feed (open the page with ?source=live). Messages have no envelope, so each is
-// recognised by its shape: a closed card by its kind, a card by decision_id (the service's
-// card carries the payload under `payload`; the old stub sent a bare payload), an event by
-// seq, a tracking frame by ball, a snapshot by subs_left. Until the live pipeline sends the
-// roster and period ends, only what arrives is shown.
+// recognised by its shape: a win-probability point or a closed card by its kind, a card by
+// decision_id (the service's card carries the payload under `payload`; the old stub sent a
+// bare payload), an event by seq (the pipeline sends key events only), a tracking frame by
+// ball, a snapshot by subs_left. The roster comes from the demo's team sheet; until the
+// pipeline sends period ends, only what arrives is shown.
 
 import { HALF_MS, lastAtOrBefore, toPos } from "./clock";
-import type { CardClosed, CardMessage, DecisionCard, DecisionPayload, MatchEvent, Snapshot, TrackingFrame } from "./contracts";
+import type {
+  CardClosed, CardMessage, DecisionCard, DecisionPayload, MatchEvent, Roster, Snapshot, TrackingFrame, WinProbMessage,
+  WinProbPoint,
+} from "./contracts";
 import { emptyLog, interpolate, type DataSource, type FeedState, type PitchFrame, type Timed } from "./datasource";
 
 // public/config.json is written at deploy time by infra/deploy.sh: {"stubUrl": "https://..."}
@@ -59,6 +63,7 @@ export class LiveDataSource implements DataSource {
   private async connect(): Promise<void> {
     const generation = ++this.generation;
     try {
+      void this.loadRoster(generation);
       const base = await loadStubUrl();
       const res = await fetch(`${base}/negotiate`);
       const { url } = (await res.json()) as { url: string | null };
@@ -80,13 +85,32 @@ export class LiveDataSource implements DataSource {
     }
   }
 
+  // The scenario's team sheet, as a broadcaster has it before kick-off; without it the page
+  // shows player ids.
+  private async loadRoster(generation: number): Promise<void> {
+    try {
+      const res = await fetch("/demo/roster.json");
+      if (!res.ok) return;
+      const roster = (await res.json()) as Roster;
+      if (this.disposed || generation !== this.generation) return;
+      this.set({ log: { ...this.state.log, roster } });
+    } catch {
+      // no roster: names fall back to ids
+    }
+  }
+
   private receive(msg: Record<string, unknown>): void {
     const log = this.state.log;
     const end1 = log.firstHalfEnd;
     const add = <T>(list: Timed<T>[], item: T, pos: number) => [...list, { pos, item }].sort((a, b) => a.pos - b.pos);
     let pos: number;
     let next = log;
-    if (msg.kind === "card_closed") {
+    if (msg.kind === "winprob") {
+      const w = msg as unknown as WinProbMessage;
+      pos = toPos(w.period, w.t_ms, end1);
+      const point: WinProbPoint = { period: w.period, t_ms: w.t_ms, team: w.team, win: w.win, draw: w.draw, loss: w.loss };
+      next = { ...log, winprob: add(log.winprob, point, pos) };
+    } else if (msg.kind === "card_closed") {
       const c = msg as unknown as CardClosed;
       pos = toPos(c.period, c.t_ms, end1);
       const closed = { period: c.period, t_ms: c.t_ms, reason: c.reason };

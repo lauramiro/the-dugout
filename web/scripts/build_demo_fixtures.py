@@ -32,10 +32,10 @@ from dugout.agents.pipeline import NarrationPipeline, StubClient
 from dugout.agents.recap import RecapRow, template_line
 from dugout.agents.templates import MODES
 from dugout.engine.options import Option, evaluate
-from dugout.engine.payload import _exposed_player, decide
-from dugout.engine.wp import Flank, simulate_diff, summarize
+from dugout.engine.payload import decide
 from dugout.stream.replay import read_events
 from dugout.stream.snapshots import lineup_from_scenario, process
+from dugout.stream.winprob import situation, winprob_point
 
 ROOT = Path(__file__).resolve().parents[2]
 DEMO = ROOT / "web" / "public" / "demo"
@@ -155,17 +155,6 @@ def manager_action(point: dict, payload: dict, windows: list[dict], events: list
     return {"period": found["period"], "t_ms": found["t_ms"], "subs": found["subs"], "option_id": option}
 
 
-def situation(snapshot: dict, team: str) -> dict:
-    """The same situation decide() builds for this snapshot and team."""
-    opp = next(t for t in snapshot["score"] if t != team)
-    player = _exposed_player(snapshot, team)
-    flank = None
-    if player is not None:
-        flank = Flank(c0=player["condition_est"], drain=max(0.0, -player.get("trend_per_min", 0.0)))
-    return dict(t0=snapshot["t_ms"] // MIN_MS, home_goals=snapshot["score"][team], away_goals=snapshot["score"][opp],
-                lam_home90=snapshot["rates"][team]["for90"], lam_away90=snapshot["rates"][team]["against90"], flank=flank)
-
-
 def manager_option(snapshot: dict, payload: dict, action: dict) -> dict | None:
     """The manager's call as an option on the card's own draws (decide's default seed), so
     its gap to the card's options is a paired difference. A like-for-like change made later
@@ -260,13 +249,8 @@ def main() -> None:
     for s in snapshots:
         if s["t_ms"] % MIN_MS:
             continue
-        at = situation(s, home)
-        if s["period"] == 1:
-            at["t0"] = min(at["t0"], 45)  # first-half added time still has a whole half to come
-        diff = simulate_diff(**at, seed=SeedSequence(s["t_ms"]), n=20_000)
-        o = summarize(diff)
-        series.append({"period": s["period"], "t_ms": s["t_ms"], "team": home,
-                       "win": round(o.win, 3), "draw": round(o.draw, 3), "loss": round(o.loss, 3)})
+        point = winprob_point(s, home, n=20_000)
+        series.append({k: point[k] for k in ("period", "t_ms", "team", "win", "draw", "loss")})
     write_jsonl(DEMO / "winprob.jsonl", series)
 
     for c in cards:

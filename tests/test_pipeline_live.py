@@ -247,3 +247,21 @@ def test_other_versions_can_be_narrated_on_a_thread_pool():
     sent = pub._inner.sent
     ids = {m["decision_id"] for m in sent if "decision_id" in m}
     assert ids and sum("decision_id" in m for m in sent) == 4 * len(ids)
+
+
+def test_key_events_are_published_and_others_are_not(run):
+    sent = run[0]
+    events = [m for m in sent if "seq" in m]
+    types = [e["type"] for e in events]
+    assert set(types) <= set(live.KEY_EVENT_TYPES)
+    assert types.count("goal") == 5 and types.count("sub") == 3
+    assert not {"pass", "hsr", "sprint"} & set(types)
+
+
+def test_one_winprob_point_per_match_minute(run):
+    points = [m for m in run[0] if m.get("kind") == "winprob"]
+    keys = [(p["period"], p["t_ms"]) for p in points]
+    assert keys == sorted(set(keys))
+    assert all(p["t_ms"] % 60_000 == 0 for p in points)
+    assert len(points) >= 90
+    assert all(p["team"] == "RFC" for p in points)

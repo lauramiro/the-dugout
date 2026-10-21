@@ -40,6 +40,7 @@ from dugout.stream.replay import SPEEDS, load_dotenv, read_events, replay
 from dugout.stream.snapshots import lineup_from_scenario
 from dugout.stream.state_engine import StateEngine
 from dugout.stream.triggers import DecisionPoints
+from dugout.stream.winprob import winprob_point
 
 
 class Decisions(Protocol):
@@ -54,6 +55,10 @@ def _request(point: dict, locale: str, mode: str) -> dict:
 
 
 PUBLISH_EVERY_MS = 30_000
+MIN_MS = 60_000
+# Match events the broadcast graphics use (scorebug, goal flash, manager's call, focus cards);
+# passes, runs and duels stay off the feed.
+KEY_EVENT_TYPES = ("goal", "sub", "shot", "foul", "card")
 _UNREAD_SNAPSHOT_KEYS = ("match_id", "threat_by_channel")
 _UNREAD_PLAYER_KEYS = ("team", "role")
 
@@ -128,7 +133,10 @@ class PipelineRunner:
     """A replay Sink: feed it event batches, call `end_run` when the stream ends."""
 
     def __init__(self, lineup: list[dict], decisions: Decisions, publisher: Publisher | None,
-                 prior90: float = 1.35, publish_every_ms: int = PUBLISH_EVERY_MS) -> None:
+                 prior90: float = 1.35, publish_every_ms: int = PUBLISH_EVERY_MS,
+                 home: str | None = None) -> None:
+        # the scenario lists the home club first
+        self._home = home or lineup[0]["team"]
         self._lineup, self._prior90 = lineup, prior90
         self._decisions, self._publisher = decisions, publisher
         self._every_ms = publish_every_ms
@@ -140,10 +148,13 @@ class PipelineRunner:
         self._engine = StateEngine(self._lineup, prior90=self._prior90)
         self._points = DecisionPoints()
         self._last_published: tuple[int, int] | None = None  # (period, t_ms)
+        self._winprob_sent: set[tuple[int, int]] = set()
 
     def send(self, events: list[dict]) -> None:
         for e in events:
             self._handle(self._engine.feed(e))
+            if e.get("type") in KEY_EVENT_TYPES:
+                self._publish(e)
 
     def end_run(self) -> None:
         """End of the stream: last snapshots, close the open card, and start clean for the next run."""
@@ -162,6 +173,10 @@ class PipelineRunner:
             if opens_card or self._due(snapshot):
                 self._last_published = (snapshot.get("period", 1), snapshot["t_ms"])
                 self._publish(slim_snapshot(snapshot))
+            minute = (snapshot.get("period", 1), snapshot["t_ms"])
+            if snapshot["t_ms"] % MIN_MS == 0 and minute not in self._winprob_sent:
+                self._winprob_sent.add(minute)
+                self._publish(winprob_point(snapshot, self._home))
             for record in records:
                 if record["kind"] == "card_closed":
                     self._publish(record)
