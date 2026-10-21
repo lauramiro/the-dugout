@@ -101,3 +101,9 @@ def test_value_that_rounds_to_zero_matches_either_sign():
     for quoted in ("+0.0", "-0.0", "0.0"):
         line = f"Changing now: {quoted} pts win probability (strong)."
         assert check_grounding(line, payload, "en") == []
+
+
+@pytest.mark.parametrize("name", ["sub_like_for_like", "no_change", "delta_whole", "win_sub_lb", "numbers.delta"])
+def test_internal_names_are_reported(name):
+    errors = check_grounding(f"The model favours {name}: +3.9 pts (strong).", SAMPLE_PAYLOAD, "en")
+    assert errors == [f"internal name '{name}' in the text; use plain words"]

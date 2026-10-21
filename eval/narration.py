@@ -149,6 +149,8 @@ def classify(error: str) -> str:
         return "over the word limit"
     if error.startswith("reply is not JSON"):
         return "not valid JSON"
+    if error.startswith("internal name"):
+        return "internal name"
     return "other"
 
 

@@ -87,6 +87,7 @@ def test_error_classes_group_by_kind():
     assert classify("strength label 'strong' is missing") == "strength label missing"
     assert classify("headline is longer than 12 words") == "over the word limit"
     assert classify("reply is not JSON with a headline and a reason") == "not valid JSON"
+    assert classify("internal name 'no_change' in the text; use plain words") == "internal name"
     assert classify("something new") == "other"
 
 

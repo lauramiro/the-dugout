@@ -1,8 +1,9 @@
 """Deterministic grounding check: the code that stands between the agents and the screen.
 
 Every number in a text must match a payload field after rounding, every player id
-must exist in the payload, the strength label must match the recommendation, and
-a narration must respect the word limits. An empty error list means grounded.
+must exist in the payload, the strength label must match the recommendation, no
+internal name (an option id or request key) may appear, and a narration must respect
+the word limits. An empty error list means grounded.
 """
 
 from __future__ import annotations
@@ -18,6 +19,8 @@ MAX_REASON_WORDS = 25
 INTERVAL_PERCENT = 90
 
 PLAYER_ID = re.compile(r"\b[A-Z]{2,4}-\d{2,3}\b")
+# Option ids and request keys (sub_like_for_like, delta_whole, numbers.delta) are not words for a viewer.
+_INTERNAL_NAME = re.compile(r"\bnumbers\.\w+|\b[A-Za-z]+(?:_[A-Za-z0-9]+)+\b")
 _NUMBER = re.compile(r"(?<!\w)([+\-−])?(\d+)(?:([.,])(\d+))?")
 
 
@@ -93,6 +96,9 @@ def check_grounding(text: str, payload: dict, locale: str) -> list[str]:
     if locale not in LOCALES:
         raise ValueError(f"unknown locale: {locale}")
     errors: list[str] = []
+
+    for name in dict.fromkeys(_INTERNAL_NAME.findall(text)):
+        errors.append(f"internal name '{name}' in the text; use plain words")
 
     known_ids = payload_player_ids(payload)
     for player_id in dict.fromkeys(PLAYER_ID.findall(text)):
