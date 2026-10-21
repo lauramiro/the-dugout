@@ -3,15 +3,17 @@ import type { Roster } from "../lib/contracts";
 import type { PitchFrame } from "../lib/datasource";
 import { shirt } from "../lib/derive";
 
-const L = 105;
-const W = 68;
+export const PITCH_L = 105;
+const L = PITCH_L;
+export const PITCH_W = 68;
+const W = PITCH_W;
 const STRIPES = 12;
 
 // Contract coordinates: y grows towards the left touchline of a team attacking x = 105,
 // so it points up the screen.
-const sy = (y: number) => W - y;
+export const sy = (y: number) => W - y;
 
-const Markings = memo(function Markings() {
+export const Markings = memo(function Markings() {
   const box = (x: number, dir: 1 | -1, depth: number, width: number) => (
     <rect x={dir === 1 ? x : x - depth} y={(W - width) / 2} width={depth} height={width} />
   );

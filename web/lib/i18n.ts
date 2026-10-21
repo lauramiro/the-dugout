@@ -125,6 +125,12 @@ const en = {
   managerIq: "The manager matched the model on {a} of {n}.",
   noDecisionsYet: "No decisions yet.",
   recapTemplate: "template",
+  broadcastLabel: "Match picture with broadcast graphics",
+  broadcastSettings: "Settings",
+  favouriteClub: "Favourite club",
+  playerFocus: "Player focus",
+  none: "None",
+  recordedTracking: "Recorded tracking",
 } as const;
 
 export type StringKey = keyof typeof en;
@@ -252,6 +258,12 @@ const es: Dict = {
   managerIq: "El entrenador coincidió con el modelo en {a} de {n}.",
   noDecisionsYet: "Todavía no hay decisiones.",
   recapTemplate: "plantilla",
+  broadcastLabel: "Imagen del partido con grafismos",
+  broadcastSettings: "Ajustes",
+  favouriteClub: "Club favorito",
+  playerFocus: "Jugador a seguir",
+  none: "Ninguno",
+  recordedTracking: "Seguimiento grabado",
 };
 
 
