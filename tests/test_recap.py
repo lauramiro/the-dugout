@@ -142,3 +142,45 @@ def test_prompt_carries_the_rules():
     prompt = load_prompt("recap").lower()
     for rule in ("the model", "would have won", "25 words", "strength", "never compute", "options"):
         assert rule in prompt
+
+
+ES_ROWS = [
+    RecapRow("rfc-62-01", 62, "RFC", "No change", "Like-for-like substitution", 0.039, 0.09),
+    RecapRow("rfc-70-01", 70, "RFC", "Defensive change", "A later like-for-like change", 0.004, 0.01),
+    RecapRow("rfc-84-01", 84, "RFC", "No change", "No change", 0.0, 0.0),
+]
+
+
+@pytest.mark.parametrize("row", ES_ROWS, ids=["strong", "close", "same"])
+@pytest.mark.parametrize("mode", MODES)
+def test_every_spanish_template_passes_the_grounding_check(row, mode):
+    text = template_line(row, "es", mode)
+    assert check_narration(Narration("", text), recap_payload(row), "es") == []
+    assert "modelo" in text and "change" not in text.lower()
+
+
+def test_spanish_request_carries_spanish_calls_and_decimal_commas():
+    line = "62': el modelo prefirió un cambio en la misma posición, +3,9 pts de victoria (fuerte)."
+    client = stub([line])
+    (out,) = write_recap(ES_ROWS[:1], client, locale="es", modes=("analyst",))["analyst"]
+    assert (out.source, out.text) == ("model", line)
+    request = json.loads(client.calls[0].user)
+    assert request["target"] == {"locale": "es", "mode": "analyst"}
+    assert request["row"]["manager_call"] == "no cambiar"
+    assert request["numbers"]["delta"] == "+3,9" and request["numbers"]["strength"] == "fuerte"
+
+
+@pytest.mark.parametrize("phrase", ["el entrenador habría ganado", "fue un error", "la culpa es del entrenador"])
+def test_spanish_blame_wording_is_rejected(phrase):
+    text = f"62': {phrase}, +3,9 pts de victoria (fuerte)."
+    (line,) = write_recap(ES_ROWS[:1], stub([text, text]), locale="es", modes=("analyst",))["analyst"]
+    assert (line.source, line.fallback) == ("template", "ungrounded")
+
+
+def test_spanish_calls_keep_the_player_id():
+    from dugout.agents.recap import call_text
+
+    assert call_text("like-for-like substitution for RFC-03", "es") == "un cambio en la misma posición (RFC-03)"
+    assert call_text("No change", "es") == "no cambiar"
+    assert call_text("Replace winger (RFC-11 for RFC-19)", "es") == "Replace winger (RFC-11 for RFC-19)"
+    assert call_text("like-for-like substitution for RFC-03", "en") == "like-for-like substitution for RFC-03"

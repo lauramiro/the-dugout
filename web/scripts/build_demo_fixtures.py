@@ -188,7 +188,10 @@ def manager_option(snapshot: dict, payload: dict, action: dict) -> dict | None:
     return {"id": o["id"], "win": o["win"], "xpts": o["xpts"]}
 
 
-UNPRICED = "The card has no option for the manager's change at the minute he made it, so there is no gap to show."
+UNPRICED = {
+    "en": "The card has no option for the manager's change at the minute he made it, so there is no gap to show.",
+    "es": "La tarjeta no tiene ninguna opción para el cambio del entrenador en el minuto en que lo hizo, así que no hay diferencia que mostrar.",
+}
 
 
 def call_label(option: dict, by_id: dict) -> str:
@@ -205,7 +208,7 @@ def review(payload: dict, manager: dict | None) -> dict:
     model_call = {"id": model["id"], "win": model["win"], "xpts": model["xpts"]}
     if manager is None:
         gap_win = gap_xpts = None
-        recap = {loc: dict.fromkeys(MODES, UNPRICED) for loc in LOCALES}
+        recap = {loc: dict.fromkeys(MODES, UNPRICED[loc]) for loc in LOCALES}
     else:
         gap_win = round(model["win"] - manager["win"], 3)
         gap_xpts = round(model["xpts"] - manager["xpts"], 2)

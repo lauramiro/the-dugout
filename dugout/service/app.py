@@ -22,7 +22,7 @@ from pydantic import BaseModel
 from dugout.service.cards import CardService, default_service
 from dugout.service.publisher import Publisher, default_publisher
 
-Locale = Literal["en"]
+Locale = Literal["en", "es"]
 Mode = Literal["casual", "analyst"]
 
 

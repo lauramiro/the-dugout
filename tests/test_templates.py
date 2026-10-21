@@ -6,9 +6,9 @@ from dugout.agents.grounding import check_narration
 from dugout.agents.sample import SAMPLE_PAYLOAD, toss_up_payload
 from dugout.agents.templates import format_payload, template_narration
 
-LOCALES = ["en"]
+LOCALES = ["en", "es"]
 MODES = ["casual", "analyst"]
-CLOSE = {"en": "options are close"}
+CLOSE = {"en": "options are close", "es": "opciones estan muy parejas"}
 
 
 def no_change_payload():
@@ -42,29 +42,32 @@ def test_casual_uses_whole_numbers_and_plain_words():
     assert "3.9" not in narration.text and "2.1" not in narration.text
 
 
-@pytest.mark.parametrize("locale", ["fr", "de"])
-def test_only_english_templates(locale):
-    with pytest.raises(ValueError, match="locale"):
-        template_narration(SAMPLE_PAYLOAD, locale, "analyst")
-    with pytest.raises(ValueError, match="locale"):
-        format_payload(SAMPLE_PAYLOAD, locale)
+def test_decimal_comma_in_spanish_analyst():
+    for locale in ("es",):
+        narration = template_narration(SAMPLE_PAYLOAD, locale, "analyst")
+        assert "+3,9" in narration.reason
+        assert "+2,1" in narration.reason and "+5,7" in narration.reason
 
 
 @pytest.mark.parametrize("mode", MODES)
 @pytest.mark.parametrize("locale", LOCALES)
 def test_toss_up_says_the_options_are_close(locale, mode):
-    assert CLOSE[locale] in template_narration(toss_up_payload(), locale, mode).text
+    text = template_narration(toss_up_payload(), locale, mode).text
+    normal = text.replace("á", "a").replace("é", "e").replace("í", "i").replace("ó", "o")
+    assert CLOSE[locale] in normal
 
 
-def test_format_payload_preformats_numbers():
+def test_format_payload_preformats_numbers_per_locale():
     en = format_payload(SAMPLE_PAYLOAD, "en")
-    assert en["delta"] == "+3.9"
+    es = format_payload(SAMPLE_PAYLOAD, "es")
+    assert (en["delta"], es["delta"]) == ("+3.9", "+3,9")
     assert (en["ci_low"], en["ci_high"]) == ("+2.1", "+5.7")
+    assert es["ci_low"] == "+2,1"
     assert en["condition"] == "60"
     assert en["delta_whole"] == "4"
     assert en["player"] == "RFC-03"
-    assert en["strength"] == "strong"
-    assert en["win_no_change"] == "68.7" and en["win_sub_lb"] == "72.6"
+    assert es["strength"] == "fuerte"
+    assert en["win_no_change"] == "68.7" and es["win_sub_lb"] == "72,6"
 
 
 def test_negative_delta_reads_as_worse_in_casual():

@@ -1,4 +1,4 @@
-// UI strings, in English (the project is English only). Narration text comes from the agents
+// UI strings in English and Spanish. Narration text comes from the agents
 // (or their template fallback); only the chrome around it lives here.
 
 import type { Locale, Strength, Trigger } from "./contracts";
@@ -16,6 +16,7 @@ const en = {
   casual: "Casual",
   analyst: "Analyst",
   club: "Club",
+  language: "Language",
   half1: "1st half",
   half2: "2nd half",
   fullTime: "Full time",
@@ -129,8 +130,133 @@ const en = {
 export type StringKey = keyof typeof en;
 type Dict = Record<StringKey, string>;
 
-const DICTS: Record<Locale, Dict> = { en };
-export const LOCALES: readonly Locale[] = ["en"];
+const es: Dict = {
+  tagline: "Guía de decisiones en directo",
+  replay: "Repetición",
+  live: "En directo",
+  demoNote: "Demo grabada: clubes ficticios, datos sintéticos, estimaciones del modelo.",
+  play: "Reproducir",
+  pause: "Pausa",
+  restart: "Repetir desde el inicio",
+  speed: "Velocidad",
+  view: "Vista",
+  casual: "Básica",
+  analyst: "Analista",
+  club: "Club",
+  language: "Idioma",
+  half1: "1.ª parte",
+  half2: "2.ª parte",
+  fullTime: "Final",
+  loading: "Cargando el partido",
+  loadError: "No se cargaron los archivos del partido ({error}). Recarga la página para volver a intentarlo.",
+  waitingLive: "Esperando la señal en directo.",
+  pitch: "Campo: posiciones de los jugadores y el balón",
+  ticker: "Incidencias",
+  noEvents: "Las incidencias aparecen aquí durante el partido.",
+  goal: "Gol",
+  shot_saved: "Tiro parado",
+  shot_blocked: "Tiro bloqueado",
+  shot_off_target: "Tiro fuera",
+  sub: "Cambio",
+  subLine: "Sale {off}, entra {on}",
+  card: "Tarjeta",
+  dugout: "Banquillo",
+  condition: "Estado físico",
+  conditionHelp: "Estimado a partir de los minutos en el campo y en los últimos 7 días, las carreras realizadas y la carrera frente a los primeros 20 minutos de cada jugador.",
+  na: "n/d",
+  subsLeft: "Quedan {n} cambios",
+  windowsLeft: "Quedan {n} ventanas",
+  belowIn: "{name} bajo el 69% en unos {n} min",
+  below: "{name} bajo el 69%",
+  atLine: "{name} ya en el 69%",
+  decision: "Decisión",
+  noDecision: "No hay ninguna decisión abierta. Se abre una tarjeta cuando el estado de un jugador cae muy por debajo del de su equipo y del 69%, tras un gol desde el minuto 55 o con un cambio.",
+  trigger_condition_drop: "Se apaga frente a su equipo",
+  trigger_goal_after_55: "Gol después del 55'",
+  trigger_manager_sub: "Cambio del entrenador",
+  yourClub: "Tu club",
+  opponent: "Rival",
+  options: "Opciones",
+  win: "Victoria",
+  draw: "Empate",
+  loss: "Derrota",
+  xpts: "Puntos esp.",
+  gap: "Diferencia",
+  pts: "pts",
+  reference: "referencia",
+  ci90: "Intervalo del 90%",
+  modelPick: "Opción del modelo",
+  strength_strong: "fuerte",
+  strength_lean: "leve",
+  strength_toss_up: "igualado",
+  strengthTitle: "Fuerza",
+  opt_no_change: "Sin cambios",
+  opt_sub_like_for_like: "Cambio por {name}, mismo puesto",
+  opt_attacking: "Cambio ofensivo",
+  opt_defensive: "Cambio defensivo",
+  evidence: "Datos",
+  ev_condition: "{name} al {pct}",
+  ev_trend: "{v}% por min",
+  ev_flank: "Banda {side}: {pct} de las ocasiones en contra",
+  side_left: "izquierda",
+  side_centre: "central",
+  side_right: "derecha",
+  hsr: "Carrera a alta velocidad, últimos 10 min",
+  sprints: "Sprints, últimos 10 min",
+  baseline: "referencia {v}",
+  rates: "Ritmo goleador por 90",
+  ratesValue: "{for} a favor, {against} en contra",
+  narrationSource: "Narración",
+  source_model: "modelo, verificada en código",
+  source_template: "plantilla",
+  timeline: "Probabilidad de victoria",
+  timelineTeam: "Probabilidad de victoria de {team}",
+  jumpTo: "Ir a la decisión del {minute}",
+  seekHint: "Pulsa la línea para saltar; los rombos marcan decisiones.",
+  yourCall: "Tu decisión",
+  yourCallPrompt: "¿Qué harías tú? Decide antes que el entrenador.",
+  secondsLeft: "Quedan {n} s",
+  timeUp: "Se acabó el tiempo: sin decisión en esta tarjeta.",
+  lockedIn: "Tu decisión: {option}",
+  waitingManager: "Esperando la decisión del entrenador.",
+  theCalls: "Las decisiones del {minute}",
+  you: "Tú",
+  model: "Modelo",
+  manager: "Entrenador",
+  noCall: "Sin decisión",
+  closeCall: "opciones parejas",
+  managerNoChange: "Sin cambios",
+  managerLater: "Cambio en el mismo puesto en el {minute}",
+  unpriced: "Un cambio que la tarjeta no valoraba",
+  crowd: "{n} votos en esta tarjeta",
+  voteError: "Tu voto no llegó al servidor ({error}); en esta pantalla sigue contando.",
+  review: "Resumen final",
+  reviewSoFar: "Resumen hasta ahora",
+  openReview: "Resumen",
+  close: "Cerrar",
+  reviewIntro: "Cada decisión, la opción mejor valorada por el modelo y la decisión del entrenador. Estimaciones del modelo con las simulaciones de cada tarjeta, no a posteriori.",
+  colMinute: "Min.",
+  colDecision: "Decisión",
+  colManager: "Entrenador",
+  colModel: "Modelo",
+  colGap: "Diferencia",
+  colRecap: "Resumen",
+  colYou: "Tú",
+  gapValue: "{win} pts victoria · {xpts} pts esp.",
+  gapNone: "sin diferencia que mostrar",
+  notYet: "Aún no se sabe",
+  iq: "Ojo de entrenador",
+  iqValue: "{a} de {n}",
+  iqHelp: "Tus decisiones que coinciden con la opción del modelo. No cuentan las igualadas.",
+  iqNone: "Vota en una tarjeta para ver tu ojo de entrenador.",
+  managerIq: "El entrenador coincidió con el modelo en {a} de {n}.",
+  noDecisionsYet: "Todavía no hay decisiones.",
+  recapTemplate: "plantilla",
+};
+
+
+const DICTS: Record<Locale, Dict> = { en, es };
+export const LOCALES: readonly Locale[] = ["en", "es"];
 
 export type Translate = (key: StringKey, vars?: Record<string, string | number>) => string;
 
@@ -146,17 +272,20 @@ export function translator(locale: Locale): Translate {
 export const triggerKey = (t: Trigger): StringKey => `trigger_${t}` as StringKey;
 export const strengthKey = (s: Strength): StringKey => `strength_${s}` as StringKey;
 
-/** A payload probability (0.818) as a percentage string ("81.8"). */
-export function pct(value: number, _locale: Locale, digits = 1): string {
-  return (Math.round(value * 100 * 10 ** digits) / 10 ** digits).toFixed(digits);
+/** A payload probability (0.818) as a percentage string ("81.8"), decimal comma for es. */
+export function pct(value: number, locale: Locale, digits = 1): string {
+  const text = (Math.round(value * 100 * 10 ** digits) / 10 ** digits).toFixed(digits);
+  return locale === "en" ? text : text.replace(".", ",");
 }
 
 /** A payload gap (0.032) in points with its sign ("+3.2"). */
-export function points(value: number, _locale: Locale): string {
+export function points(value: number, locale: Locale): string {
   const n = Math.round(value * 1000) / 10;
-  return `${n > 0 ? "+" : n < 0 ? "−" : ""}${Math.abs(n).toFixed(1)}`;
+  const text = `${n > 0 ? "+" : n < 0 ? "−" : ""}${Math.abs(n).toFixed(1)}`;
+  return locale === "en" ? text : text.replace(".", ",");
 }
 
-export function decimal(value: number, _locale: Locale, digits: number): string {
-  return value.toFixed(digits);
+export function decimal(value: number, locale: Locale, digits: number): string {
+  const text = value.toFixed(digits);
+  return locale === "en" ? text : text.replace(".", ",");
 }

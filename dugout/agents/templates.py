@@ -1,4 +1,4 @@
-"""Number formatting and the template fallback (always available, also used when the model is slow)."""
+"""Locale formatting and the template fallback (always available, also used when the model is slow)."""
 
 from __future__ import annotations
 
@@ -88,6 +88,23 @@ _TEXT = {
             "change": "The model rates changing now about {n} {unit} {direction} ({strength}).",
             "keep": "No change looks better: the model rates changing now about {n} {unit} worse ({strength}).",
             "close": "The options are close: the model sees almost no difference ({strength}).",
+        },
+    },
+    "es": {
+        "headline": "{player} se está agotando ({condition}%).",
+        "headline_plain": "Cambio en estudio para {player}.",
+        "headline_none": "Sustitución en estudio.",
+        "interval": ", intervalo del 90%: {ci_low} a {ci_high}",
+        "units": ("punto", "puntos"), "better": "mejor", "worse": "peor",
+        "analyst": {
+            "change": "Cambiar ahora: {delta} pts de probabilidad de victoria{interval} ({strength}).",
+            "keep": "Mejor no cambiar: cambiar ahora mueve la probabilidad de victoria {delta} pts{interval} ({strength}).",
+            "close": "Las opciones están muy parejas: cambiar ahora mueve la probabilidad de victoria {delta} pts{interval} ({strength}).",
+        },
+        "casual": {
+            "change": "El modelo valora cambiar ahora cerca de {n} {unit} {direction} ({strength}).",
+            "keep": "Mejor no cambiar: el modelo valora cambiar ahora cerca de {n} {unit} peor ({strength}).",
+            "close": "Las opciones están muy parejas: el modelo no ve apenas diferencia ({strength}).",
         },
     },
 }

@@ -45,9 +45,9 @@ def test_open_runs_the_engine_once_and_stores_the_payload(parts):
 def test_card_carries_engine_numbers_and_narration(parts):
     _, _, svc = parts
     svc.open(SNAPSHOT, "RFC", "condition_drop")
-    card = svc.card("rfc-62-01", "en", "analyst")
+    card = svc.card("rfc-62-01", "es", "analyst")
     assert card["decision_id"] == "rfc-62-01"
-    assert card["locale"] == "en" and card["mode"] == "analyst"
+    assert card["locale"] == "es" and card["mode"] == "analyst"
     assert card["payload"] == SAMPLE_PAYLOAD
     assert card["headline"] and card["reason"] and card["source"] in {"model", "template"}
 
@@ -55,19 +55,20 @@ def test_card_carries_engine_numbers_and_narration(parts):
 def test_second_request_for_the_same_card_reruns_nothing(parts):
     engine, pipeline, svc = parts
     svc.open(SNAPSHOT, "RFC", "condition_drop")
-    first = svc.card("rfc-62-01", "en", "casual")
-    second = svc.card("rfc-62-01", "en", "casual")
+    first = svc.card("rfc-62-01", "es", "casual")
+    second = svc.card("rfc-62-01", "es", "casual")
     assert first == second
     assert len(engine.calls) == 1
-    assert pipeline.calls == [("rfc-62-01", "en", "casual")]
+    assert pipeline.calls == [("rfc-62-01", "es", "casual")]
 
 
-def test_other_mode_runs_the_pipeline_but_not_the_engine(parts):
+def test_other_locale_or_mode_runs_the_pipeline_but_not_the_engine(parts):
     engine, pipeline, svc = parts
     svc.open(SNAPSHOT, "RFC", "condition_drop")
     svc.card("rfc-62-01", "en", "casual")
     svc.card("rfc-62-01", "en", "analyst")
-    assert len(engine.calls) == 1 and len(pipeline.calls) == 2
+    svc.card("rfc-62-01", "es", "casual")
+    assert len(engine.calls) == 1 and len(pipeline.calls) == 3
 
 
 def test_unknown_decision_is_none(parts):
@@ -76,7 +77,7 @@ def test_unknown_decision_is_none(parts):
     assert pipeline.calls == []
 
 
-@pytest.mark.parametrize("locale,mode", [("fr", "casual"), ("de", "casual"), ("en", "loud")])
+@pytest.mark.parametrize("locale,mode", [("fr", "casual"), ("en", "loud")])
 def test_unsupported_locale_or_mode_is_rejected(parts, locale, mode):
     _, _, svc = parts
     svc.open(SNAPSHOT, "RFC", "condition_drop")

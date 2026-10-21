@@ -129,7 +129,7 @@ export interface CardClosed {
 }
 
 // Agent output per locale and mode (dugout.agents.pipeline.Card).
-export type Locale = "en"; // the project is English only
+export type Locale = "en" | "es";
 export type Mode = "casual" | "analyst";
 
 export interface Narration {
