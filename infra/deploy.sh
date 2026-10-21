@@ -18,10 +18,10 @@
 # except the local .env (git-ignored) written for the replayer.
 #
 # Checked against `az ... -h`: containerapp up/env create/secret set/update, staticwebapp secrets list,
-# eventhubs keys list. Still UNVERIFIED: webpubsub key show, budget create-with-rg input shapes, and the
-# output property names primaryConnectionString / apiKey, and for the runner the service app's
-# properties.configuration.registries[0] (server, username, passwordSecretRef) and
-# properties.template.containers[0].image. `--check-help` prints the help for these.
+# eventhubs keys list, containerapp create --registry-identity. Verified by the 2026-10-21 apply:
+# webpubsub key show primaryConnectionString, the service app's image and registries[0].server (its
+# username is empty: it pulls with its system identity). Still UNVERIFIED: budget create-with-rg input
+# shapes and staticwebapp secrets list apiKey. `--check-help` prints the help for these.
 #
 # Two Container Apps from one image (built once, by `containerapp up` on the service): $PREFIX-service runs
 # the Dockerfile's decision service; $PREFIX-runner runs the live pipeline (Event Hubs in, Web PubSub out)
@@ -145,32 +145,26 @@ EH_CONN="$(capture az eventhubs namespace authorization-rule keys list --namespa
 need EH_CONN "$EH_CONN"
 
 echo "# 5b. Live pipeline runner: the service's image, its own command"
-# Same image and registry as the service app; the registry login is read from the service app.
+# Same image and registry as the service app. `containerapp up` (CLI 2.91) pulls with the app's
+# system identity, not a username and password, so the runner gets its own system identity too.
 IMAGE="$(capture az containerapp show --name "$APP" --resource-group "$RG" \
   --query "properties.template.containers[0].image" -o tsv)"
 REG_SERVER="$(capture az containerapp show --name "$APP" --resource-group "$RG" \
   --query "properties.configuration.registries[0].server" -o tsv)"
-REG_USER="$(capture az containerapp show --name "$APP" --resource-group "$RG" \
-  --query "properties.configuration.registries[0].username" -o tsv)"
-REG_PW_REF="$(capture az containerapp show --name "$APP" --resource-group "$RG" \
-  --query "properties.configuration.registries[0].passwordSecretRef" -o tsv)"
-need IMAGE "$IMAGE"; need REG_SERVER "$REG_SERVER"; need REG_USER "$REG_USER"; need REG_PW_REF "$REG_PW_REF"
-REG_PASS="$(capture az containerapp secret list --name "$APP" --resource-group "$RG" --show-values \
-  --query "[?name=='$REG_PW_REF'].value | [0]" -o tsv)"
-need REG_PASS "$REG_PASS"
+need IMAGE "$IMAGE"; need REG_SERVER "$REG_SERVER"
 # The command has no flags (az would read them as its own): PIPELINE_SOURCE selects Event Hubs and follow mode.
 if [[ $APPLY == 1 ]] && az containerapp show --name "$RUNNER" --resource-group "$RG" >/dev/null 2>&1; then
   run az containerapp update --name "$RUNNER" --resource-group "$RG" --image "$IMAGE"
   run_quiet "refresh runner secrets" az containerapp secret set --name "$RUNNER" --resource-group "$RG" \
-    --secrets "wps-conn=$WPS_CONN" "eh-conn=$EH_CONN" "acr-pw=$REG_PASS" "foundry-key=$FOUNDRY_KEY"
+    --secrets "wps-conn=$WPS_CONN" "eh-conn=$EH_CONN" "foundry-key=$FOUNDRY_KEY"
   run az containerapp update --name "$RUNNER" --resource-group "$RG" --set-env-vars "${FOUNDRY_ENV[@]}"
 else
-  run_quiet "create runner (secrets and registry password in arguments)" \
+  run_quiet "create runner (secrets in arguments)" \
     az containerapp create --name "$RUNNER" --resource-group "$RG" --environment "$CAE" \
     --image "$IMAGE" --command python /app/dugout/stream/pipeline.py \
     --min-replicas 1 --max-replicas 1 \
-    --registry-server "$REG_SERVER" --registry-username "$REG_USER" --registry-password secretref:acr-pw \
-    --secrets "wps-conn=$WPS_CONN" "eh-conn=$EH_CONN" "acr-pw=$REG_PASS" "foundry-key=$FOUNDRY_KEY" \
+    --registry-server "$REG_SERVER" --registry-identity system \
+    --secrets "wps-conn=$WPS_CONN" "eh-conn=$EH_CONN" "foundry-key=$FOUNDRY_KEY" \
     --env-vars "${FOUNDRY_ENV[@]}" "PIPELINE_SOURCE=eventhub" "EVENTHUB_CONNECTION_STRING=secretref:eh-conn" \
     "EVENTHUB_NAME=$HUB" "WEBPUBSUB_CONNECTION_STRING=secretref:wps-conn" "WEBPUBSUB_HUB=$PUBSUB_HUB"
 fi
