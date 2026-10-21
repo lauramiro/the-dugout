@@ -1,6 +1,10 @@
 # Riverside FC v Castleton Athletic. Fictional clubs and players.
 # The first 11 players of each team start; the other 7 are on the bench.
 # Ratings run from 0 to 1. Sides: left, centre, right (from the player's own team's view).
+# recent_minutes: minutes played in the last 7 days, which a club knows before kick-off (public
+# lineup information, read by the state engine; the simulator never reads it). Both clubs' last
+# league match was 8 days ago, outside the window, so it is 0 for everyone except RFC-03, who
+# played all 90 minutes of a midweek cup tie: the played_midweek lever below, made observable.
 match_id_prefix: rfc-cas
 
 # Story levers. played_midweek: starting condition below 1.0 (hidden from the engine).
@@ -16,7 +20,7 @@ home:
   players:
     - {id: RFC-01, name: Owen Marsh,     role: GK, side: centre, attack: 0.10, defence: 0.74, pace: 0.40, stamina: 0.80, work_rate: 0.50}
     - {id: RFC-02, name: Danny Okafor,   role: FB, side: right,  attack: 0.58, defence: 0.68, pace: 0.74, stamina: 0.78, work_rate: 0.75}
-    - {id: RFC-03, name: Leon Varga,     role: FB, side: left,   attack: 0.60, defence: 0.66, pace: 0.76, stamina: 0.70, work_rate: 0.85}
+    - {id: RFC-03, name: Leon Varga,     role: FB, side: left,   attack: 0.60, defence: 0.66, pace: 0.76, stamina: 0.70, work_rate: 0.85, recent_minutes: 90}
     - {id: RFC-04, name: Sam Brannigan,  role: CB, side: centre, attack: 0.30, defence: 0.74, pace: 0.60, stamina: 0.80, work_rate: 0.60}
     - {id: RFC-05, name: Joel Pereira,   role: CB, side: centre, attack: 0.32, defence: 0.72, pace: 0.62, stamina: 0.80, work_rate: 0.60}
     - {id: RFC-06, name: Matty Coyle,    role: CM, side: centre, attack: 0.55, defence: 0.68, pace: 0.60, stamina: 0.82, work_rate: 0.80}

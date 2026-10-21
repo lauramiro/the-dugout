@@ -105,3 +105,35 @@ def test_realism_smoke(scenario):
     assert 1.5 <= stats["goals"]["mean"] <= 4.0
     assert 15 <= stats["shots"]["mean"] <= 35
     assert 50 <= stats["in_play_min"]["mean"] <= 65
+
+
+def test_recent_minutes_is_read_from_the_scenario(scenario):
+    by_id = {p.id: p for t in (scenario.home, scenario.away) for p in t.players}
+    assert by_id["RFC-03"].recent_minutes == 90  # the midweek match behind the played_midweek lever
+    assert all(0 <= p.recent_minutes <= 7 * 90 for p in by_id.values())
+
+
+def test_recent_minutes_must_be_whole_and_not_negative(tmp_path):
+    from pathlib import Path
+
+    import yaml
+
+    from dugout.sim.scenario import load_scenario
+
+    raw = yaml.safe_load((Path(__file__).resolve().parents[1] / "scenarios" / "riverside-castleton.yaml")
+                         .read_text(encoding="utf-8"))
+    for bad in (-1, 12.5):
+        raw["home"]["players"][2]["recent_minutes"] = bad
+        path = tmp_path / "s.yaml"
+        path.write_text(yaml.safe_dump(raw), encoding="utf-8")
+        with pytest.raises(ValueError, match="recent_minutes"):
+            load_scenario(path)
+
+
+def test_seed_73_reproduces_the_recorded_demo_stream_byte_for_byte(scenario):
+    """The simulator never reads recent_minutes: the committed demo stream must not move."""
+    from pathlib import Path
+
+    demo = Path(__file__).resolve().parents[1] / "data" / "demo-rfc-cas-0073.jsonl"
+    _, events = run_match(scenario, 73)
+    assert "".join(json.dumps(e.to_dict()) + "\n" for e in events) == demo.read_text(encoding="utf-8")

@@ -26,6 +26,9 @@ class PlayerSpec:
     pace: float
     stamina: float
     work_rate: float
+    # Minutes played in the last 7 days: public lineup information for the state engine.
+    # The simulator never reads it; hidden starting condition is the played_midweek lever.
+    recent_minutes: int = 0
 
 
 @dataclass(frozen=True, slots=True)
@@ -72,6 +75,8 @@ def _team(raw: dict) -> TeamSpec:
         for r in RATINGS:
             if not 0.0 <= getattr(p, r) <= 1.0:
                 raise ValueError(f"{p.id}: {r} must be between 0 and 1")
+        if isinstance(p.recent_minutes, bool) or not isinstance(p.recent_minutes, int) or p.recent_minutes < 0:
+            raise ValueError(f"{p.id}: recent_minutes must be a whole number of minutes, 0 or more")
     if [p.role for p in players[:STARTERS]].count("GK") != 1:
         raise ValueError(f"{code}: starters need exactly one GK")
     return TeamSpec(code=code, name=raw["name"], players=players)

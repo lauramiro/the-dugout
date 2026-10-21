@@ -10,7 +10,8 @@ One JSON record per line, in stream order:
     {"kind": "card_closed", "id", "t_ms", "period", "team", "reason"}
 
 Only this command reads the scenario, and from it only each player's id, team, role,
-side and whether he starts; ratings and story levers stay with the simulator.
+side, whether he starts and his minutes in the last 7 days (public lineup information);
+ratings and story levers stay with the simulator.
 """
 
 from __future__ import annotations
@@ -29,7 +30,8 @@ from dugout.stream.triggers import DecisionPoints
 
 def lineup_from_scenario(path: str | Path) -> list[dict]:
     scenario = load_scenario(path)
-    return [{"id": p.id, "team": team.code, "role": p.role, "side": p.side, "starting": p in team.starters}
+    return [{"id": p.id, "team": team.code, "role": p.role, "side": p.side, "starting": p in team.starters,
+             "recent_minutes": p.recent_minutes}
             for team in (scenario.home, scenario.away) for p in team.players]
 
 

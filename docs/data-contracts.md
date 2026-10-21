@@ -75,7 +75,13 @@ One frame every 500 ms of match clock in each period, from the period's kick-off
 
 Goalkeepers carry `"condition_est": null`.
 
-Written by `dugout.stream.state_engine` from events in `seq` order plus a lineup (each player's id, team, role, side and whether he starts; nothing hidden). Additions to the shape above:
+Written by `dugout.stream.state_engine` from events in `seq` order plus a lineup: one entry per squad player with his id, team, role, side, whether he starts and `recent_minutes`, the minutes he played in the last 7 days. A club knows all of this before kick-off; nothing in it is hidden. `recent_minutes` is a whole number, 0 or more, and 0 when the lineup leaves it out. It comes from the scenario's per-player `recent_minutes` and the simulator never reads it, so it changes no recorded stream.
+
+```json
+{"id": "RFC-03", "team": "RFC", "role": "FB", "side": "left", "starting": true, "recent_minutes": 90}
+```
+
+Additions to the snapshot shape above:
 
 - `match_id` and `period` at the top level; `period` because first-half added time overlaps second-half `t_ms`. A snapshot at `(period, t_ms)` covers every event of that period with a smaller `t_ms`. Snapshots run every 10 s from each period's kick-off; a period's last snapshot is the first boundary after its last event.
 - `rates` has an entry for each team: a pre-match prior (1.35 xG/90 by default) blended with rolling xG over the last 20 played minutes, the rolling weight growing to 0.6 at 90'.

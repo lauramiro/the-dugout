@@ -365,3 +365,14 @@ def test_threat_is_the_last_15_minutes_against_the_first_half():
     early = at(run_engine(StateEngine(TWO_GK), events), 2, 3600)["threat_by_channel"]
     # nothing in the last 15 minutes: the split falls back to the first half
     assert max(("A_left", "A_centre", "A_right"), key=early.get) == "A_left"
+
+
+def test_lineup_from_scenario_carries_recent_minutes():
+    from pathlib import Path
+
+    from dugout.stream.snapshots import lineup_from_scenario
+
+    lineup = lineup_from_scenario(Path(__file__).resolve().parents[1] / "scenarios" / "riverside-castleton.yaml")
+    by_id = {p["id"]: p for p in lineup}
+    assert by_id["RFC-03"]["recent_minutes"] == 90
+    assert set(by_id["RFC-03"]) == {"id", "team", "role", "side", "starting", "recent_minutes"}
