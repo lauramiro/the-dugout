@@ -27,8 +27,9 @@ from pathlib import Path
 import yaml
 from numpy.random import SeedSequence
 
-from dugout.agents.lexicon import DECIMAL_SEPARATOR, LOCALES
+from dugout.agents.lexicon import LOCALES
 from dugout.agents.pipeline import NarrationPipeline, StubClient
+from dugout.agents.recap import RecapRow, template_line
 from dugout.agents.templates import MODES
 from dugout.engine.options import Option, evaluate
 from dugout.engine.payload import _exposed_player, decide
@@ -187,34 +188,33 @@ def manager_option(snapshot: dict, payload: dict, action: dict) -> dict | None:
     return {"id": o["id"], "win": o["win"], "xpts": o["xpts"]}
 
 
-# Recap lines until dugout.agents.recap lands. Options and trade-offs, never verdicts.
-RECAP = {
-    "en": {
-        "same": "Manager and model chose the same option.",
-        "gap": "The model's option rated {win} pts of win probability and {xpts} expected points above the manager's.",
-        "behind": "The manager's call rated {win} pts of win probability and {xpts} expected points above the model's option.",
-        "unpriced": "The card has no option for the manager's change at the minute he made it, so there is no gap to show.",
-    },
-}
+UNPRICED = "The card has no option for the manager's change at the minute he made it, so there is no gap to show."
 
 
-def fmt(value: float, digits: int, locale: str) -> str:
-    return f"{abs(value):.{digits}f}".replace(".", DECIMAL_SEPARATOR[locale])
+def call_label(option: dict, by_id: dict) -> str:
+    """An option as the recap names it: the card's own label, in lower case after the first word."""
+    if option["id"] == "manager_later":
+        return "a later like-for-like change"
+    label = by_id[option["id"]]["label"]
+    return label[:1].lower() + label[1:]
 
 
 def review(payload: dict, manager: dict | None) -> dict:
-    model = next(o for o in payload["options"] if o["id"] == payload["recommendation"]["option_id"])
+    by_id = {o["id"]: o for o in payload["options"]}
+    model = by_id[payload["recommendation"]["option_id"]]
+    model_call = {"id": model["id"], "win": model["win"], "xpts": model["xpts"]}
     if manager is None:
         gap_win = gap_xpts = None
-        kind = "unpriced"
+        recap = {loc: dict.fromkeys(MODES, UNPRICED) for loc in LOCALES}
     else:
         gap_win = round(model["win"] - manager["win"], 3)
         gap_xpts = round(model["xpts"] - manager["xpts"], 2)
-        kind = "same" if manager["id"] == model["id"] else "gap" if gap_win >= 0 else "behind"
-    recap = {loc: RECAP[loc][kind].format(win=fmt((gap_win or 0) * 100, 1, loc), xpts=fmt(gap_xpts or 0, 2, loc))
-             for loc in LOCALES}
-    return {"model": {"id": model["id"], "win": model["win"], "xpts": model["xpts"]}, "manager": manager,
-            "gap_win": gap_win, "gap_xpts": gap_xpts, "recap": recap, "recap_source": "template"}
+        row = RecapRow(decision_id=payload["decision_id"], minute=payload["t_ms"] // MIN_MS, team=payload["team"],
+                       manager_call=call_label(manager, by_id), model_call=call_label(model_call, by_id),
+                       gap_win=gap_win, gap_xpts=gap_xpts)
+        recap = {loc: {mode: template_line(row, loc, mode) for mode in MODES} for loc in LOCALES}
+    return {"model": model_call, "manager": manager, "gap_win": gap_win, "gap_xpts": gap_xpts,
+            "recap": recap, "recap_source": "template"}
 
 
 def main() -> None:

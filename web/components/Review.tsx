@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import { formatMinute } from "../lib/clock";
-import type { DecisionCard as Card, Locale, Roster } from "../lib/contracts";
+import type { DecisionCard as Card, Locale, Mode, Roster } from "../lib/contracts";
 import type { Timed } from "../lib/datasource";
 import { agreement, managerOption, revealPos, type Vote } from "../lib/calls";
 import { decimal, points, triggerKey, type Translate } from "../lib/i18n";
@@ -17,6 +17,7 @@ interface Props {
   finished: boolean;
   roster: Roster | null;
   locale: Locale;
+  mode: Mode;
   t: Translate;
 }
 
@@ -38,7 +39,7 @@ function Iq({ cards, votes, t }: { cards: Card[]; votes: Record<string, Vote>; t
   );
 }
 
-export function Review({ open, onClose, cards, votes, playhead, firstHalfEnd, finished, roster, locale, t }: Props) {
+export function Review({ open, onClose, cards, votes, playhead, firstHalfEnd, finished, roster, locale, mode, t }: Props) {
   const ref = useRef<HTMLDialogElement>(null);
   useEffect(() => {
     const dialog = ref.current;
@@ -81,7 +82,7 @@ export function Review({ open, onClose, cards, votes, playhead, firstHalfEnd, fi
             const manager = known ? managerCall(card, roster, t) : null;
             const vote = votes[payload.decision_id];
             const voted = vote?.option ? payload.options.find((o) => o.id === vote.option) : undefined;
-            const recap = review?.recap[locale] ?? review?.recap.en;
+            const recap = review?.recap[locale]?.[mode] ?? review?.recap.en?.[mode];
             return (
               <li key={payload.decision_id} className={`review-row ${payload.team === roster?.home ? "home" : "away"}`}>
                 <span className="r-minute led amber">{formatMinute(card.period, payload.t_ms).replace("'", "")}</span>

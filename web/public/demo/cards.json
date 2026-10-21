@@ -1,60 +1,60 @@
 {
  "cards": [
   {
-   "period": 1,
-   "point_id": "rfc-36-01",
+   "period": 2,
+   "point_id": "rfc-60-01",
    "payload": {
-    "decision_id": "rfc-36-00",
-    "t_ms": 2160000,
+    "decision_id": "rfc-60-20",
+    "t_ms": 3620000,
     "team": "RFC",
-    "trigger": "condition_below_60",
+    "trigger": "condition_drop",
     "options": [
      {
       "id": "no_change",
       "label": "No change",
-      "win": 0.507,
-      "draw": 0.269,
-      "loss": 0.225,
-      "xpts": 1.79,
+      "win": 0.717,
+      "draw": 0.214,
+      "loss": 0.069,
+      "xpts": 2.36,
       "delta_win": 0.0
      },
      {
       "id": "sub_like_for_like",
-      "label": "Like-for-like substitution for RFC-04",
-      "win": 0.584,
-      "draw": 0.254,
-      "loss": 0.162,
-      "xpts": 2.01,
-      "delta_win": 0.078,
+      "label": "Like-for-like substitution for RFC-03",
+      "win": 0.78,
+      "draw": 0.177,
+      "loss": 0.043,
+      "xpts": 2.52,
+      "delta_win": 0.063,
       "ci90": [
-       0.075,
-       0.081
+       0.06,
+       0.066
       ]
      },
      {
       "id": "attacking",
       "label": "Attacking change",
-      "win": 0.505,
-      "draw": 0.264,
-      "loss": 0.232,
-      "xpts": 1.78,
-      "delta_win": -0.002,
+      "win": 0.717,
+      "draw": 0.209,
+      "loss": 0.074,
+      "xpts": 2.36,
+      "delta_win": 0.0,
       "ci90": [
-       -0.004,
-       0.001
+       -0.002,
+       0.002
       ]
      },
      {
       "id": "defensive",
       "label": "Defensive change",
-      "win": 0.508,
-      "draw": 0.278,
-      "loss": 0.214,
-      "xpts": 1.8,
-      "delta_win": 0.002,
+      "win": 0.721,
+      "draw": 0.214,
+      "loss": 0.065,
+      "xpts": 2.38,
+      "delta_win": 0.004,
       "ci90": [
-       -0.001,
-       0.004
+       0.001,
+       0.006
       ]
      }
     ],
@@ -65,668 +65,66 @@
     "evidence": [
      {
       "type": "condition",
-      "player_id": "RFC-04",
-      "value": 0.597,
-      "trend_per_min": -0.0159
+      "player_id": "RFC-03",
+      "value": 0.689,
+      "trend_per_min": -0.0028
      },
      {
       "type": "flank_threat",
       "channel": "RFC_left",
-      "share": 0.0
+      "share": 0.137
      }
     ],
     "manager_action": {
      "period": 2,
-     "t_ms": 5819500,
-     "subs": [],
-     "option_id": "no_change"
-    }
-   },
-   "narration": {
-    "en": {
-     "casual": {
-      "headline": "RFC-04 is fading (60%).",
-      "reason": "The model rates changing now about 8 points better (strong).",
-      "source": "template"
-     },
-     "analyst": {
-      "headline": "RFC-04 is fading (60%).",
-      "reason": "Changing now: +7.8 pts win probability, 90% interval +7.5 to +8.1 (strong).",
-      "source": "template"
-     }
-    },
-    "es": {
-     "casual": {
-      "headline": "RFC-04 se está agotando (60%).",
-      "reason": "El modelo valora cambiar ahora unos 8 puntos mejor (fuerte).",
-      "source": "template"
-     },
-     "analyst": {
-      "headline": "RFC-04 se está agotando (60%).",
-      "reason": "Cambiar ahora: +7,8 pts de probabilidad de victoria, intervalo del 90%: +7,5 a +8,1 (fuerte).",
-      "source": "template"
-     }
-    },
-    "ca": {
-     "casual": {
-      "headline": "RFC-04 s'està esgotant (60%).",
-      "reason": "El model valora canviar ara uns 8 punts millor (forta).",
-      "source": "template"
-     },
-     "analyst": {
-      "headline": "RFC-04 s'està esgotant (60%).",
-      "reason": "Canviar ara: +7,8 punts de probabilitat de victòria, interval del 90%: +7,5 a +8,1 (forta).",
-      "source": "template"
-     }
-    }
-   },
-   "closed": {
-    "period": 1,
-    "t_ms": 2340000,
-    "reason": "timeout"
-   },
-   "review": {
-    "model": {
-     "id": "sub_like_for_like",
-     "win": 0.584,
-     "xpts": 2.01
-    },
-    "manager": {
-     "id": "no_change",
-     "win": 0.507,
-     "xpts": 1.79
-    },
-    "gap_win": 0.077,
-    "gap_xpts": 0.22,
-    "recap": {
-     "en": "The model's option rated 7.7 pts of win probability and 0.22 expected points above the manager's.",
-     "es": "La opción del modelo valía 7,7 pts de probabilidad de victoria y 0,22 puntos esperados más que la del entrenador.",
-     "ca": "L'opció del model valia 7,7 punts de probabilitat de victòria i 0,22 punts esperats més que la de l'entrenador."
-    },
-    "recap_source": "template"
-   }
-  },
-  {
-   "period": 1,
-   "point_id": "cas-39-01",
-   "payload": {
-    "decision_id": "cas-39-00",
-    "t_ms": 2340000,
-    "team": "CAS",
-    "trigger": "condition_below_60",
-    "options": [
-     {
-      "id": "no_change",
-      "label": "No change",
-      "win": 0.128,
-      "draw": 0.226,
-      "loss": 0.646,
-      "xpts": 0.61,
-      "delta_win": 0.0
-     },
-     {
-      "id": "sub_like_for_like",
-      "label": "Like-for-like substitution for CAS-09",
-      "win": 0.151,
-      "draw": 0.254,
-      "loss": 0.595,
-      "xpts": 0.71,
-      "delta_win": 0.023,
-      "ci90": [
-       0.021,
-       0.025
-      ]
-     },
-     {
-      "id": "attacking",
-      "label": "Attacking change",
-      "win": 0.142,
-      "draw": 0.229,
-      "loss": 0.63,
-      "xpts": 0.65,
-      "delta_win": 0.014,
-      "ci90": [
-       0.012,
-       0.016
-      ]
-     },
-     {
-      "id": "defensive",
-      "label": "Defensive change",
-      "win": 0.111,
-      "draw": 0.223,
-      "loss": 0.666,
-      "xpts": 0.56,
-      "delta_win": -0.017,
-      "ci90": [
-       -0.019,
-       -0.015
-      ]
-     }
-    ],
-    "recommendation": {
-     "option_id": "sub_like_for_like",
-     "strength": "lean"
-    },
-    "evidence": [
-     {
-      "type": "condition",
-      "player_id": "CAS-09",
-      "value": 0.651,
-      "trend_per_min": -0.0209
-     },
-     {
-      "type": "flank_threat",
-      "channel": "CAS_left",
-      "share": 0.275
-     }
-    ],
-    "manager_action": {
-     "period": 2,
-     "t_ms": 5819500,
-     "subs": [],
-     "option_id": "no_change"
-    }
-   },
-   "narration": {
-    "en": {
-     "casual": {
-      "headline": "CAS-09 is fading (65%).",
-      "reason": "The model rates changing now about 2 points better (lean).",
-      "source": "template"
-     },
-     "analyst": {
-      "headline": "CAS-09 is fading (65%).",
-      "reason": "Changing now: +2.3 pts win probability, 90% interval +2.1 to +2.5 (lean).",
-      "source": "template"
-     }
-    },
-    "es": {
-     "casual": {
-      "headline": "CAS-09 se está agotando (65%).",
-      "reason": "El modelo valora cambiar ahora unos 2 puntos mejor (leve).",
-      "source": "template"
-     },
-     "analyst": {
-      "headline": "CAS-09 se está agotando (65%).",
-      "reason": "Cambiar ahora: +2,3 pts de probabilidad de victoria, intervalo del 90%: +2,1 a +2,5 (leve).",
-      "source": "template"
-     }
-    },
-    "ca": {
-     "casual": {
-      "headline": "CAS-09 s'està esgotant (65%).",
-      "reason": "El model valora canviar ara uns 2 punts millor (lleu).",
-      "source": "template"
-     },
-     "analyst": {
-      "headline": "CAS-09 s'està esgotant (65%).",
-      "reason": "Canviar ara: +2,3 punts de probabilitat de victòria, interval del 90%: +2,1 a +2,5 (lleu).",
-      "source": "template"
-     }
-    }
-   },
-   "closed": {
-    "period": 1,
-    "t_ms": 2520000,
-    "reason": "timeout"
-   },
-   "review": {
-    "model": {
-     "id": "sub_like_for_like",
-     "win": 0.151,
-     "xpts": 0.71
-    },
-    "manager": {
-     "id": "no_change",
-     "win": 0.128,
-     "xpts": 0.61
-    },
-    "gap_win": 0.023,
-    "gap_xpts": 0.1,
-    "recap": {
-     "en": "The model's option rated 2.3 pts of win probability and 0.10 expected points above the manager's.",
-     "es": "La opción del modelo valía 2,3 pts de probabilidad de victoria y 0,10 puntos esperados más que la del entrenador.",
-     "ca": "L'opció del model valia 2,3 punts de probabilitat de victòria i 0,10 punts esperats més que la de l'entrenador."
-    },
-    "recap_source": "template"
-   }
-  },
-  {
-   "period": 1,
-   "point_id": "rfc-42-01",
-   "payload": {
-    "decision_id": "rfc-42-20",
-    "t_ms": 2540000,
-    "team": "RFC",
-    "trigger": "condition_below_60",
-    "options": [
-     {
-      "id": "no_change",
-      "label": "No change",
-      "win": 0.488,
-      "draw": 0.285,
-      "loss": 0.227,
-      "xpts": 1.75,
-      "delta_win": 0.0
-     },
-     {
-      "id": "sub_like_for_like",
-      "label": "Like-for-like substitution for RFC-05",
-      "win": 0.567,
-      "draw": 0.273,
-      "loss": 0.161,
-      "xpts": 1.97,
-      "delta_win": 0.078,
-      "ci90": [
-       0.075,
-       0.081
-      ]
-     },
-     {
-      "id": "attacking",
-      "label": "Attacking change",
-      "win": 0.484,
-      "draw": 0.279,
-      "loss": 0.236,
-      "xpts": 1.73,
-      "delta_win": -0.004,
-      "ci90": [
-       -0.007,
-       -0.002
-      ]
-     },
-     {
-      "id": "defensive",
-      "label": "Defensive change",
-      "win": 0.493,
-      "draw": 0.294,
-      "loss": 0.212,
-      "xpts": 1.77,
-      "delta_win": 0.005,
-      "ci90": [
-       0.002,
-       0.007
-      ]
-     }
-    ],
-    "recommendation": {
-     "option_id": "sub_like_for_like",
-     "strength": "strong"
-    },
-    "evidence": [
-     {
-      "type": "condition",
-      "player_id": "RFC-05",
-      "value": 0.595,
-      "trend_per_min": -0.0315
-     },
-     {
-      "type": "flank_threat",
-      "channel": "RFC_left",
-      "share": 0.202
-     }
-    ],
-    "manager_action": {
-     "period": 2,
-     "t_ms": 5819500,
-     "subs": [],
-     "option_id": "no_change"
-    }
-   },
-   "narration": {
-    "en": {
-     "casual": {
-      "headline": "RFC-05 is fading (60%).",
-      "reason": "The model rates changing now about 8 points better (strong).",
-      "source": "template"
-     },
-     "analyst": {
-      "headline": "RFC-05 is fading (60%).",
-      "reason": "Changing now: +7.8 pts win probability, 90% interval +7.5 to +8.1 (strong).",
-      "source": "template"
-     }
-    },
-    "es": {
-     "casual": {
-      "headline": "RFC-05 se está agotando (60%).",
-      "reason": "El modelo valora cambiar ahora unos 8 puntos mejor (fuerte).",
-      "source": "template"
-     },
-     "analyst": {
-      "headline": "RFC-05 se está agotando (60%).",
-      "reason": "Cambiar ahora: +7,8 pts de probabilidad de victoria, intervalo del 90%: +7,5 a +8,1 (fuerte).",
-      "source": "template"
-     }
-    },
-    "ca": {
-     "casual": {
-      "headline": "RFC-05 s'està esgotant (60%).",
-      "reason": "El model valora canviar ara uns 8 punts millor (forta).",
-      "source": "template"
-     },
-     "analyst": {
-      "headline": "RFC-05 s'està esgotant (60%).",
-      "reason": "Canviar ara: +7,8 punts de probabilitat de victòria, interval del 90%: +7,5 a +8,1 (forta).",
-      "source": "template"
-     }
-    }
-   },
-   "closed": {
-    "period": 1,
-    "t_ms": 2720000,
-    "reason": "timeout"
-   },
-   "review": {
-    "model": {
-     "id": "sub_like_for_like",
-     "win": 0.567,
-     "xpts": 1.97
-    },
-    "manager": {
-     "id": "no_change",
-     "win": 0.488,
-     "xpts": 1.75
-    },
-    "gap_win": 0.079,
-    "gap_xpts": 0.22,
-    "recap": {
-     "en": "The model's option rated 7.9 pts of win probability and 0.22 expected points above the manager's.",
-     "es": "La opción del modelo valía 7,9 pts de probabilidad de victoria y 0,22 puntos esperados más que la del entrenador.",
-     "ca": "L'opció del model valia 7,9 punts de probabilitat de victòria i 0,22 punts esperats més que la de l'entrenador."
-    },
-    "recap_source": "template"
-   }
-  },
-  {
-   "period": 2,
-   "point_id": "cas-58-01",
-   "payload": {
-    "decision_id": "cas-58-40",
-    "t_ms": 3520000,
-    "team": "CAS",
-    "trigger": "condition_below_60",
-    "options": [
-     {
-      "id": "no_change",
-      "label": "No change",
-      "win": 0.04,
-      "draw": 0.164,
-      "loss": 0.796,
-      "xpts": 0.28,
-      "delta_win": 0.0
-     },
-     {
-      "id": "sub_like_for_like",
-      "label": "Like-for-like substitution for CAS-11",
-      "win": 0.047,
-      "draw": 0.19,
-      "loss": 0.763,
-      "xpts": 0.33,
-      "delta_win": 0.008,
-      "ci90": [
-       0.007,
-       0.009
-      ]
-     },
-     {
-      "id": "attacking",
-      "label": "Attacking change",
-      "win": 0.046,
-      "draw": 0.168,
-      "loss": 0.786,
-      "xpts": 0.31,
-      "delta_win": 0.006,
-      "ci90": [
-       0.005,
-       0.007
-      ]
-     },
-     {
-      "id": "defensive",
-      "label": "Defensive change",
-      "win": 0.034,
-      "draw": 0.157,
-      "loss": 0.809,
-      "xpts": 0.26,
-      "delta_win": -0.006,
-      "ci90": [
-       -0.007,
-       -0.005
-      ]
-     }
-    ],
-    "recommendation": {
-     "option_id": "sub_like_for_like",
-     "strength": "toss_up"
-    },
-    "evidence": [
-     {
-      "type": "condition",
-      "player_id": "CAS-11",
-      "value": 0.598,
-      "trend_per_min": -0.0287
-     },
-     {
-      "type": "flank_threat",
-      "channel": "CAS_right",
-      "share": 0.365
-     }
-    ],
-    "manager_action": {
-     "period": 2,
-     "t_ms": 5819500,
-     "subs": [],
-     "option_id": "no_change"
-    }
-   },
-   "narration": {
-    "en": {
-     "casual": {
-      "headline": "CAS-11 is fading (60%).",
-      "reason": "The options are close: the model sees almost no difference (toss-up).",
-      "source": "template"
-     },
-     "analyst": {
-      "headline": "CAS-11 is fading (60%).",
-      "reason": "The options are close: changing now moves win probability by +0.8 pts, 90% interval +0.7 to +0.9 (toss-up).",
-      "source": "template"
-     }
-    },
-    "es": {
-     "casual": {
-      "headline": "CAS-11 se está agotando (60%).",
-      "reason": "Las opciones están muy parejas: el modelo no ve apenas diferencia (igualado).",
-      "source": "template"
-     },
-     "analyst": {
-      "headline": "CAS-11 se está agotando (60%).",
-      "reason": "Las opciones están muy parejas: cambiar ahora mueve la probabilidad de victoria +0,8 pts, intervalo del 90%: +0,7 a +0,9 (igualado).",
-      "source": "template"
-     }
-    },
-    "ca": {
-     "casual": {
-      "headline": "CAS-11 s'està esgotant (60%).",
-      "reason": "Les opcions estan molt igualades: el model gairebé no hi veu diferència (igualat).",
-      "source": "template"
-     },
-     "analyst": {
-      "headline": "CAS-11 s'està esgotant (60%).",
-      "reason": "Les opcions estan molt igualades: canviar ara mou la probabilitat de victòria +0,8 punts, interval del 90%: +0,7 a +0,9 (igualat).",
-      "source": "template"
-     }
-    }
-   },
-   "closed": {
-    "period": 2,
-    "t_ms": 3700000,
-    "reason": "timeout"
-   },
-   "review": {
-    "model": {
-     "id": "sub_like_for_like",
-     "win": 0.047,
-     "xpts": 0.33
-    },
-    "manager": {
-     "id": "no_change",
-     "win": 0.04,
-     "xpts": 0.28
-    },
-    "gap_win": 0.007,
-    "gap_xpts": 0.05,
-    "recap": {
-     "en": "The model's option rated 0.7 pts of win probability and 0.05 expected points above the manager's.",
-     "es": "La opción del modelo valía 0,7 pts de probabilidad de victoria y 0,05 puntos esperados más que la del entrenador.",
-     "ca": "L'opció del model valia 0,7 punts de probabilitat de victòria i 0,05 punts esperats més que la de l'entrenador."
-    },
-    "recap_source": "template"
-   }
-  },
-  {
-   "period": 2,
-   "point_id": "cas-63-01",
-   "payload": {
-    "decision_id": "cas-63-40",
-    "t_ms": 3820000,
-    "team": "CAS",
-    "trigger": "condition_below_60",
-    "options": [
-     {
-      "id": "no_change",
-      "label": "No change",
-      "win": 0.021,
-      "draw": 0.142,
-      "loss": 0.837,
-      "xpts": 0.21,
-      "delta_win": 0.0
-     },
-     {
-      "id": "sub_like_for_like",
-      "label": "Like-for-like substitution for CAS-11",
-      "win": 0.024,
-      "draw": 0.155,
-      "loss": 0.821,
-      "xpts": 0.23,
-      "delta_win": 0.003,
-      "ci90": [
-       0.002,
-       0.003
-      ]
-     },
-     {
-      "id": "attacking",
-      "label": "Attacking change",
-      "win": 0.024,
-      "draw": 0.151,
-      "loss": 0.824,
-      "xpts": 0.22,
-      "delta_win": 0.003,
-      "ci90": [
-       0.002,
-       0.004
-      ]
-     },
-     {
-      "id": "defensive",
-      "label": "Defensive change",
-      "win": 0.018,
-      "draw": 0.133,
-      "loss": 0.85,
-      "xpts": 0.19,
-      "delta_win": -0.004,
-      "ci90": [
-       -0.004,
-       -0.003
-      ]
-     }
-    ],
-    "recommendation": {
-     "option_id": "attacking",
-     "strength": "toss_up"
-    },
-    "evidence": [
-     {
-      "type": "condition",
-      "player_id": "CAS-11",
-      "value": 0.544,
-      "trend_per_min": -0.0109
-     },
-     {
-      "type": "flank_threat",
-      "channel": "CAS_left",
-      "share": 0.471
-     }
-    ],
-    "manager_action": {
-     "period": 2,
-     "t_ms": 5227000,
+     "t_ms": 4740000,
      "subs": [
       {
-       "off": "CAS-10",
-       "on": "CAS-16"
+       "off": "RFC-03",
+       "on": "RFC-15"
       }
      ],
-     "option_id": "attacking"
+     "option_id": "sub_like_for_like"
     }
    },
    "narration": {
     "en": {
      "casual": {
-      "headline": "CAS-11 is fading (54%).",
-      "reason": "The options are close: the model sees almost no difference (toss-up).",
+      "headline": "RFC-03 is fading (69%).",
+      "reason": "The model rates changing now about 6 points better (strong).",
       "source": "template"
      },
      "analyst": {
-      "headline": "CAS-11 is fading (54%).",
-      "reason": "The options are close: changing now moves win probability by +0.3 pts, 90% interval +0.2 to +0.4 (toss-up).",
-      "source": "template"
-     }
-    },
-    "es": {
-     "casual": {
-      "headline": "CAS-11 se está agotando (54%).",
-      "reason": "Las opciones están muy parejas: el modelo no ve apenas diferencia (igualado).",
-      "source": "template"
-     },
-     "analyst": {
-      "headline": "CAS-11 se está agotando (54%).",
-      "reason": "Las opciones están muy parejas: cambiar ahora mueve la probabilidad de victoria +0,3 pts, intervalo del 90%: +0,2 a +0,4 (igualado).",
-      "source": "template"
-     }
-    },
-    "ca": {
-     "casual": {
-      "headline": "CAS-11 s'està esgotant (54%).",
-      "reason": "Les opcions estan molt igualades: el model gairebé no hi veu diferència (igualat).",
-      "source": "template"
-     },
-     "analyst": {
-      "headline": "CAS-11 s'està esgotant (54%).",
-      "reason": "Les opcions estan molt igualades: canviar ara mou la probabilitat de victòria +0,3 punts, interval del 90%: +0,2 a +0,4 (igualat).",
+      "headline": "RFC-03 is fading (69%).",
+      "reason": "Changing now: +6.3 pts win probability, 90% interval +6.0 to +6.6 (strong).",
       "source": "template"
      }
     }
    },
    "closed": {
     "period": 2,
-    "t_ms": 4000000,
+    "t_ms": 3800000,
     "reason": "timeout"
    },
    "review": {
     "model": {
-     "id": "attacking",
-     "win": 0.024,
-     "xpts": 0.22
+     "id": "sub_like_for_like",
+     "win": 0.78,
+     "xpts": 2.52
     },
-    "manager": null,
-    "gap_win": null,
-    "gap_xpts": null,
+    "manager": {
+     "id": "manager_later",
+     "minute": 79,
+     "win": 0.749,
+     "xpts": 2.45
+    },
+    "gap_win": 0.031,
+    "gap_xpts": 0.07,
     "recap": {
-     "en": "The card has no option for the manager's change at the minute he made it, so there is no gap to show.",
-     "es": "La tarjeta no tiene ninguna opción para el cambio del entrenador en el minuto en que lo hizo, así que no hay diferencia que mostrar.",
-     "ca": "La targeta no té cap opció per al canvi de l'entrenador al minut en què el va fer, així que no hi ha diferència a mostrar."
+     "en": {
+      "casual": "60': the manager chose a later like-for-like change; the model rated like-for-like substitution for RFC-03 about 3 points better (strong).",
+      "analyst": "60': the manager chose a later like-for-like change; the model preferred like-for-like substitution for RFC-03, +3.1 pts win probability, 0.07 expected points (strong)."
+     }
     },
     "recap_source": "template"
    }
@@ -743,20 +141,20 @@
      {
       "id": "no_change",
       "label": "No change",
-      "win": 0.019,
-      "draw": 0.151,
-      "loss": 0.83,
-      "xpts": 0.21,
+      "win": 0.018,
+      "draw": 0.144,
+      "loss": 0.838,
+      "xpts": 0.2,
       "delta_win": 0.0
      },
      {
       "id": "sub_like_for_like",
-      "label": "Like-for-like substitution for CAS-11",
+      "label": "Like-for-like substitution for CAS-02",
       "win": 0.02,
-      "draw": 0.158,
-      "loss": 0.822,
+      "draw": 0.156,
+      "loss": 0.824,
       "xpts": 0.22,
-      "delta_win": 0.001,
+      "delta_win": 0.002,
       "ci90": [
        0.001,
        0.002
@@ -765,11 +163,11 @@
      {
       "id": "attacking",
       "label": "Attacking change",
-      "win": 0.022,
-      "draw": 0.159,
-      "loss": 0.819,
-      "xpts": 0.23,
-      "delta_win": 0.004,
+      "win": 0.021,
+      "draw": 0.153,
+      "loss": 0.826,
+      "xpts": 0.22,
+      "delta_win": 0.003,
       "ci90": [
        0.003,
        0.004
@@ -779,9 +177,9 @@
       "id": "defensive",
       "label": "Defensive change",
       "win": 0.015,
-      "draw": 0.14,
-      "loss": 0.844,
-      "xpts": 0.19,
+      "draw": 0.135,
+      "loss": 0.85,
+      "xpts": 0.18,
       "delta_win": -0.004,
       "ci90": [
        -0.004,
@@ -796,9 +194,9 @@
     "evidence": [
      {
       "type": "condition",
-      "player_id": "CAS-11",
-      "value": 0.527,
-      "trend_per_min": -0.0016
+      "player_id": "CAS-02",
+      "value": 0.745,
+      "trend_per_min": -0.0039
      },
      {
       "type": "flank_threat",
@@ -821,37 +219,13 @@
    "narration": {
     "en": {
      "casual": {
-      "headline": "CAS-11 is fading (53%).",
+      "headline": "CAS-02 is fading (75%).",
       "reason": "The options are close: the model sees almost no difference (toss-up).",
       "source": "template"
      },
      "analyst": {
-      "headline": "CAS-11 is fading (53%).",
-      "reason": "The options are close: changing now moves win probability by +0.4 pts, 90% interval +0.3 to +0.4 (toss-up).",
-      "source": "template"
-     }
-    },
-    "es": {
-     "casual": {
-      "headline": "CAS-11 se está agotando (53%).",
-      "reason": "Las opciones están muy parejas: el modelo no ve apenas diferencia (igualado).",
-      "source": "template"
-     },
-     "analyst": {
-      "headline": "CAS-11 se está agotando (53%).",
-      "reason": "Las opciones están muy parejas: cambiar ahora mueve la probabilidad de victoria +0,4 pts, intervalo del 90%: +0,3 a +0,4 (igualado).",
-      "source": "template"
-     }
-    },
-    "ca": {
-     "casual": {
-      "headline": "CAS-11 s'està esgotant (53%).",
-      "reason": "Les opcions estan molt igualades: el model gairebé no hi veu diferència (igualat).",
-      "source": "template"
-     },
-     "analyst": {
-      "headline": "CAS-11 s'està esgotant (53%).",
-      "reason": "Les opcions estan molt igualades: canviar ara mou la probabilitat de victòria +0,4 punts, interval del 90%: +0,3 a +0,4 (igualat).",
+      "headline": "CAS-02 is fading (75%).",
+      "reason": "The options are close: changing now moves win probability by +0.3 pts, 90% interval +0.3 to +0.4 (toss-up).",
       "source": "template"
      }
     }
@@ -864,20 +238,21 @@
    "review": {
     "model": {
      "id": "attacking",
-     "win": 0.022,
-     "xpts": 0.23
+     "win": 0.021,
+     "xpts": 0.22
     },
     "manager": {
      "id": "no_change",
-     "win": 0.019,
-     "xpts": 0.21
+     "win": 0.018,
+     "xpts": 0.2
     },
     "gap_win": 0.003,
     "gap_xpts": 0.02,
     "recap": {
-     "en": "The model's option rated 0.3 pts of win probability and 0.02 expected points above the manager's.",
-     "es": "La opción del modelo valía 0,3 pts de probabilidad de victoria y 0,02 puntos esperados más que la del entrenador.",
-     "ca": "L'opció del model valia 0,3 punts de probabilitat de victòria i 0,02 punts esperats més que la de l'entrenador."
+     "en": {
+      "casual": "69': no change or attacking change: the model sees almost no difference (toss-up).",
+      "analyst": "69': the options were close: the model put attacking change +0.3 pts ahead of no change, 0.02 expected points (toss-up)."
+     }
     },
     "recap_source": "template"
    }
@@ -894,62 +269,62 @@
      {
       "id": "no_change",
       "label": "No change",
-      "win": 0.213,
-      "draw": 0.554,
-      "loss": 0.233,
-      "xpts": 1.19,
+      "win": 0.208,
+      "draw": 0.543,
+      "loss": 0.248,
+      "xpts": 1.17,
       "delta_win": 0.0
      },
      {
       "id": "sub_like_for_like",
-      "label": "Like-for-like substitution for RFC-05",
-      "win": 0.226,
-      "draw": 0.575,
-      "loss": 0.199,
-      "xpts": 1.25,
-      "delta_win": 0.013,
+      "label": "Like-for-like substitution for RFC-03",
+      "win": 0.224,
+      "draw": 0.572,
+      "loss": 0.204,
+      "xpts": 1.24,
+      "delta_win": 0.016,
       "ci90": [
-       0.011,
-       0.014
+       0.014,
+       0.017
       ]
      },
      {
       "id": "attacking",
       "label": "Attacking change",
-      "win": 0.229,
-      "draw": 0.531,
-      "loss": 0.24,
-      "xpts": 1.22,
-      "delta_win": 0.016,
+      "win": 0.222,
+      "draw": 0.52,
+      "loss": 0.258,
+      "xpts": 1.19,
+      "delta_win": 0.014,
       "ci90": [
-       0.014,
-       0.018
+       0.012,
+       0.016
       ]
      },
      {
       "id": "defensive",
       "label": "Defensive change",
-      "win": 0.193,
-      "draw": 0.583,
-      "loss": 0.225,
-      "xpts": 1.16,
-      "delta_win": -0.02,
+      "win": 0.189,
+      "draw": 0.571,
+      "loss": 0.24,
+      "xpts": 1.14,
+      "delta_win": -0.019,
       "ci90": [
-       -0.022,
-       -0.018
+       -0.021,
+       -0.017
       ]
      }
     ],
     "recommendation": {
-     "option_id": "attacking",
+     "option_id": "sub_like_for_like",
      "strength": "lean"
     },
     "evidence": [
      {
       "type": "condition",
-      "player_id": "RFC-05",
-      "value": 0.56,
-      "trend_per_min": -0.0141
+      "player_id": "RFC-03",
+      "value": 0.68,
+      "trend_per_min": 0.0007
      },
      {
       "type": "flank_threat",
@@ -966,43 +341,19 @@
        "on": "RFC-15"
       }
      ],
-     "option_id": null
+     "option_id": "sub_like_for_like"
     }
    },
    "narration": {
     "en": {
      "casual": {
-      "headline": "RFC-05 is fading (56%).",
+      "headline": "RFC-03 is fading (68%).",
       "reason": "The model rates changing now about 2 points better (lean).",
       "source": "template"
      },
      "analyst": {
-      "headline": "RFC-05 is fading (56%).",
-      "reason": "Changing now: +1.6 pts win probability, 90% interval +1.4 to +1.8 (lean).",
-      "source": "template"
-     }
-    },
-    "es": {
-     "casual": {
-      "headline": "RFC-05 se está agotando (56%).",
-      "reason": "El modelo valora cambiar ahora unos 2 puntos mejor (leve).",
-      "source": "template"
-     },
-     "analyst": {
-      "headline": "RFC-05 se está agotando (56%).",
-      "reason": "Cambiar ahora: +1,6 pts de probabilidad de victoria, intervalo del 90%: +1,4 a +1,8 (leve).",
-      "source": "template"
-     }
-    },
-    "ca": {
-     "casual": {
-      "headline": "RFC-05 s'està esgotant (56%).",
-      "reason": "El model valora canviar ara uns 2 punts millor (lleu).",
-      "source": "template"
-     },
-     "analyst": {
-      "headline": "RFC-05 s'està esgotant (56%).",
-      "reason": "Canviar ara: +1,6 punts de probabilitat de victòria, interval del 90%: +1,4 a +1,8 (lleu).",
+      "headline": "RFC-03 is fading (68%).",
+      "reason": "Changing now: +1.6 pts win probability, 90% interval +1.4 to +1.7 (lean).",
       "source": "template"
      }
     }
@@ -1014,17 +365,23 @@
    },
    "review": {
     "model": {
-     "id": "attacking",
-     "win": 0.229,
+     "id": "sub_like_for_like",
+     "win": 0.224,
+     "xpts": 1.24
+    },
+    "manager": {
+     "id": "manager_later",
+     "minute": 79,
+     "win": 0.22,
      "xpts": 1.22
     },
-    "manager": null,
-    "gap_win": null,
-    "gap_xpts": null,
+    "gap_win": 0.004,
+    "gap_xpts": 0.02,
     "recap": {
-     "en": "The card has no option for the manager's change at the minute he made it, so there is no gap to show.",
-     "es": "La tarjeta no tiene ninguna opción para el cambio del entrenador en el minuto en que lo hizo, así que no hay diferencia que mostrar.",
-     "ca": "La targeta no té cap opció per al canvi de l'entrenador al minut en què el va fer, així que no hi ha diferència a mostrar."
+     "en": {
+      "casual": "72': a later like-for-like change or like-for-like substitution for RFC-03: the model sees almost no difference (toss-up).",
+      "analyst": "72': the options were close: the model put like-for-like substitution for RFC-03 +0.4 pts ahead of a later like-for-like change, 0.02 expected points (toss-up)."
+     }
     },
     "recap_source": "template"
    }
@@ -1041,62 +398,62 @@
      {
       "id": "no_change",
       "label": "No change",
-      "win": 0.18,
-      "draw": 0.562,
-      "loss": 0.258,
-      "xpts": 1.1,
+      "win": 0.178,
+      "draw": 0.556,
+      "loss": 0.266,
+      "xpts": 1.09,
       "delta_win": 0.0
      },
      {
       "id": "sub_like_for_like",
-      "label": "Like-for-like substitution for CAS-10",
-      "win": 0.193,
-      "draw": 0.594,
-      "loss": 0.213,
-      "xpts": 1.17,
+      "label": "Like-for-like substitution for CAS-02",
+      "win": 0.191,
+      "draw": 0.59,
+      "loss": 0.219,
+      "xpts": 1.16,
       "delta_win": 0.013,
       "ci90": [
-       0.011,
+       0.012,
        0.014
       ]
      },
      {
       "id": "attacking",
       "label": "Attacking change",
-      "win": 0.193,
-      "draw": 0.542,
-      "loss": 0.265,
-      "xpts": 1.12,
-      "delta_win": 0.013,
+      "win": 0.19,
+      "draw": 0.537,
+      "loss": 0.274,
+      "xpts": 1.11,
+      "delta_win": 0.012,
       "ci90": [
-       0.011,
-       0.015
+       0.01,
+       0.014
       ]
      },
      {
       "id": "defensive",
       "label": "Defensive change",
-      "win": 0.164,
-      "draw": 0.586,
-      "loss": 0.249,
-      "xpts": 1.08,
+      "win": 0.163,
+      "draw": 0.58,
+      "loss": 0.257,
+      "xpts": 1.07,
       "delta_win": -0.015,
       "ci90": [
        -0.017,
-       -0.014
+       -0.013
       ]
      }
     ],
     "recommendation": {
-     "option_id": "attacking",
+     "option_id": "sub_like_for_like",
      "strength": "lean"
     },
     "evidence": [
      {
       "type": "condition",
-      "player_id": "CAS-10",
-      "value": 0.45,
-      "trend_per_min": -0.0194
+      "player_id": "CAS-02",
+      "value": 0.717,
+      "trend_per_min": -0.0037
      },
      {
       "type": "flank_threat",
@@ -1114,37 +471,13 @@
    "narration": {
     "en": {
      "casual": {
-      "headline": "CAS-10 is fading (45%).",
+      "headline": "CAS-02 is fading (72%).",
       "reason": "The model rates changing now about 1 point better (lean).",
       "source": "template"
      },
      "analyst": {
-      "headline": "CAS-10 is fading (45%).",
-      "reason": "Changing now: +1.3 pts win probability, 90% interval +1.1 to +1.5 (lean).",
-      "source": "template"
-     }
-    },
-    "es": {
-     "casual": {
-      "headline": "CAS-10 se está agotando (45%).",
-      "reason": "El modelo valora cambiar ahora unos 1 punto mejor (leve).",
-      "source": "template"
-     },
-     "analyst": {
-      "headline": "CAS-10 se está agotando (45%).",
-      "reason": "Cambiar ahora: +1,3 pts de probabilidad de victoria, intervalo del 90%: +1,1 a +1,5 (leve).",
-      "source": "template"
-     }
-    },
-    "ca": {
-     "casual": {
-      "headline": "CAS-10 s'està esgotant (45%).",
-      "reason": "El model valora canviar ara uns 1 punt millor (lleu).",
-      "source": "template"
-     },
-     "analyst": {
-      "headline": "CAS-10 s'està esgotant (45%).",
-      "reason": "Canviar ara: +1,3 punts de probabilitat de victòria, interval del 90%: +1,1 a +1,5 (lleu).",
+      "headline": "CAS-02 is fading (72%).",
+      "reason": "Changing now: +1.3 pts win probability, 90% interval +1.2 to +1.4 (lean).",
       "source": "template"
      }
     }
@@ -1156,21 +489,22 @@
    },
    "review": {
     "model": {
-     "id": "attacking",
-     "win": 0.193,
-     "xpts": 1.12
+     "id": "sub_like_for_like",
+     "win": 0.191,
+     "xpts": 1.16
     },
     "manager": {
      "id": "no_change",
-     "win": 0.18,
-     "xpts": 1.1
+     "win": 0.178,
+     "xpts": 1.09
     },
     "gap_win": 0.013,
-    "gap_xpts": 0.02,
+    "gap_xpts": 0.07,
     "recap": {
-     "en": "The model's option rated 1.3 pts of win probability and 0.02 expected points above the manager's.",
-     "es": "La opción del modelo valía 1,3 pts de probabilidad de victoria y 0,02 puntos esperados más que la del entrenador.",
-     "ca": "L'opció del model valia 1,3 punts de probabilitat de victòria i 0,02 punts esperats més que la de l'entrenador."
+     "en": {
+      "casual": "75': the manager chose no change; the model rated like-for-like substitution for CAS-02 about 1 point better (lean).",
+      "analyst": "75': the manager chose no change; the model preferred like-for-like substitution for CAS-02, +1.3 pts win probability, 0.07 expected points (lean)."
+     }
     },
     "recap_source": "template"
    }
@@ -1187,49 +521,49 @@
      {
       "id": "no_change",
       "label": "No change",
-      "win": 0.165,
-      "draw": 0.625,
-      "loss": 0.21,
-      "xpts": 1.12,
+      "win": 0.163,
+      "draw": 0.618,
+      "loss": 0.22,
+      "xpts": 1.11,
       "delta_win": 0.0
      },
      {
       "id": "sub_like_for_like",
-      "label": "Like-for-like substitution for RFC-08",
-      "win": 0.174,
-      "draw": 0.648,
-      "loss": 0.178,
-      "xpts": 1.17,
-      "delta_win": 0.009,
+      "label": "Like-for-like substitution for RFC-11",
+      "win": 0.173,
+      "draw": 0.646,
+      "loss": 0.182,
+      "xpts": 1.16,
+      "delta_win": 0.01,
       "ci90": [
-       0.008,
-       0.01
+       0.009,
+       0.011
       ]
      },
      {
       "id": "attacking",
       "label": "Attacking change",
-      "win": 0.178,
-      "draw": 0.604,
-      "loss": 0.218,
-      "xpts": 1.14,
+      "win": 0.176,
+      "draw": 0.596,
+      "loss": 0.228,
+      "xpts": 1.12,
       "delta_win": 0.013,
       "ci90": [
        0.011,
-       0.014
+       0.015
       ]
      },
      {
       "id": "defensive",
       "label": "Defensive change",
-      "win": 0.15,
-      "draw": 0.65,
-      "loss": 0.2,
-      "xpts": 1.1,
+      "win": 0.148,
+      "draw": 0.642,
+      "loss": 0.21,
+      "xpts": 1.09,
       "delta_win": -0.015,
       "ci90": [
-       -0.017,
-       -0.014
+       -0.016,
+       -0.013
       ]
      }
     ],
@@ -1240,9 +574,9 @@
     "evidence": [
      {
       "type": "condition",
-      "player_id": "RFC-08",
-      "value": 0.625,
-      "trend_per_min": -0.0349
+      "player_id": "RFC-11",
+      "value": 0.726,
+      "trend_per_min": -0.0036
      },
      {
       "type": "flank_threat",
@@ -1265,37 +599,13 @@
    "narration": {
     "en": {
      "casual": {
-      "headline": "RFC-08 is fading (63%).",
+      "headline": "RFC-11 is fading (73%).",
       "reason": "The model rates changing now about 1 point better (lean).",
       "source": "template"
      },
      "analyst": {
-      "headline": "RFC-08 is fading (63%).",
-      "reason": "Changing now: +1.3 pts win probability, 90% interval +1.1 to +1.4 (lean).",
-      "source": "template"
-     }
-    },
-    "es": {
-     "casual": {
-      "headline": "RFC-08 se está agotando (63%).",
-      "reason": "El modelo valora cambiar ahora unos 1 punto mejor (leve).",
-      "source": "template"
-     },
-     "analyst": {
-      "headline": "RFC-08 se está agotando (63%).",
-      "reason": "Cambiar ahora: +1,3 pts de probabilidad de victoria, intervalo del 90%: +1,1 a +1,4 (leve).",
-      "source": "template"
-     }
-    },
-    "ca": {
-     "casual": {
-      "headline": "RFC-08 s'està esgotant (63%).",
-      "reason": "El model valora canviar ara uns 1 punt millor (lleu).",
-      "source": "template"
-     },
-     "analyst": {
-      "headline": "RFC-08 s'està esgotant (63%).",
-      "reason": "Canviar ara: +1,3 punts de probabilitat de victòria, interval del 90%: +1,1 a +1,4 (lleu).",
+      "headline": "RFC-11 is fading (73%).",
+      "reason": "Changing now: +1.3 pts win probability, 90% interval +1.1 to +1.5 (lean).",
       "source": "template"
      }
     }
@@ -1308,225 +618,80 @@
    "review": {
     "model": {
      "id": "attacking",
-     "win": 0.178,
-     "xpts": 1.14
-    },
-    "manager": {
-     "id": "no_change",
-     "win": 0.165,
+     "win": 0.176,
      "xpts": 1.12
     },
-    "gap_win": 0.013,
-    "gap_xpts": 0.02,
-    "recap": {
-     "en": "The model's option rated 1.3 pts of win probability and 0.02 expected points above the manager's.",
-     "es": "La opción del modelo valía 1,3 pts de probabilidad de victoria y 0,02 puntos esperados más que la del entrenador.",
-     "ca": "L'opció del model valia 1,3 punts de probabilitat de victòria i 0,02 punts esperats més que la de l'entrenador."
-    },
-    "recap_source": "template"
-   }
-  },
-  {
-   "period": 2,
-   "point_id": "rfc-82-01",
-   "payload": {
-    "decision_id": "rfc-82-10",
-    "t_ms": 4930000,
-    "team": "RFC",
-    "trigger": "condition_below_60",
-    "options": [
-     {
-      "id": "no_change",
-      "label": "No change",
-      "win": 0.818,
-      "draw": 0.162,
-      "loss": 0.02,
-      "xpts": 2.62,
-      "delta_win": 0.0
-     },
-     {
-      "id": "sub_like_for_like",
-      "label": "Like-for-like substitution for RFC-08",
-      "win": 0.847,
-      "draw": 0.139,
-      "loss": 0.014,
-      "xpts": 2.68,
-      "delta_win": 0.029,
-      "ci90": [
-       0.027,
-       0.031
-      ]
-     },
-     {
-      "id": "attacking",
-      "label": "Attacking change",
-      "win": 0.809,
-      "draw": 0.169,
-      "loss": 0.022,
-      "xpts": 2.6,
-      "delta_win": -0.009,
-      "ci90": [
-       -0.011,
-       -0.008
-      ]
-     },
-     {
-      "id": "defensive",
-      "label": "Defensive change",
-      "win": 0.825,
-      "draw": 0.157,
-      "loss": 0.018,
-      "xpts": 2.63,
-      "delta_win": 0.007,
-      "ci90": [
-       0.006,
-       0.009
-      ]
-     }
-    ],
-    "recommendation": {
-     "option_id": "sub_like_for_like",
-     "strength": "lean"
-    },
-    "evidence": [
-     {
-      "type": "condition",
-      "player_id": "RFC-08",
-      "value": 0.56,
-      "trend_per_min": -0.026
-     },
-     {
-      "type": "flank_threat",
-      "channel": "RFC_left",
-      "share": 0.602
-     }
-    ],
-    "manager_action": {
-     "period": 2,
-     "t_ms": 5819500,
-     "subs": [],
-     "option_id": "no_change"
-    }
-   },
-   "narration": {
-    "en": {
-     "casual": {
-      "headline": "RFC-08 is fading (56%).",
-      "reason": "The model rates changing now about 3 points better (lean).",
-      "source": "template"
-     },
-     "analyst": {
-      "headline": "RFC-08 is fading (56%).",
-      "reason": "Changing now: +2.9 pts win probability, 90% interval +2.7 to +3.1 (lean).",
-      "source": "template"
-     }
-    },
-    "es": {
-     "casual": {
-      "headline": "RFC-08 se está agotando (56%).",
-      "reason": "El modelo valora cambiar ahora unos 3 puntos mejor (leve).",
-      "source": "template"
-     },
-     "analyst": {
-      "headline": "RFC-08 se está agotando (56%).",
-      "reason": "Cambiar ahora: +2,9 pts de probabilidad de victoria, intervalo del 90%: +2,7 a +3,1 (leve).",
-      "source": "template"
-     }
-    },
-    "ca": {
-     "casual": {
-      "headline": "RFC-08 s'està esgotant (56%).",
-      "reason": "El model valora canviar ara uns 3 punts millor (lleu).",
-      "source": "template"
-     },
-     "analyst": {
-      "headline": "RFC-08 s'està esgotant (56%).",
-      "reason": "Canviar ara: +2,9 punts de probabilitat de victòria, interval del 90%: +2,7 a +3,1 (lleu).",
-      "source": "template"
-     }
-    }
-   },
-   "closed": {
-    "period": 2,
-    "t_ms": 5110000,
-    "reason": "timeout"
-   },
-   "review": {
-    "model": {
-     "id": "sub_like_for_like",
-     "win": 0.847,
-     "xpts": 2.68
-    },
     "manager": {
      "id": "no_change",
-     "win": 0.818,
-     "xpts": 2.62
+     "win": 0.163,
+     "xpts": 1.11
     },
-    "gap_win": 0.029,
-    "gap_xpts": 0.06,
+    "gap_win": 0.013,
+    "gap_xpts": 0.01,
     "recap": {
-     "en": "The model's option rated 2.9 pts of win probability and 0.06 expected points above the manager's.",
-     "es": "La opción del modelo valía 2,9 pts de probabilidad de victoria y 0,06 puntos esperados más que la del entrenador.",
-     "ca": "L'opció del model valia 2,9 punts de probabilitat de victòria i 0,06 punts esperats més que la de l'entrenador."
+     "en": {
+      "casual": "79': the manager chose no change; the model rated attacking change about 1 point better (lean).",
+      "analyst": "79': the manager chose no change; the model preferred attacking change, +1.3 pts win probability, 0.01 expected points (lean)."
+     }
     },
     "recap_source": "template"
    }
   },
   {
    "period": 2,
-   "point_id": "cas-85-01",
+   "point_id": "cas-82-01",
    "payload": {
-    "decision_id": "cas-85-10",
-    "t_ms": 5110000,
+    "decision_id": "cas-82-10",
+    "t_ms": 4930000,
     "team": "CAS",
     "trigger": "goal_after_55",
     "options": [
      {
       "id": "no_change",
       "label": "No change",
-      "win": 0.006,
-      "draw": 0.091,
-      "loss": 0.904,
-      "xpts": 0.11,
+      "win": 0.013,
+      "draw": 0.124,
+      "loss": 0.863,
+      "xpts": 0.16,
       "delta_win": 0.0
      },
      {
       "id": "sub_like_for_like",
-      "label": "Like-for-like substitution for CAS-10",
-      "win": 0.006,
-      "draw": 0.094,
-      "loss": 0.9,
-      "xpts": 0.11,
-      "delta_win": 0.0,
-      "ci90": [
-       0.0,
-       0.001
-      ]
-     },
-     {
-      "id": "attacking",
-      "label": "Attacking change",
-      "win": 0.007,
-      "draw": 0.097,
-      "loss": 0.896,
-      "xpts": 0.12,
-      "delta_win": 0.001,
+      "label": "Like-for-like substitution for CAS-02",
+      "win": 0.014,
+      "draw": 0.135,
+      "loss": 0.85,
+      "xpts": 0.18,
+      "delta_win": 0.002,
       "ci90": [
        0.001,
        0.002
       ]
      },
      {
+      "id": "attacking",
+      "label": "Attacking change",
+      "win": 0.016,
+      "draw": 0.133,
+      "loss": 0.852,
+      "xpts": 0.18,
+      "delta_win": 0.003,
+      "ci90": [
+       0.002,
+       0.003
+      ]
+     },
+     {
       "id": "defensive",
       "label": "Defensive change",
-      "win": 0.005,
-      "draw": 0.084,
-      "loss": 0.911,
-      "xpts": 0.1,
-      "delta_win": -0.001,
+      "win": 0.011,
+      "draw": 0.116,
+      "loss": 0.873,
+      "xpts": 0.15,
+      "delta_win": -0.002,
       "ci90": [
-       -0.001,
-       -0.0
+       -0.003,
+       -0.002
       ]
      }
     ],
@@ -1537,14 +702,14 @@
     "evidence": [
      {
       "type": "condition",
-      "player_id": "CAS-10",
-      "value": 0.495,
-      "trend_per_min": 0.007
+      "player_id": "CAS-02",
+      "value": 0.694,
+      "trend_per_min": -0.0027
      },
      {
       "type": "flank_threat",
-      "channel": "CAS_left",
-      "share": 0.431
+      "channel": "CAS_right",
+      "share": 0.112
      }
     ],
     "manager_action": {
@@ -1556,125 +721,97 @@
        "on": "CAS-16"
       }
      ],
-     "option_id": "sub_like_for_like"
+     "option_id": "attacking"
     }
    },
    "narration": {
     "en": {
      "casual": {
-      "headline": "CAS-10 is fading (50%).",
+      "headline": "CAS-02 is fading (69%).",
       "reason": "The options are close: the model sees almost no difference (toss-up).",
       "source": "template"
      },
      "analyst": {
-      "headline": "CAS-10 is fading (50%).",
-      "reason": "The options are close: changing now moves win probability by +0.1 pts, 90% interval +0.1 to +0.2 (toss-up).",
-      "source": "template"
-     }
-    },
-    "es": {
-     "casual": {
-      "headline": "CAS-10 se está agotando (50%).",
-      "reason": "Las opciones están muy parejas: el modelo no ve apenas diferencia (igualado).",
-      "source": "template"
-     },
-     "analyst": {
-      "headline": "CAS-10 se está agotando (50%).",
-      "reason": "Las opciones están muy parejas: cambiar ahora mueve la probabilidad de victoria +0,1 pts, intervalo del 90%: +0,1 a +0,2 (igualado).",
-      "source": "template"
-     }
-    },
-    "ca": {
-     "casual": {
-      "headline": "CAS-10 s'està esgotant (50%).",
-      "reason": "Les opcions estan molt igualades: el model gairebé no hi veu diferència (igualat).",
-      "source": "template"
-     },
-     "analyst": {
-      "headline": "CAS-10 s'està esgotant (50%).",
-      "reason": "Les opcions estan molt igualades: canviar ara mou la probabilitat de victòria +0,1 punts, interval del 90%: +0,1 a +0,2 (igualat).",
+      "headline": "CAS-02 is fading (69%).",
+      "reason": "The options are close: changing now moves win probability by +0.3 pts, 90% interval +0.2 to +0.3 (toss-up).",
       "source": "template"
      }
     }
    },
    "closed": {
     "period": 2,
-    "t_ms": 5230000,
-    "reason": "change"
+    "t_ms": 5110000,
+    "reason": "timeout"
    },
    "review": {
     "model": {
      "id": "attacking",
-     "win": 0.007,
-     "xpts": 0.12
+     "win": 0.016,
+     "xpts": 0.18
     },
-    "manager": {
-     "id": "manager_later",
-     "minute": 87,
-     "win": 0.006,
-     "xpts": 0.11
-    },
-    "gap_win": 0.001,
-    "gap_xpts": 0.01,
+    "manager": null,
+    "gap_win": null,
+    "gap_xpts": null,
     "recap": {
-     "en": "The model's option rated 0.1 pts of win probability and 0.01 expected points above the manager's.",
-     "es": "La opción del modelo valía 0,1 pts de probabilidad de victoria y 0,01 puntos esperados más que la del entrenador.",
-     "ca": "L'opció del model valia 0,1 punts de probabilitat de victòria i 0,01 punts esperats més que la de l'entrenador."
+     "en": {
+      "casual": "The card has no option for the manager's change at the minute he made it, so there is no gap to show.",
+      "analyst": "The card has no option for the manager's change at the minute he made it, so there is no gap to show."
+     }
     },
     "recap_source": "template"
    }
   },
   {
    "period": 2,
-   "point_id": "rfc-87-01",
+   "point_id": "rfc-85-01",
    "payload": {
-    "decision_id": "rfc-87-10",
-    "t_ms": 5230000,
+    "decision_id": "rfc-85-10",
+    "t_ms": 5110000,
     "team": "RFC",
     "trigger": "goal_after_55",
     "options": [
      {
       "id": "no_change",
       "label": "No change",
-      "win": 0.895,
-      "draw": 0.098,
-      "loss": 0.006,
-      "xpts": 2.78,
+      "win": 0.869,
+      "draw": 0.12,
+      "loss": 0.011,
+      "xpts": 2.73,
       "delta_win": 0.0
      },
      {
       "id": "sub_like_for_like",
-      "label": "Like-for-like substitution for RFC-08",
-      "win": 0.908,
-      "draw": 0.087,
-      "loss": 0.005,
-      "xpts": 2.81,
-      "delta_win": 0.013,
+      "label": "Like-for-like substitution for RFC-11",
+      "win": 0.894,
+      "draw": 0.099,
+      "loss": 0.007,
+      "xpts": 2.78,
+      "delta_win": 0.025,
       "ci90": [
-       0.012,
-       0.015
+       0.023,
+       0.026
       ]
      },
      {
       "id": "attacking",
       "label": "Attacking change",
-      "win": 0.891,
-      "draw": 0.102,
-      "loss": 0.007,
-      "xpts": 2.78,
-      "delta_win": -0.004,
+      "win": 0.866,
+      "draw": 0.122,
+      "loss": 0.012,
+      "xpts": 2.72,
+      "delta_win": -0.003,
       "ci90": [
-       -0.005,
-       -0.003
+       -0.004,
+       -0.001
       ]
      },
      {
       "id": "defensive",
       "label": "Defensive change",
-      "win": 0.9,
-      "draw": 0.095,
-      "loss": 0.005,
-      "xpts": 2.79,
+      "win": 0.874,
+      "draw": 0.116,
+      "loss": 0.01,
+      "xpts": 2.74,
       "delta_win": 0.005,
       "ci90": [
        0.003,
@@ -1689,9 +826,9 @@
     "evidence": [
      {
       "type": "condition",
-      "player_id": "RFC-08",
-      "value": 0.521,
-      "trend_per_min": -0.0078
+      "player_id": "RFC-11",
+      "value": 0.704,
+      "trend_per_min": -0.0042
      },
      {
       "type": "flank_threat",
@@ -1709,92 +846,69 @@
    "narration": {
     "en": {
      "casual": {
-      "headline": "RFC-08 is fading (52%).",
-      "reason": "The model rates changing now about 1 point better (lean).",
+      "headline": "RFC-11 is fading (70%).",
+      "reason": "The model rates changing now about 3 points better (lean).",
       "source": "template"
      },
      "analyst": {
-      "headline": "RFC-08 is fading (52%).",
-      "reason": "Changing now: +1.3 pts win probability, 90% interval +1.2 to +1.5 (lean).",
-      "source": "template"
-     }
-    },
-    "es": {
-     "casual": {
-      "headline": "RFC-08 se está agotando (52%).",
-      "reason": "El modelo valora cambiar ahora unos 1 punto mejor (leve).",
-      "source": "template"
-     },
-     "analyst": {
-      "headline": "RFC-08 se está agotando (52%).",
-      "reason": "Cambiar ahora: +1,3 pts de probabilidad de victoria, intervalo del 90%: +1,2 a +1,5 (leve).",
-      "source": "template"
-     }
-    },
-    "ca": {
-     "casual": {
-      "headline": "RFC-08 s'està esgotant (52%).",
-      "reason": "El model valora canviar ara uns 1 punt millor (lleu).",
-      "source": "template"
-     },
-     "analyst": {
-      "headline": "RFC-08 s'està esgotant (52%).",
-      "reason": "Canviar ara: +1,3 punts de probabilitat de victòria, interval del 90%: +1,2 a +1,5 (lleu).",
+      "headline": "RFC-11 is fading (70%).",
+      "reason": "Changing now: +2.5 pts win probability, 90% interval +2.3 to +2.6 (lean).",
       "source": "template"
      }
     }
    },
    "closed": {
     "period": 2,
-    "t_ms": 5410000,
+    "t_ms": 5290000,
     "reason": "timeout"
    },
    "review": {
     "model": {
      "id": "sub_like_for_like",
-     "win": 0.908,
-     "xpts": 2.81
+     "win": 0.894,
+     "xpts": 2.78
     },
     "manager": {
      "id": "no_change",
-     "win": 0.895,
-     "xpts": 2.78
+     "win": 0.869,
+     "xpts": 2.73
     },
-    "gap_win": 0.013,
-    "gap_xpts": 0.03,
+    "gap_win": 0.025,
+    "gap_xpts": 0.05,
     "recap": {
-     "en": "The model's option rated 1.3 pts of win probability and 0.03 expected points above the manager's.",
-     "es": "La opción del modelo valía 1,3 pts de probabilidad de victoria y 0,03 puntos esperados más que la del entrenador.",
-     "ca": "L'opció del model valia 1,3 punts de probabilitat de victòria i 0,03 punts esperats més que la de l'entrenador."
+     "en": {
+      "casual": "85': the manager chose no change; the model rated like-for-like substitution for RFC-11 about 3 points better (lean).",
+      "analyst": "85': the manager chose no change; the model preferred like-for-like substitution for RFC-11, +2.5 pts win probability, 0.05 expected points (lean)."
+     }
     },
     "recap_source": "template"
    }
   },
   {
    "period": 2,
-   "point_id": "cas-90-01",
+   "point_id": "cas-88-01",
    "payload": {
-    "decision_id": "cas-90-10",
-    "t_ms": 5410000,
+    "decision_id": "cas-88-10",
+    "t_ms": 5290000,
     "team": "CAS",
     "trigger": "manager_sub",
     "options": [
      {
       "id": "no_change",
       "label": "No change",
-      "win": 0.009,
-      "draw": 0.116,
-      "loss": 0.875,
-      "xpts": 0.14,
+      "win": 0.004,
+      "draw": 0.074,
+      "loss": 0.922,
+      "xpts": 0.08,
       "delta_win": 0.0
      },
      {
       "id": "sub_like_for_like",
-      "label": "Like-for-like substitution for CAS-04",
-      "win": 0.009,
-      "draw": 0.119,
-      "loss": 0.871,
-      "xpts": 0.15,
+      "label": "Like-for-like substitution for CAS-02",
+      "win": 0.004,
+      "draw": 0.08,
+      "loss": 0.917,
+      "xpts": 0.09,
       "delta_win": 0.0,
       "ci90": [
        0.0,
@@ -1804,27 +918,27 @@
      {
       "id": "attacking",
       "label": "Attacking change",
-      "win": 0.011,
-      "draw": 0.126,
-      "loss": 0.863,
-      "xpts": 0.16,
+      "win": 0.004,
+      "draw": 0.08,
+      "loss": 0.916,
+      "xpts": 0.09,
       "delta_win": 0.001,
       "ci90": [
-       0.001,
-       0.002
+       0.0,
+       0.001
       ]
      },
      {
       "id": "defensive",
       "label": "Defensive change",
-      "win": 0.007,
-      "draw": 0.106,
-      "loss": 0.886,
-      "xpts": 0.13,
-      "delta_win": -0.002,
+      "win": 0.003,
+      "draw": 0.067,
+      "loss": 0.931,
+      "xpts": 0.07,
+      "delta_win": -0.001,
       "ci90": [
-       -0.002,
-       -0.001
+       -0.001,
+       -0.0
       ]
      }
     ],
@@ -1835,14 +949,14 @@
     "evidence": [
      {
       "type": "condition",
-      "player_id": "CAS-04",
-      "value": 0.612,
-      "trend_per_min": -0.0231
+      "player_id": "CAS-02",
+      "value": 0.677,
+      "trend_per_min": -0.0025
      },
      {
       "type": "flank_threat",
       "channel": "CAS_left",
-      "share": 0.494
+      "share": 0.402
      }
     ],
     "manager_action": {
@@ -1860,140 +974,117 @@
    "narration": {
     "en": {
      "casual": {
-      "headline": "CAS-04 is fading (61%).",
+      "headline": "CAS-02 is fading (68%).",
       "reason": "The options are close: the model sees almost no difference (toss-up).",
       "source": "template"
      },
      "analyst": {
-      "headline": "CAS-04 is fading (61%).",
-      "reason": "The options are close: changing now moves win probability by +0.1 pts, 90% interval +0.1 to +0.2 (toss-up).",
-      "source": "template"
-     }
-    },
-    "es": {
-     "casual": {
-      "headline": "CAS-04 se está agotando (61%).",
-      "reason": "Las opciones están muy parejas: el modelo no ve apenas diferencia (igualado).",
-      "source": "template"
-     },
-     "analyst": {
-      "headline": "CAS-04 se está agotando (61%).",
-      "reason": "Las opciones están muy parejas: cambiar ahora mueve la probabilidad de victoria +0,1 pts, intervalo del 90%: +0,1 a +0,2 (igualado).",
-      "source": "template"
-     }
-    },
-    "ca": {
-     "casual": {
-      "headline": "CAS-04 s'està esgotant (61%).",
-      "reason": "Les opcions estan molt igualades: el model gairebé no hi veu diferència (igualat).",
-      "source": "template"
-     },
-     "analyst": {
-      "headline": "CAS-04 s'està esgotant (61%).",
-      "reason": "Les opcions estan molt igualades: canviar ara mou la probabilitat de victòria +0,1 punts, interval del 90%: +0,1 a +0,2 (igualat).",
+      "headline": "CAS-02 is fading (68%).",
+      "reason": "The options are close: changing now moves win probability by +0.1 pts, 90% interval +0.0 to +0.1 (toss-up).",
       "source": "template"
      }
     }
    },
    "closed": {
     "period": 2,
-    "t_ms": 5590000,
+    "t_ms": 5470000,
     "reason": "timeout"
    },
    "review": {
     "model": {
      "id": "attacking",
-     "win": 0.011,
-     "xpts": 0.16
+     "win": 0.004,
+     "xpts": 0.09
     },
     "manager": {
      "id": "no_change",
-     "win": 0.009,
-     "xpts": 0.14
+     "win": 0.004,
+     "xpts": 0.08
     },
-    "gap_win": 0.002,
-    "gap_xpts": 0.02,
+    "gap_win": 0.0,
+    "gap_xpts": 0.01,
     "recap": {
-     "en": "The model's option rated 0.2 pts of win probability and 0.02 expected points above the manager's.",
-     "es": "La opción del modelo valía 0,2 pts de probabilidad de victoria y 0,02 puntos esperados más que la del entrenador.",
-     "ca": "L'opció del model valia 0,2 punts de probabilitat de victòria i 0,02 punts esperats més que la de l'entrenador."
+     "en": {
+      "casual": "88': no change or attacking change: the model sees almost no difference (toss-up).",
+      "analyst": "88': the options were close: the model put attacking change +0.0 pts ahead of no change, 0.01 expected points (toss-up)."
+     }
     },
     "recap_source": "template"
    }
   },
   {
    "period": 2,
-   "point_id": "rfc-93-01",
+   "point_id": "rfc-91-01",
    "payload": {
-    "decision_id": "rfc-93-10",
-    "t_ms": 5590000,
+    "decision_id": "rfc-91-10",
+    "t_ms": 5470000,
     "team": "RFC",
     "trigger": "goal_after_55",
     "options": [
      {
       "id": "no_change",
       "label": "No change",
-      "win": 0.92,
-      "draw": 0.076,
-      "loss": 0.004,
-      "xpts": 2.84,
+      "win": 0.85,
+      "draw": 0.136,
+      "loss": 0.014,
+      "xpts": 2.68,
       "delta_win": 0.0
      },
      {
       "id": "sub_like_for_like",
-      "label": "Like-for-like substitution for RFC-08",
-      "win": 0.929,
-      "draw": 0.068,
-      "loss": 0.003,
-      "xpts": 2.86,
-      "delta_win": 0.009,
+      "label": "Like-for-like substitution for RFC-11",
+      "win": 0.878,
+      "draw": 0.113,
+      "loss": 0.009,
+      "xpts": 2.75,
+      "delta_win": 0.028,
       "ci90": [
-       0.008,
-       0.01
+       0.026,
+       0.03
       ]
      },
      {
       "id": "attacking",
       "label": "Attacking change",
-      "win": 0.915,
-      "draw": 0.081,
-      "loss": 0.004,
-      "xpts": 2.83,
-      "delta_win": -0.006,
+      "win": 0.842,
+      "draw": 0.143,
+      "loss": 0.016,
+      "xpts": 2.67,
+      "delta_win": -0.008,
       "ci90": [
-       -0.007,
-       -0.005
+       -0.009,
+       -0.007
       ]
      },
      {
       "id": "defensive",
       "label": "Defensive change",
-      "win": 0.924,
-      "draw": 0.073,
-      "loss": 0.003,
-      "xpts": 2.85,
-      "delta_win": 0.004,
+      "win": 0.859,
+      "draw": 0.128,
+      "loss": 0.013,
+      "xpts": 2.71,
+      "delta_win": 0.009,
       "ci90": [
-       0.003,
-       0.005
+       0.008,
+       0.011
       ]
      }
     ],
     "recommendation": {
      "option_id": "sub_like_for_like",
-     "strength": "toss_up"
+     "strength": "lean"
     },
     "evidence": [
      {
       "type": "condition",
-      "player_id": "RFC-08",
-      "value": 0.495,
-      "trend_per_min": -0.0027
+      "player_id": "RFC-11",
+      "value": 0.695,
+      "trend_per_min": -0.0017
      },
      {
       "type": "flank_threat",
       "channel": "RFC_right",
-      "share": 0.173
+      "share": 0.016
      }
     ],
     "manager_action": {
@@ -2006,135 +1097,112 @@
    "narration": {
     "en": {
      "casual": {
-      "headline": "RFC-08 is fading (50%).",
-      "reason": "The options are close: the model sees almost no difference (toss-up).",
+      "headline": "RFC-11 is fading (70%).",
+      "reason": "The model rates changing now about 3 points better (lean).",
       "source": "template"
      },
      "analyst": {
-      "headline": "RFC-08 is fading (50%).",
-      "reason": "The options are close: changing now moves win probability by +0.9 pts, 90% interval +0.8 to +1.0 (toss-up).",
-      "source": "template"
-     }
-    },
-    "es": {
-     "casual": {
-      "headline": "RFC-08 se está agotando (50%).",
-      "reason": "Las opciones están muy parejas: el modelo no ve apenas diferencia (igualado).",
-      "source": "template"
-     },
-     "analyst": {
-      "headline": "RFC-08 se está agotando (50%).",
-      "reason": "Las opciones están muy parejas: cambiar ahora mueve la probabilidad de victoria +0,9 pts, intervalo del 90%: +0,8 a +1,0 (igualado).",
-      "source": "template"
-     }
-    },
-    "ca": {
-     "casual": {
-      "headline": "RFC-08 s'està esgotant (50%).",
-      "reason": "Les opcions estan molt igualades: el model gairebé no hi veu diferència (igualat).",
-      "source": "template"
-     },
-     "analyst": {
-      "headline": "RFC-08 s'està esgotant (50%).",
-      "reason": "Les opcions estan molt igualades: canviar ara mou la probabilitat de victòria +0,9 punts, interval del 90%: +0,8 a +1,0 (igualat).",
+      "headline": "RFC-11 is fading (70%).",
+      "reason": "Changing now: +2.8 pts win probability, 90% interval +2.6 to +3.0 (lean).",
       "source": "template"
      }
     }
    },
    "closed": {
     "period": 2,
-    "t_ms": 5770000,
+    "t_ms": 5650000,
     "reason": "timeout"
    },
    "review": {
     "model": {
      "id": "sub_like_for_like",
-     "win": 0.929,
-     "xpts": 2.86
+     "win": 0.878,
+     "xpts": 2.75
     },
     "manager": {
      "id": "no_change",
-     "win": 0.92,
-     "xpts": 2.84
+     "win": 0.85,
+     "xpts": 2.68
     },
-    "gap_win": 0.009,
-    "gap_xpts": 0.02,
+    "gap_win": 0.028,
+    "gap_xpts": 0.07,
     "recap": {
-     "en": "The model's option rated 0.9 pts of win probability and 0.02 expected points above the manager's.",
-     "es": "La opción del modelo valía 0,9 pts de probabilidad de victoria y 0,02 puntos esperados más que la del entrenador.",
-     "ca": "L'opció del model valia 0,9 punts de probabilitat de victòria i 0,02 punts esperats més que la de l'entrenador."
+     "en": {
+      "casual": "91': the manager chose no change; the model rated like-for-like substitution for RFC-11 about 3 points better (lean).",
+      "analyst": "91': the manager chose no change; the model preferred like-for-like substitution for RFC-11, +2.8 pts win probability, 0.07 expected points (lean)."
+     }
     },
     "recap_source": "template"
    }
   },
   {
    "period": 2,
-   "point_id": "cas-96-01",
+   "point_id": "cas-94-01",
    "payload": {
-    "decision_id": "cas-96-10",
-    "t_ms": 5770000,
+    "decision_id": "cas-94-10",
+    "t_ms": 5650000,
     "team": "CAS",
     "trigger": "goal_after_55",
     "options": [
      {
       "id": "no_change",
       "label": "No change",
-      "win": 0.0,
-      "draw": 0.0,
-      "loss": 1.0,
-      "xpts": 0.0,
+      "win": 0.001,
+      "draw": 0.043,
+      "loss": 0.956,
+      "xpts": 0.05,
       "delta_win": 0.0
      },
      {
       "id": "sub_like_for_like",
-      "label": "Like-for-like substitution for CAS-06",
-      "win": 0.0,
-      "draw": 0.0,
-      "loss": 1.0,
-      "xpts": 0.0,
+      "label": "Like-for-like substitution for CAS-02",
+      "win": 0.001,
+      "draw": 0.044,
+      "loss": 0.955,
+      "xpts": 0.05,
       "delta_win": 0.0,
       "ci90": [
-       0.0,
+       -0.0,
        0.0
       ]
      },
      {
       "id": "attacking",
       "label": "Attacking change",
-      "win": 0.0,
-      "draw": 0.0,
-      "loss": 1.0,
-      "xpts": 0.0,
+      "win": 0.001,
+      "draw": 0.047,
+      "loss": 0.952,
+      "xpts": 0.05,
       "delta_win": 0.0,
       "ci90": [
        0.0,
-       0.0
+       0.001
       ]
      },
      {
       "id": "defensive",
       "label": "Defensive change",
-      "win": 0.0,
-      "draw": 0.0,
-      "loss": 1.0,
-      "xpts": 0.0,
-      "delta_win": 0.0,
+      "win": 0.001,
+      "draw": 0.038,
+      "loss": 0.961,
+      "xpts": 0.04,
+      "delta_win": -0.0,
       "ci90": [
-       0.0,
-       0.0
+       -0.001,
+       -0.0
       ]
      }
     ],
     "recommendation": {
-     "option_id": "no_change",
+     "option_id": "attacking",
      "strength": "toss_up"
     },
     "evidence": [
      {
       "type": "condition",
-      "player_id": "CAS-06",
-      "value": 0.695,
-      "trend_per_min": -0.0228
+      "player_id": "CAS-02",
+      "value": 0.655,
+      "trend_per_min": -0.004
      },
      {
       "type": "flank_threat",
@@ -2152,63 +1220,40 @@
    "narration": {
     "en": {
      "casual": {
-      "headline": "CAS-06 is fading (70%).",
+      "headline": "CAS-02 is fading (66%).",
       "reason": "The options are close: the model sees almost no difference (toss-up).",
       "source": "template"
      },
      "analyst": {
-      "headline": "CAS-06 is fading (70%).",
-      "reason": "The options are close: changing now moves win probability by +0.0 pts, 90% interval +0.0 to +0.0 (toss-up).",
-      "source": "template"
-     }
-    },
-    "es": {
-     "casual": {
-      "headline": "CAS-06 se está agotando (70%).",
-      "reason": "Las opciones están muy parejas: el modelo no ve apenas diferencia (igualado).",
-      "source": "template"
-     },
-     "analyst": {
-      "headline": "CAS-06 se está agotando (70%).",
-      "reason": "Las opciones están muy parejas: cambiar ahora mueve la probabilidad de victoria +0,0 pts, intervalo del 90%: +0,0 a +0,0 (igualado).",
-      "source": "template"
-     }
-    },
-    "ca": {
-     "casual": {
-      "headline": "CAS-06 s'està esgotant (70%).",
-      "reason": "Les opcions estan molt igualades: el model gairebé no hi veu diferència (igualat).",
-      "source": "template"
-     },
-     "analyst": {
-      "headline": "CAS-06 s'està esgotant (70%).",
-      "reason": "Les opcions estan molt igualades: canviar ara mou la probabilitat de victòria +0,0 punts, interval del 90%: +0,0 a +0,0 (igualat).",
+      "headline": "CAS-02 is fading (66%).",
+      "reason": "The options are close: changing now moves win probability by +0.0 pts, 90% interval +0.0 to +0.1 (toss-up).",
       "source": "template"
      }
     }
    },
    "closed": {
     "period": 2,
-    "t_ms": 5770000,
+    "t_ms": 5650000,
     "reason": "full_time"
    },
    "review": {
     "model": {
-     "id": "no_change",
-     "win": 0.0,
-     "xpts": 0.0
+     "id": "attacking",
+     "win": 0.001,
+     "xpts": 0.05
     },
     "manager": {
      "id": "no_change",
-     "win": 0.0,
-     "xpts": 0.0
+     "win": 0.001,
+     "xpts": 0.05
     },
     "gap_win": 0.0,
     "gap_xpts": 0.0,
     "recap": {
-     "en": "Manager and model chose the same option.",
-     "es": "El entrenador y el modelo eligieron la misma opción.",
-     "ca": "L'entrenador i el model van triar la mateixa opció."
+     "en": {
+      "casual": "94': no change or attacking change: the model sees almost no difference (toss-up).",
+      "analyst": "94': the options were close: the model put attacking change +0.0 pts ahead of no change, 0.00 expected points (toss-up)."
+     }
     },
     "recap_source": "template"
    }

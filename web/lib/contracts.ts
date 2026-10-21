@@ -167,7 +167,8 @@ export interface Review {
   manager: ReviewOption | null;
   gap_win: number | null; // model minus manager
   gap_xpts: number | null;
-  recap: Partial<Record<Locale, string>>;
+  /** One line per mode from dugout.agents.recap (its template, so recap_source is "template"). */
+  recap: Partial<Record<Locale, Partial<Record<Mode, string>>>>;
   recap_source: "model" | "template";
 }
 

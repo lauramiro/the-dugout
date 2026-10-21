@@ -180,6 +180,7 @@ export default function Page() {
         finished={finished}
         roster={roster}
         locale={locale}
+        mode={mode}
         t={t}
       />
     </main>
