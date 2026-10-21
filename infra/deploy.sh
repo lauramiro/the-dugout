@@ -28,6 +28,8 @@
 # with a command of its own, no ingress and one replica (no checkpoint store, so a second replica would
 # publish everything twice). It replaces the old $PREFIX-stub app, which this script no longer touches.
 set -euo pipefail
+# Git Bash on Windows rewrites /app/... arguments into C:/Program Files/Git/app/...; keep them as written.
+export MSYS_NO_PATHCONV=1
 
 APPLY=0
 case "${1:-}" in
