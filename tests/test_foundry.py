@@ -134,3 +134,27 @@ def test_client_from_env_names_the_missing_variable_only(monkeypatch, missing):
         client_from_env()
     assert missing in str(info.value)
     assert "secret-value" not in str(info.value)
+
+
+def test_reasoning_effort_is_sent_only_when_set(monkeypatch):
+    bodies = []
+
+    def handler(request):
+        bodies.append(json.loads(request.content))
+        return reply("{}")
+
+    client_with(handler).complete("s", "u", timeout_s=1)
+    FoundryClient(ENDPOINT, "k", "m", reasoning_effort="minimal",
+                  transport=httpx.MockTransport(handler)).complete("s", "u", timeout_s=1)
+    assert "reasoning_effort" not in bodies[0]
+    assert bodies[1]["reasoning_effort"] == "minimal"
+
+
+def test_client_from_env_reads_optional_reasoning_effort(monkeypatch):
+    monkeypatch.setenv("FOUNDRY_ENDPOINT", ENDPOINT)
+    monkeypatch.setenv("FOUNDRY_API_KEY", "k")
+    monkeypatch.setenv("FOUNDRY_MODEL", "gpt-5-mini")
+    monkeypatch.delenv("FOUNDRY_REASONING_EFFORT", raising=False)
+    assert client_from_env()._reasoning_effort is None
+    monkeypatch.setenv("FOUNDRY_REASONING_EFFORT", "minimal")
+    assert client_from_env()._reasoning_effort == "minimal"

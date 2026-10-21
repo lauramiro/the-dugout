@@ -6,13 +6,16 @@ grounding check (decision 14: narrate once per card, then serve from the cache).
 
 from __future__ import annotations
 
+import os
 from collections import defaultdict
 from dataclasses import asdict
 from threading import Lock
 from typing import Callable, Protocol
 
+from dugout.agents.foundry import ENV_ENDPOINT, client_from_env
 from dugout.agents.lexicon import LOCALES
 from dugout.agents.pipeline import NarrationPipeline, StubClient
+from dugout.agents.workflow import NarrationWorkflow
 from dugout.engine.payload import decide
 from dugout.service.store import MemoryStore, Store
 
@@ -68,7 +71,14 @@ class CardService:
             return self._locks[key]
 
 
+def default_narrator() -> Narrator:
+    """The Agent Framework workflow on Foundry when FOUNDRY_ENDPOINT is set, else the stub client."""
+    if os.environ.get(ENV_ENDPOINT):
+        return NarrationWorkflow(client_from_env())
+    return NarrationPipeline(StubClient())
+
+
 def default_service(store: Store | None = None) -> CardService:
-    """Engine with its default sample count, narration through the stub model client."""
+    """Engine with its default sample count, narration from default_narrator()."""
     return CardService(lambda snapshot, team, trigger, **kw: decide(snapshot, team, trigger, **kw),
-                       NarrationPipeline(StubClient()), store or MemoryStore())
+                       default_narrator(), store or MemoryStore())

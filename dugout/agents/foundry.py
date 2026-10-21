@@ -16,15 +16,19 @@ from dugout.agents.pipeline import ModelError, ModelTimeout
 ENV_ENDPOINT = "FOUNDRY_ENDPOINT"
 ENV_API_KEY = "FOUNDRY_API_KEY"
 ENV_MODEL = "FOUNDRY_MODEL"
+# Optional. "minimal" keeps a gpt-5 family call near 1.5 s (default reasoning took 9 s on gpt-5-mini).
+ENV_REASONING_EFFORT = "FOUNDRY_REASONING_EFFORT"
 
 
 class FoundryClient:
     def __init__(self, endpoint: str, api_key: str, model: str, *,
+                 reasoning_effort: str | None = None,
                  transport: httpx.BaseTransport | None = None):
         base = endpoint.rstrip("/").removesuffix("/openai/v1")
         self._url = f"{base}/openai/v1/chat/completions"
         self._api_key = api_key
         self._model = model
+        self._reasoning_effort = reasoning_effort
         self._http = httpx.Client(transport=transport)
 
     def complete(self, system: str, user: str, *, timeout_s: float) -> str:
@@ -36,6 +40,8 @@ class FoundryClient:
             ],
             "response_format": {"type": "json_object"},
         }
+        if self._reasoning_effort:
+            body["reasoning_effort"] = self._reasoning_effort
         try:
             response = self._http.post(
                 self._url, json=body, headers={"api-key": self._api_key}, timeout=timeout_s,
@@ -61,4 +67,5 @@ def client_from_env() -> FoundryClient:
     missing = [name for name, value in values.items() if not value]
     if missing:
         raise RuntimeError(f"Set {', '.join(missing)} to use the Foundry client (see env.example)")
-    return FoundryClient(values[ENV_ENDPOINT], values[ENV_API_KEY], values[ENV_MODEL])
+    return FoundryClient(values[ENV_ENDPOINT], values[ENV_API_KEY], values[ENV_MODEL],
+                         reasoning_effort=os.environ.get(ENV_REASONING_EFFORT) or None)

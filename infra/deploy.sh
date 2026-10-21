@@ -7,7 +7,8 @@
 # Create resources only after review and explicit approval:
 #   BUDGET_EMAIL=... infra/deploy.sh --apply
 #
-# Required:  BUDGET_EMAIL  address that receives the budget alert
+# Required:  BUDGET_EMAIL  address that receives the budget alert; infra/foundry.sh run first (both
+#            Container Apps narrate through its model deployment)
 # Optional:  REGION (default northeurope; westeurope refused new customers on the free
 #            subscription), SWA_REGION (default eastus2; westeurope refused, northeurope not offered), BUDGET_USD (default 20),
 #            PREFIX (default dugout)
@@ -67,6 +68,7 @@ EH_NS="$PREFIX-eh-$SUFFIX"
 WPS="$PREFIX-wps-$SUFFIX"
 SWA="$PREFIX-web-$SUFFIX"
 CAE="$PREFIX-env"
+FOUNDRY="$PREFIX-foundry-$SUFFIX"  # created by infra/foundry.sh
 APP="$PREFIX-service"
 RUNNER="$PREFIX-runner"
 
@@ -120,13 +122,20 @@ run az containerapp env create --name "$CAE" --resource-group "$RG" --location "
 WPS_CONN="$(capture az webpubsub key show --name "$WPS" --resource-group "$RG" --query primaryConnectionString -o tsv)"
 # 'up' builds the repo Dockerfile in Azure and creates or updates the app.
 need WPS_CONN "$WPS_CONN"
+# Foundry narration (infra/foundry.sh): endpoint, key and the first model deployment's name.
+FOUNDRY_KEY="$(capture az cognitiveservices account keys list --name "$FOUNDRY" --resource-group "$RG" --query key1 -o tsv)"
+FOUNDRY_MODEL="$(capture az cognitiveservices account deployment list --name "$FOUNDRY" --resource-group "$RG" --query "[0].name" -o tsv)"
+need FOUNDRY_KEY "$FOUNDRY_KEY"; need FOUNDRY_MODEL "$FOUNDRY_MODEL"
+FOUNDRY_ENV=("FOUNDRY_ENDPOINT=https://$FOUNDRY.openai.azure.com" "FOUNDRY_API_KEY=secretref:foundry-key"
+             "FOUNDRY_MODEL=$FOUNDRY_MODEL" "FOUNDRY_REASONING_EFFORT=minimal")
 run az containerapp up --name "$APP" --resource-group "$RG" --environment "$CAE" \
   --source "$ROOT" --ingress external --target-port 8000
-run_quiet "store Web PubSub connection string as secret" \
-  az containerapp secret set --name "$APP" --resource-group "$RG" --secrets "wps-conn=$WPS_CONN"
+run_quiet "store Web PubSub connection string and Foundry key as secrets" \
+  az containerapp secret set --name "$APP" --resource-group "$RG" \
+  --secrets "wps-conn=$WPS_CONN" "foundry-key=$FOUNDRY_KEY"
 run az containerapp update --name "$APP" --resource-group "$RG" --set-env-vars \
   "WEBPUBSUB_CONNECTION_STRING=secretref:wps-conn" "WEBPUBSUB_HUB=$PUBSUB_HUB" \
-  "STUB_CORS_ORIGINS=https://$SWA_HOST"
+  "STUB_CORS_ORIGINS=https://$SWA_HOST" "${FOUNDRY_ENV[@]}"
 SERVICE_FQDN="$(capture az containerapp show --name "$APP" --resource-group "$RG" --query properties.configuration.ingress.fqdn -o tsv)"
 
 need SERVICE_FQDN "$SERVICE_FQDN"
@@ -153,15 +162,16 @@ need REG_PASS "$REG_PASS"
 if [[ $APPLY == 1 ]] && az containerapp show --name "$RUNNER" --resource-group "$RG" >/dev/null 2>&1; then
   run az containerapp update --name "$RUNNER" --resource-group "$RG" --image "$IMAGE"
   run_quiet "refresh runner secrets" az containerapp secret set --name "$RUNNER" --resource-group "$RG" \
-    --secrets "wps-conn=$WPS_CONN" "eh-conn=$EH_CONN" "acr-pw=$REG_PASS"
+    --secrets "wps-conn=$WPS_CONN" "eh-conn=$EH_CONN" "acr-pw=$REG_PASS" "foundry-key=$FOUNDRY_KEY"
+  run az containerapp update --name "$RUNNER" --resource-group "$RG" --set-env-vars "${FOUNDRY_ENV[@]}"
 else
   run_quiet "create runner (secrets and registry password in arguments)" \
     az containerapp create --name "$RUNNER" --resource-group "$RG" --environment "$CAE" \
     --image "$IMAGE" --command python /app/dugout/stream/pipeline.py \
     --min-replicas 1 --max-replicas 1 \
     --registry-server "$REG_SERVER" --registry-username "$REG_USER" --registry-password secretref:acr-pw \
-    --secrets "wps-conn=$WPS_CONN" "eh-conn=$EH_CONN" "acr-pw=$REG_PASS" \
-    --env-vars "PIPELINE_SOURCE=eventhub" "EVENTHUB_CONNECTION_STRING=secretref:eh-conn" \
+    --secrets "wps-conn=$WPS_CONN" "eh-conn=$EH_CONN" "acr-pw=$REG_PASS" "foundry-key=$FOUNDRY_KEY" \
+    --env-vars "${FOUNDRY_ENV[@]}" "PIPELINE_SOURCE=eventhub" "EVENTHUB_CONNECTION_STRING=secretref:eh-conn" \
     "EVENTHUB_NAME=$HUB" "WEBPUBSUB_CONNECTION_STRING=secretref:wps-conn" "WEBPUBSUB_HUB=$PUBSUB_HUB"
 fi
 

@@ -82,3 +82,22 @@ def test_unsupported_locale_or_mode_is_rejected(parts, locale, mode):
     svc.open(SNAPSHOT, "RFC", "condition_drop")
     with pytest.raises(ValueError):
         svc.card("rfc-62-01", locale, mode)
+
+
+def test_default_service_narrates_with_the_stub_without_foundry_settings(monkeypatch):
+    for name in ("FOUNDRY_ENDPOINT", "FOUNDRY_API_KEY", "FOUNDRY_MODEL"):
+        monkeypatch.delenv(name, raising=False)
+    from dugout.service.cards import default_service
+    assert isinstance(default_service()._pipeline._client, StubClient)
+
+
+def test_default_service_narrates_with_foundry_when_configured(monkeypatch):
+    monkeypatch.setenv("FOUNDRY_ENDPOINT", "https://dugout-test.openai.azure.com")
+    monkeypatch.setenv("FOUNDRY_API_KEY", "test-key")
+    monkeypatch.setenv("FOUNDRY_MODEL", "gpt-5-mini")
+    from dugout.agents.foundry import FoundryClient
+    from dugout.agents.workflow import NarrationWorkflow
+    from dugout.service.cards import default_service
+    pipeline = default_service()._pipeline
+    assert isinstance(pipeline, NarrationWorkflow)
+    assert isinstance(pipeline._client, FoundryClient)
