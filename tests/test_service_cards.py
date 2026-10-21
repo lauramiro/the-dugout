@@ -36,15 +36,15 @@ def parts():
 
 def test_open_runs_the_engine_once_and_stores_the_payload(parts):
     engine, _, svc = parts
-    payload = svc.open(SNAPSHOT, "RFC", "condition_below_60")
+    payload = svc.open(SNAPSHOT, "RFC", "condition_drop")
     assert payload["decision_id"] == "rfc-62-01"
-    assert engine.calls == [("RFC", "condition_below_60")]
+    assert engine.calls == [("RFC", "condition_drop")]
     assert svc.payload("rfc-62-01") == payload
 
 
 def test_card_carries_engine_numbers_and_narration(parts):
     _, _, svc = parts
-    svc.open(SNAPSHOT, "RFC", "condition_below_60")
+    svc.open(SNAPSHOT, "RFC", "condition_drop")
     card = svc.card("rfc-62-01", "es", "analyst")
     assert card["decision_id"] == "rfc-62-01"
     assert card["locale"] == "es" and card["mode"] == "analyst"
@@ -54,7 +54,7 @@ def test_card_carries_engine_numbers_and_narration(parts):
 
 def test_second_request_for_the_same_card_reruns_nothing(parts):
     engine, pipeline, svc = parts
-    svc.open(SNAPSHOT, "RFC", "condition_below_60")
+    svc.open(SNAPSHOT, "RFC", "condition_drop")
     first = svc.card("rfc-62-01", "ca", "casual")
     second = svc.card("rfc-62-01", "ca", "casual")
     assert first == second
@@ -64,7 +64,7 @@ def test_second_request_for_the_same_card_reruns_nothing(parts):
 
 def test_other_locale_or_mode_runs_the_pipeline_but_not_the_engine(parts):
     engine, pipeline, svc = parts
-    svc.open(SNAPSHOT, "RFC", "condition_below_60")
+    svc.open(SNAPSHOT, "RFC", "condition_drop")
     svc.card("rfc-62-01", "en", "casual")
     svc.card("rfc-62-01", "en", "analyst")
     svc.card("rfc-62-01", "es", "casual")
@@ -80,6 +80,6 @@ def test_unknown_decision_is_none(parts):
 @pytest.mark.parametrize("locale,mode", [("fr", "casual"), ("en", "loud")])
 def test_unsupported_locale_or_mode_is_rejected(parts, locale, mode):
     _, _, svc = parts
-    svc.open(SNAPSHOT, "RFC", "condition_below_60")
+    svc.open(SNAPSHOT, "RFC", "condition_drop")
     with pytest.raises(ValueError):
         svc.card("rfc-62-01", locale, mode)

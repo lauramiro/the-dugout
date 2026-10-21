@@ -8,7 +8,7 @@ SAMPLE_PAYLOAD: dict = {
     "decision_id": "rfc-62-01",
     "t_ms": 3720000,
     "team": "RFC",
-    "trigger": "condition_below_60",
+    "trigger": "condition_drop",
     "options": [
         {"id": "no_change", "label": "No change", "win": 0.687, "draw": 0.240,
          "loss": 0.073, "xpts": 2.30, "delta_win": 0.0},

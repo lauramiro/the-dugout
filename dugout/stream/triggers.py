@@ -1,8 +1,11 @@
 """Decision points for both teams from snapshots and the events between them.
 
 Triggers:
-- `condition_below_60`: an outfield player's condition estimate crosses below 0.60;
-  once per player, for his team.
+- `condition_drop`: an outfield player's condition estimate is at least CONDITION_MARGIN
+  below the median of his team's outfield players on the pitch (himself included) and
+  below CONDITION_LINE, once his band is set; once per player, for his team. The margin
+  says he is the one fading, the line that he is fading at all: a player who started less
+  fresh reads well below his team from kick-off without needing a change yet.
 - `goal_after_55`: a goal from 55:00 on; one point for each team, the conceding team first.
 - `manager_sub`: any substitution; one point per team per window, for the team that made it.
 
@@ -18,8 +21,14 @@ Reads snapshots and event dicts only; never imports the simulator.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from statistics import median
 
-CONDITION_LINE = 0.60
+# Chosen on seeds 1-20 (eval/condition_estimate.py --triggers): the smallest margin whose
+# cards are at least 95% for a player within 0.05 of the simulated manager's fade line, then
+# the line whose median card lands closest to the hidden fade (ties: more matches where
+# Riverside's first card is RFC-03).
+CONDITION_MARGIN = 0.10
+CONDITION_LINE = 0.69
 GOAL_MINUTE = 55
 CARD_TIMEOUT_SNAPSHOTS = 18  # 3 minutes of match clock at one snapshot every 10 s
 
@@ -37,7 +46,6 @@ class DecisionPoints:
         self.queue: list[_Point] = []
         self.open: dict | None = None  # the open card's record
         self._age = 0  # snapshots since the open card opened
-        self._last_est: dict[str, float] = {}
         self._fired: set[str] = set()  # players with a condition point already
         self._count: dict[tuple[str, int], int] = {}
 
@@ -58,7 +66,7 @@ class DecisionPoints:
             on_pitch = {p["id"] for p in snapshot["players"]}
             while self.queue:
                 point = self.queue.pop(0)
-                if point.trigger != "condition_below_60" or point.detail["player_id"] in on_pitch:
+                if point.trigger != "condition_drop" or point.detail["player_id"] in on_pitch:
                     out.append(self._open(snapshot, point))
                     break
         return out
@@ -84,17 +92,18 @@ class DecisionPoints:
             points.append(_Point(team, "manager_sub", t_ms,
                                  {"subs": [{"off": s["player_id"], "on": s["player_in_id"]} for s in subs]}))
         points.sort(key=lambda p: p.raised_t_ms)
-        for p in snapshot["players"]:
-            est = p.get("condition_est")
-            if est is None:
-                continue
-            before = self._last_est.get(p["id"], 1.0)
-            self._last_est[p["id"]] = est
-            if est < CONDITION_LINE <= before and p["id"] not in self._fired:
+        outfield = [p for p in snapshot["players"] if p.get("condition_est") is not None]
+        medians = {team: median(p["condition_est"] for p in outfield if p["team"] == team)
+                   for team in {p["team"] for p in outfield}}
+        for p in outfield:
+            est, team_median = p["condition_est"], medians[p["team"]]
+            if (p.get("condition_band") is not None and p["id"] not in self._fired
+                    and est <= team_median - CONDITION_MARGIN and est < CONDITION_LINE):
                 self._fired.add(p["id"])
-                points.append(_Point(p["team"], "condition_below_60", snapshot["t_ms"],
+                points.append(_Point(p["team"], "condition_drop", snapshot["t_ms"],
                                      {"player_id": p["id"], "condition_est": est,
-                                      "condition_band": p.get("condition_band")}))
+                                      "condition_band": p["condition_band"],
+                                      "team_median": round(team_median, 3)}))
         return points
 
     def _open(self, snapshot: dict, point: _Point) -> dict:

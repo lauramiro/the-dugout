@@ -25,7 +25,7 @@ N = 20_000
 
 
 def payload(**kw):
-    return decide(SNAPSHOT, "RFC", "condition_below_60", SeedSequence(5), n=N, **kw)
+    return decide(SNAPSHOT, "RFC", "condition_drop", SeedSequence(5), n=N, **kw)
 
 
 def test_contract_4_keys_and_types():
@@ -33,7 +33,7 @@ def test_contract_4_keys_and_types():
     assert set(p) == {"decision_id", "t_ms", "team", "trigger", "options", "recommendation",
                       "evidence", "manager_action"}
     assert p["decision_id"] == "rfc-62-00"
-    assert p["t_ms"] == 3720000 and p["team"] == "RFC" and p["trigger"] == "condition_below_60"
+    assert p["t_ms"] == 3720000 and p["team"] == "RFC" and p["trigger"] == "condition_drop"
     assert p["manager_action"] is None
     assert len(p["options"]) == 4
     for o in p["options"]:
@@ -98,12 +98,12 @@ AWAY = {
 
 
 def test_away_team_decision_reads_that_teams_rates_and_players():
-    p = decide(AWAY, "CAS", "condition_below_60", SeedSequence(5), n=2_000)
+    p = decide(AWAY, "CAS", "condition_drop", SeedSequence(5), n=2_000)
     assert p["team"] == "CAS" and p["decision_id"].startswith("cas-62-")
     ev = {e["type"]: e for e in p["evidence"]}
     assert ev["condition"]["player_id"] == "CAS-04"
     assert ev["flank_threat"] == {"type": "flank_threat", "channel": "CAS_right", "share": 0.50}
-    other = decide(AWAY, "CAS", "condition_below_60", SeedSequence(5), n=2_000)
+    other = decide(AWAY, "CAS", "condition_drop", SeedSequence(5), n=2_000)
     assert other == p
 
 

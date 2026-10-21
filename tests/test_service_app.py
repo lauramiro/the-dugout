@@ -39,7 +39,7 @@ def env():
 
 
 def open_decision(client, **extra):
-    body = {"snapshot": SNAPSHOT, "team": "RFC", "trigger": "condition_below_60", **extra}
+    body = {"snapshot": SNAPSHOT, "team": "RFC", "trigger": "condition_drop", **extra}
     return client.post("/decisions", json=body)
 
 

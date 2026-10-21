@@ -1,0 +1,24 @@
+{
+ "seeds": [
+  1,
+  20
+ ],
+ "results": [
+  {
+   "margin": 0.1,
+   "line": 0.69,
+   "matches": 20,
+   "cards_per_match": {
+    "RFC": 1.0,
+    "CAS": 0.0
+   },
+   "rfc_first_is_rfc03": 20,
+   "lag_minutes_median": -1.0,
+   "lag_minutes_iqr": [
+    -4.5,
+    1.0
+   ],
+   "honest": 1.0
+  }
+ ]
+}

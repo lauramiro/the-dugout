@@ -21,6 +21,14 @@ Reports, over all seeds:
     uv run python eval/condition_estimate.py --seeds 20 [--first 1] [--no-recent] [--out eval/results/x.json]
 
 --no-recent drops recent_minutes from the lineup, which gives the estimate before it knew them.
+
+--triggers plays whole matches through the state engine and dugout.stream.triggers instead and
+reports the condition_drop cards: per match for each team, how often Riverside's first one is
+RFC-03, its minute against the hidden fade (first minute below managers.FADE), and the share of
+cards whose player is within 0.05 of FADE at the card. --scan does the same over a grid of
+margins and lines, which is how the constants in triggers.py were chosen on seeds 1-20.
+
+    uv run python eval/condition_estimate.py --triggers --seeds 20 [--scan]
 """
 from __future__ import annotations
 
@@ -34,9 +42,11 @@ import numpy as np
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
+from dugout.sim import managers  # noqa: E402
 from dugout.sim.match import new_match, step  # noqa: E402
 from dugout.sim.scenario import load_scenario  # noqa: E402
 from dugout.stream.snapshots import lineup_from_scenario  # noqa: E402
+from dugout.stream import triggers  # noqa: E402
 from dugout.stream.state_engine import StateEngine  # noqa: E402
 
 SCENARIO = ROOT / "scenarios" / "riverside-castleton.yaml"
@@ -53,6 +63,61 @@ def play(scenario, seed):
         if s.clock_s % 60 == 0:
             hidden[(s.period, s.clock_s * 1000)] = {p.id: p.condition for p in s.players.values()}
     return events, hidden
+
+
+def play_all(scenario, seed):
+    """Every event and hidden condition at each whole match minute, keyed (period, t_ms)."""
+    s, events = new_match(scenario, seed)
+    hidden = {}
+    while not s.finished:
+        events += step(s)
+        if s.clock_s % 60 == 0:
+            hidden[(s.period, s.clock_s * 1000)] = {p.id: p.condition for p in s.players.values()}
+    return [e.to_dict() for e in events], hidden
+
+
+def condition_cards(lineup, events, margin, line):
+    """The condition_drop cards that open, with the trigger's constants set to margin and line."""
+    saved = triggers.CONDITION_MARGIN, triggers.CONDITION_LINE
+    triggers.CONDITION_MARGIN, triggers.CONDITION_LINE = margin, line
+    try:
+        engine, points, out = StateEngine(lineup), triggers.DecisionPoints(), []
+        for e in events:
+            for snap, new in engine.feed(e):
+                out += points.on_snapshot(snap, new)
+        for snap, new in engine.finish():
+            out += points.on_snapshot(snap, new)
+        out += points.finish()
+    finally:
+        triggers.CONDITION_MARGIN, triggers.CONDITION_LINE = saved
+    return [r for r in out if r["kind"] == "decision_point" and r["trigger"] == "condition_drop"]
+
+
+def measure_triggers(matches, lineup, margin, line):
+    per_team = {"RFC": 0, "CAS": 0}
+    first = honest = total = 0
+    lags = []
+    for events, hidden in matches:
+        cards = condition_cards(lineup, events, margin, line)
+        for c in cards:
+            per_team[c["team"]] += 1
+            h = hidden.get((c["period"], c["t_ms"] // 60_000 * 60_000), {}).get(c["detail"]["player_id"])
+            if h is not None:
+                total += 1
+                honest += h < managers.FADE + 0.05
+        rfc = [c for c in cards if c["team"] == "RFC"]
+        if rfc and rfc[0]["detail"]["player_id"] == FOCUS:
+            first += 1
+            fade = next((k for k in sorted(hidden) if hidden[k][FOCUS] < managers.FADE), None)
+            if fade is not None:
+                lags.append((rfc[0]["t_ms"] - fade[1]) // 60_000)
+    n = len(matches)
+    return {"margin": margin, "line": line, "matches": n,
+            "cards_per_match": {t: round(v / n, 2) for t, v in per_team.items()},
+            "rfc_first_is_rfc03": first,
+            "lag_minutes_median": float(np.median(lags)) if lags else None,
+            "lag_minutes_iqr": [float(np.percentile(lags, q)) for q in (25, 75)] if lags else None,
+            "honest": round(honest / total, 3) if total else None}
 
 
 def snapshots(lineup, events):
@@ -125,9 +190,20 @@ def main():
     ap.add_argument("--seeds", type=int, default=20)
     ap.add_argument("--first", type=int, default=1)
     ap.add_argument("--no-recent", action="store_true", help="lineup without recent_minutes")
+    ap.add_argument("--triggers", action="store_true", help="measure condition_drop cards instead")
+    ap.add_argument("--scan", action="store_true", help="with --triggers: a grid of margins and lines")
     ap.add_argument("--out", type=Path)
     args = ap.parse_args()
-    result = measure(range(args.first, args.first + args.seeds), recent=not args.no_recent)
+    seeds = range(args.first, args.first + args.seeds)
+    if args.triggers:
+        scenario, lineup = load_scenario(SCENARIO), lineup_from_scenario(SCENARIO)
+        matches = [play_all(scenario, seed) for seed in seeds]
+        grid = ([(m, ln) for m in (0.06, 0.08, 0.10, 0.12) for ln in (1.0, 0.72, 0.70, 0.69, 0.68, 0.67, 0.66)]
+                if args.scan else [(triggers.CONDITION_MARGIN, triggers.CONDITION_LINE)])
+        result = {"seeds": [min(seeds), max(seeds)],
+                  "results": [measure_triggers(matches, lineup, m, ln) for m, ln in grid]}
+    else:
+        result = measure(seeds, recent=not args.no_recent)
     print(json.dumps(result, indent=1))
     if args.out:
         args.out.parent.mkdir(parents=True, exist_ok=True)

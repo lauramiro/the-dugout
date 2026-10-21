@@ -103,3 +103,42 @@ estimate aims at where a player started and not only at his own first 20 minutes
 
 Not sensitive to the assumed share on held-out seeds 21-100: 0.25 gives r 0.748 and 80/80, 0.75
 gives r 0.894 and 80/80; relative coverage stays 0.89 to 0.90.
+
+## The relative trigger, `condition_drop` (done)
+
+`condition_below_60` is replaced. A `condition_drop` card opens for an outfield player once his
+band is set (20 minutes on the pitch) when his estimate is at least a margin below the median of
+his team's outfield players on the pitch and below a line, once per player.
+
+A margin alone is not enough once the estimate knows recent minutes. RFC-03 starts 0.14 below
+his team and stays 0.12 to 0.16 below it all match, while nobody else's gap passes about 0.08, so
+a margin-only card opens as soon as his band is set, about 43 minutes before he fades. The margin
+says he is the one fading; the line says he is fading at all.
+
+Chosen on seeds 1-20 with `uv run python eval/condition_estimate.py --triggers --scan`
+(`condition_trigger_scan_1-20.json`). An honest card is one whose player's hidden condition is
+within 0.05 of the simulated manager's fade line (`managers.FADE`, 0.60) at the card; the fade is
+the first minute RFC-03 is below that line. Rule: the smallest margin whose cards are at least
+95% honest (0.10), then the line whose median card lands closest to the fade; 0.69 and 0.68 tie
+(-1 and +1 minutes), and 0.69 wins on more matches where Riverside's first card is RFC-03 (20
+against 19).
+
+| margin 0.10, line 0.69 | seeds 1-20 (fit) | seeds 21-100 (held out) |
+| --- | --- | --- |
+| condition cards per match, Riverside | 1.00 | 1.02 |
+| condition cards per match, Castleton | 0.00 | 0.04 |
+| Riverside's first condition card is RFC-03 | 20/20 | 79/80 |
+| card minute minus hidden fade, median (IQR) | -1 (-4.5 to 1) | -3 (-7.5 to 1) |
+| honest cards | 1.00 | 0.94 |
+
+Raw numbers: `condition_trigger_1-20.json`, `condition_trigger_21-100.json`.
+
+Check on demo seed 73, not a fit: the card opens for RFC-03 at 60' (estimate 0.689, team median
+0.821), four minutes before his hidden fade at 64' and 19 minutes before the manager's change at
+79'. That is inside the 60' to 70' target, but at its edge.
+
+What this means: in this scenario the card is in effect for the player who played midweek. A
+player with no recent minutes never reads 0.10 below his team, because the rest of the spread is
+load the estimator can count and the rate signal is too noisy to separate one player from the
+others (see above). Castleton, with nobody who played midweek, almost never gets a condition card.
+That is honest, and the demo should say so rather than show cards that are not there.

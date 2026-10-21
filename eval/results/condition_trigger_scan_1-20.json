@@ -1,0 +1,456 @@
+{
+ "seeds": [
+  1,
+  20
+ ],
+ "results": [
+  {
+   "margin": 0.06,
+   "line": 1.0,
+   "matches": 20,
+   "cards_per_match": {
+    "RFC": 2.35,
+    "CAS": 0.35
+   },
+   "rfc_first_is_rfc03": 20,
+   "lag_minutes_median": -43.0,
+   "lag_minutes_iqr": [
+    -44.0,
+    -42.0
+   ],
+   "honest": 0.019
+  },
+  {
+   "margin": 0.06,
+   "line": 0.72,
+   "matches": 20,
+   "cards_per_match": {
+    "RFC": 2.3,
+    "CAS": 0.25
+   },
+   "rfc_first_is_rfc03": 20,
+   "lag_minutes_median": -22.0,
+   "lag_minutes_iqr": [
+    -24.25,
+    -17.75
+   ],
+   "honest": 0.137
+  },
+  {
+   "margin": 0.06,
+   "line": 0.7,
+   "matches": 20,
+   "cards_per_match": {
+    "RFC": 1.95,
+    "CAS": 0.3
+   },
+   "rfc_first_is_rfc03": 20,
+   "lag_minutes_median": -7.0,
+   "lag_minutes_iqr": [
+    -15.25,
+    -0.75
+   ],
+   "honest": 0.489
+  },
+  {
+   "margin": 0.06,
+   "line": 0.69,
+   "matches": 20,
+   "cards_per_match": {
+    "RFC": 1.7,
+    "CAS": 0.25
+   },
+   "rfc_first_is_rfc03": 20,
+   "lag_minutes_median": -1.0,
+   "lag_minutes_iqr": [
+    -4.5,
+    1.0
+   ],
+   "honest": 0.59
+  },
+  {
+   "margin": 0.06,
+   "line": 0.68,
+   "matches": 20,
+   "cards_per_match": {
+    "RFC": 1.3,
+    "CAS": 0.25
+   },
+   "rfc_first_is_rfc03": 19,
+   "lag_minutes_median": 1.0,
+   "lag_minutes_iqr": [
+    -1.0,
+    4.5
+   ],
+   "honest": 0.667
+  },
+  {
+   "margin": 0.06,
+   "line": 0.67,
+   "matches": 20,
+   "cards_per_match": {
+    "RFC": 1.1,
+    "CAS": 0.15
+   },
+   "rfc_first_is_rfc03": 18,
+   "lag_minutes_median": 4.5,
+   "lag_minutes_iqr": [
+    1.25,
+    8.0
+   ],
+   "honest": 0.8
+  },
+  {
+   "margin": 0.06,
+   "line": 0.66,
+   "matches": 20,
+   "cards_per_match": {
+    "RFC": 0.95,
+    "CAS": 0.1
+   },
+   "rfc_first_is_rfc03": 17,
+   "lag_minutes_median": 9.0,
+   "lag_minutes_iqr": [
+    5.0,
+    11.0
+   ],
+   "honest": 0.905
+  },
+  {
+   "margin": 0.08,
+   "line": 1.0,
+   "matches": 20,
+   "cards_per_match": {
+    "RFC": 1.3,
+    "CAS": 0.15
+   },
+   "rfc_first_is_rfc03": 20,
+   "lag_minutes_median": -43.0,
+   "lag_minutes_iqr": [
+    -44.0,
+    -42.0
+   ],
+   "honest": 0.034
+  },
+  {
+   "margin": 0.08,
+   "line": 0.72,
+   "matches": 20,
+   "cards_per_match": {
+    "RFC": 1.3,
+    "CAS": 0.15
+   },
+   "rfc_first_is_rfc03": 20,
+   "lag_minutes_median": -22.0,
+   "lag_minutes_iqr": [
+    -24.25,
+    -17.75
+   ],
+   "honest": 0.241
+  },
+  {
+   "margin": 0.08,
+   "line": 0.7,
+   "matches": 20,
+   "cards_per_match": {
+    "RFC": 1.3,
+    "CAS": 0.15
+   },
+   "rfc_first_is_rfc03": 20,
+   "lag_minutes_median": -7.0,
+   "lag_minutes_iqr": [
+    -15.25,
+    -0.75
+   ],
+   "honest": 0.724
+  },
+  {
+   "margin": 0.08,
+   "line": 0.69,
+   "matches": 20,
+   "cards_per_match": {
+    "RFC": 1.25,
+    "CAS": 0.15
+   },
+   "rfc_first_is_rfc03": 20,
+   "lag_minutes_median": -1.0,
+   "lag_minutes_iqr": [
+    -4.5,
+    1.0
+   ],
+   "honest": 0.786
+  },
+  {
+   "margin": 0.08,
+   "line": 0.68,
+   "matches": 20,
+   "cards_per_match": {
+    "RFC": 1.05,
+    "CAS": 0.15
+   },
+   "rfc_first_is_rfc03": 19,
+   "lag_minutes_median": 1.0,
+   "lag_minutes_iqr": [
+    -1.0,
+    4.5
+   ],
+   "honest": 0.826
+  },
+  {
+   "margin": 0.08,
+   "line": 0.67,
+   "matches": 20,
+   "cards_per_match": {
+    "RFC": 1.0,
+    "CAS": 0.1
+   },
+   "rfc_first_is_rfc03": 18,
+   "lag_minutes_median": 4.5,
+   "lag_minutes_iqr": [
+    1.25,
+    8.0
+   ],
+   "honest": 0.909
+  },
+  {
+   "margin": 0.08,
+   "line": 0.66,
+   "matches": 20,
+   "cards_per_match": {
+    "RFC": 0.9,
+    "CAS": 0.1
+   },
+   "rfc_first_is_rfc03": 17,
+   "lag_minutes_median": 9.0,
+   "lag_minutes_iqr": [
+    5.0,
+    11.0
+   ],
+   "honest": 0.9
+  },
+  {
+   "margin": 0.1,
+   "line": 1.0,
+   "matches": 20,
+   "cards_per_match": {
+    "RFC": 1.05,
+    "CAS": 0.1
+   },
+   "rfc_first_is_rfc03": 20,
+   "lag_minutes_median": -43.0,
+   "lag_minutes_iqr": [
+    -44.0,
+    -42.0
+   ],
+   "honest": 0.0
+  },
+  {
+   "margin": 0.1,
+   "line": 0.72,
+   "matches": 20,
+   "cards_per_match": {
+    "RFC": 1.05,
+    "CAS": 0.1
+   },
+   "rfc_first_is_rfc03": 20,
+   "lag_minutes_median": -22.0,
+   "lag_minutes_iqr": [
+    -24.25,
+    -17.75
+   ],
+   "honest": 0.261
+  },
+  {
+   "margin": 0.1,
+   "line": 0.7,
+   "matches": 20,
+   "cards_per_match": {
+    "RFC": 1.0,
+    "CAS": 0.05
+   },
+   "rfc_first_is_rfc03": 20,
+   "lag_minutes_median": -7.0,
+   "lag_minutes_iqr": [
+    -15.25,
+    -0.75
+   ],
+   "honest": 0.952
+  },
+  {
+   "margin": 0.1,
+   "line": 0.69,
+   "matches": 20,
+   "cards_per_match": {
+    "RFC": 1.0,
+    "CAS": 0.0
+   },
+   "rfc_first_is_rfc03": 20,
+   "lag_minutes_median": -1.0,
+   "lag_minutes_iqr": [
+    -4.5,
+    1.0
+   ],
+   "honest": 1.0
+  },
+  {
+   "margin": 0.1,
+   "line": 0.68,
+   "matches": 20,
+   "cards_per_match": {
+    "RFC": 0.95,
+    "CAS": 0.0
+   },
+   "rfc_first_is_rfc03": 19,
+   "lag_minutes_median": 1.0,
+   "lag_minutes_iqr": [
+    -1.0,
+    4.5
+   ],
+   "honest": 1.0
+  },
+  {
+   "margin": 0.1,
+   "line": 0.67,
+   "matches": 20,
+   "cards_per_match": {
+    "RFC": 0.9,
+    "CAS": 0.0
+   },
+   "rfc_first_is_rfc03": 18,
+   "lag_minutes_median": 4.5,
+   "lag_minutes_iqr": [
+    1.25,
+    8.0
+   ],
+   "honest": 1.0
+  },
+  {
+   "margin": 0.1,
+   "line": 0.66,
+   "matches": 20,
+   "cards_per_match": {
+    "RFC": 0.85,
+    "CAS": 0.0
+   },
+   "rfc_first_is_rfc03": 17,
+   "lag_minutes_median": 9.0,
+   "lag_minutes_iqr": [
+    5.0,
+    11.0
+   ],
+   "honest": 1.0
+  },
+  {
+   "margin": 0.12,
+   "line": 1.0,
+   "matches": 20,
+   "cards_per_match": {
+    "RFC": 1.0,
+    "CAS": 0.0
+   },
+   "rfc_first_is_rfc03": 20,
+   "lag_minutes_median": -42.5,
+   "lag_minutes_iqr": [
+    -44.0,
+    -40.75
+   ],
+   "honest": 0.0
+  },
+  {
+   "margin": 0.12,
+   "line": 0.72,
+   "matches": 20,
+   "cards_per_match": {
+    "RFC": 1.0,
+    "CAS": 0.0
+   },
+   "rfc_first_is_rfc03": 20,
+   "lag_minutes_median": -22.0,
+   "lag_minutes_iqr": [
+    -24.25,
+    -17.75
+   ],
+   "honest": 0.3
+  },
+  {
+   "margin": 0.12,
+   "line": 0.7,
+   "matches": 20,
+   "cards_per_match": {
+    "RFC": 0.9,
+    "CAS": 0.0
+   },
+   "rfc_first_is_rfc03": 18,
+   "lag_minutes_median": -8.0,
+   "lag_minutes_iqr": [
+    -15.75,
+    -1.0
+   ],
+   "honest": 1.0
+  },
+  {
+   "margin": 0.12,
+   "line": 0.69,
+   "matches": 20,
+   "cards_per_match": {
+    "RFC": 0.9,
+    "CAS": 0.0
+   },
+   "rfc_first_is_rfc03": 18,
+   "lag_minutes_median": -1.5,
+   "lag_minutes_iqr": [
+    -5.5,
+    1.0
+   ],
+   "honest": 1.0
+  },
+  {
+   "margin": 0.12,
+   "line": 0.68,
+   "matches": 20,
+   "cards_per_match": {
+    "RFC": 0.9,
+    "CAS": 0.0
+   },
+   "rfc_first_is_rfc03": 18,
+   "lag_minutes_median": 0.5,
+   "lag_minutes_iqr": [
+    -1.0,
+    3.75
+   ],
+   "honest": 1.0
+  },
+  {
+   "margin": 0.12,
+   "line": 0.67,
+   "matches": 20,
+   "cards_per_match": {
+    "RFC": 0.8,
+    "CAS": 0.0
+   },
+   "rfc_first_is_rfc03": 16,
+   "lag_minutes_median": 4.0,
+   "lag_minutes_iqr": [
+    0.5,
+    7.25
+   ],
+   "honest": 1.0
+  },
+  {
+   "margin": 0.12,
+   "line": 0.66,
+   "matches": 20,
+   "cards_per_match": {
+    "RFC": 0.8,
+    "CAS": 0.0
+   },
+   "rfc_first_is_rfc03": 16,
+   "lag_minutes_median": 8.5,
+   "lag_minutes_iqr": [
+    4.5,
+    10.25
+   ],
+   "honest": 1.0
+  }
+ ]
+}

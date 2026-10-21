@@ -85,24 +85,25 @@ Additions to the snapshot shape above:
 
 - `match_id` and `period` at the top level; `period` because first-half added time overlaps second-half `t_ms`. A snapshot at `(period, t_ms)` covers every event of that period with a smaller `t_ms`. Snapshots run every 10 s from each period's kick-off; a period's last snapshot is the first boundary after its last event.
 - `rates` has an entry for each team: a pre-match prior (1.35 xG/90 by default) blended with rolling xG over the last 20 played minutes, the rolling weight growing to 0.6 at 90'.
-- `players` lists everyone on the pitch, both teams, with `team` and `role`. The condition estimate is mostly accumulated load: a player starts below 1.0 by what is left of his `recent_minutes` (half a full match's load, about 0.14 for 90 minutes), each minute on the pitch costs a drain for the role, each `hsr` and `sprint` run a little more, and half-time gives some back. A small weight goes on exponentially weighted runs per in-play minute against the player's own first 20 minutes on the pitch, the only sign of a player tiring faster than his load says. It is clipped to 0.3 to 1.0 and reads about 0.8 for a starter at 60', so a fall below 0.60 is rare. `condition_band`, `baseline_hsr_m_10m` and `baseline_sprints_10m` are null until that baseline is complete. `condition_band` is a 90% interval from the spread of drain between players on the same load and the run counts behind the rate, typically about 0.15 across at 60'; goalkeepers also carry `"condition_band": null`.
+- `players` lists everyone on the pitch, both teams, with `team` and `role`. The condition estimate is mostly accumulated load: a player starts below 1.0 by what is left of his `recent_minutes` (half a full match's load, about 0.14 for 90 minutes), each minute on the pitch costs a drain for the role, each `hsr` and `sprint` run a little more, and half-time gives some back. A small weight goes on exponentially weighted runs per in-play minute against the player's own first 20 minutes on the pitch, the only sign of a player tiring faster than his load says. It is clipped to 0.3 to 1.0 and reads about 0.8 for a starter at 60'. `condition_band`, `baseline_hsr_m_10m` and `baseline_sprints_10m` are null until that baseline is complete. `condition_band` is a 90% interval from the spread of drain between players on the same load and the run counts behind the rate, typically about 0.15 across at 60'; goalkeepers also carry `"condition_band": null`.
 - `threat_by_channel` has keys for both teams (`RFC_left` = attacks on Riverside's left, from Riverside's view): the share of the opponent's xG over the last 15 played minutes, shrunk towards the first-half split. `threat_by_channel_first_half` gives that first-half split (the first half so far while it is being played; even until the first shot).
 
 Decision points (`dugout.stream.triggers`), one record each, carrying the snapshot the card opens on with the deciding team first in `rates`:
 
 ```json
 {"kind": "decision_point", "id": "rfc-62-01", "t_ms": 3720000, "period": 2, "team": "RFC",
- "trigger": "condition_below_60", "raised_t_ms": 3720000,
- "detail": {"player_id": "RFC-03", "condition_est": 0.594, "condition_band": [0.35, 0.86]}, "snapshot": {"t_ms": 3720000, "...": "..."}}
+ "trigger": "condition_drop", "raised_t_ms": 3720000,
+ "detail": {"player_id": "RFC-03", "condition_est": 0.689, "condition_band": [0.557, 0.82], "team_median": 0.821},
+ "snapshot": {"t_ms": 3720000, "...": "..."}}
 ```
 
-`detail` is `{"player_id", "condition_est", "condition_band"}` for `condition_below_60` (the estimate crossing 0.60, which few players reach before full time), `{"scorer_team"}` for `goal_after_55` (one point for each team, the conceding team first) and `{"subs": [{"off", "on"}]}` for `manager_sub` (one per team per window). One card is open at a time and the rest wait, oldest first. A card closes when its team makes a change, after 3 minutes of match clock or at the end of the stream, written as `{"kind": "card_closed", "id", "t_ms", "period", "team", "reason"}` with `reason` `change`, `timeout` or `full_time`. `python -m dugout.stream.snapshots` writes snapshots as `{"kind": "snapshot", "snapshot": {...}}` with these records in between.
+`detail` is `{"player_id", "condition_est", "condition_band", "team_median"}` for `condition_drop` (an outfield player whose band is set reads at least 0.10 below the median of his team's outfield players on the pitch, himself included, and below 0.69; once per player), `{"scorer_team"}` for `goal_after_55` (one point for each team, the conceding team first) and `{"subs": [{"off", "on"}]}` for `manager_sub` (one per team per window). One card is open at a time and the rest wait, oldest first. A card closes when its team makes a change, after 3 minutes of match clock or at the end of the stream, written as `{"kind": "card_closed", "id", "t_ms", "period", "team", "reason"}` with `reason` `change`, `timeout` or `full_time`. `python -m dugout.stream.snapshots` writes snapshots as `{"kind": "snapshot", "snapshot": {...}}` with these records in between.
 
 ## 4. Decision payload (decision engine output; the agents' only input)
 
 ```json
 {"decision_id": "rfc-62-01", "t_ms": 3720000, "team": "RFC",
- "trigger": "condition_below_60",
+ "trigger": "condition_drop",
  "options": [
    {"id": "no_change", "label": "No change", "win": 0.687, "draw": 0.240, "loss": 0.073, "xpts": 2.30, "delta_win": 0.0},
    {"id": "sub_lb", "label": "Replace left-back (RFC-03 for RFC-15)", "win": 0.726, "draw": 0.217, "loss": 0.057, "xpts": 2.39,
@@ -113,4 +114,4 @@ Decision points (`dugout.stream.triggers`), one record each, carrying the snapsh
  "manager_action": null}
 ```
 
-Triggers: `condition_below_60`, `goal_after_55`, `manager_sub`. Strength: `strong` (gap of 3 points or more), `lean` (1 to 3), `toss_up` (under 1). The `ci90` values above are placeholders.
+Triggers: `condition_drop`, `goal_after_55`, `manager_sub`. Strength: `strong` (gap of 3 points or more), `lean` (1 to 3), `toss_up` (under 1). The `ci90` values above are placeholders.
