@@ -140,6 +140,7 @@ const en = {
   foul: "Foul",
   comesOn: "Comes on",
   whatIf: "What if",
+  exportCues: "Export cue sheet",
 } as const;
 
 export type StringKey = keyof typeof en;
@@ -282,6 +283,7 @@ const es: Dict = {
   foul: "Falta",
   comesOn: "Entra al campo",
   whatIf: "¿Y si...?",
+  exportCues: "Exportar guion de grafismos",
 };
 
 

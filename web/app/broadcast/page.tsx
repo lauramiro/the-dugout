@@ -13,7 +13,7 @@ import {
 import { Stage } from "../../components/broadcast/Stage";
 import { fromPos, lastAtOrBefore, toPos } from "../../lib/clock";
 import type { Roster, Snapshot } from "../../lib/contracts";
-import { buildCues, type Cue } from "../../lib/cues";
+import { buildCues, cueSheet, type Cue } from "../../lib/cues";
 import type { DataSource, FeedState, MatchLog, PitchFrame } from "../../lib/datasource";
 import { playerName, score } from "../../lib/derive";
 import { translator } from "../../lib/i18n";
@@ -30,6 +30,8 @@ export default function BroadcastPage() {
   const { log, playhead } = feed;
   const live = source.kind === "live";
 
+  const [cuesJson, setCuesJson] = useState(false);
+  useEffect(() => setCuesJson(new URLSearchParams(window.location.search).get("cues") === "json"), []);
   const [prefs, setPrefs] = useState<BroadcastPrefs>(DEFAULT_PREFS);
   useEffect(() => setPrefs((p) => ({ ...p, ...readPrefs() })), []);
   useEffect(() => {
@@ -85,6 +87,8 @@ export default function BroadcastPage() {
     ? log.cards.find((c) => c.item.payload.decision_id === decision.data.decision_id)?.item
     : undefined;
 
+  if (cuesJson) return <CueSheetView log={log} focus={prefs.player} source={source.kind} />;
+
   return (
     <Stage label={t("broadcastLabel")}>
       <FieldView frame={frame} roster={log.roster} tags={tags} label={t("broadcastLabel")} />
@@ -132,10 +136,30 @@ export default function BroadcastPage() {
         controls={source.controls}
         feed={feed}
         recordedTracking={recorded.active}
+        extra={
+          <button type="button" onClick={() => downloadCueSheet(cueSheet(log, prefs.player, source.kind))}>
+            {t("exportCues")}
+          </button>
+        }
         t={t}
       />
     </Stage>
   );
+}
+
+/** ?cues=json: the cue sheet as plain JSON instead of the picture, for a graphics system. */
+function CueSheetView({ log, focus, source }: { log: MatchLog; focus: string | null; source: "replay" | "live" }) {
+  return <pre className="bc-cuesheet">{JSON.stringify(cueSheet(log, focus, source), null, 2)}</pre>;
+}
+
+function downloadCueSheet(sheet: ReturnType<typeof cueSheet>): void {
+  const blob = new Blob([JSON.stringify(sheet, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `cues-${sheet.match_id ?? "match"}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
 }
 
 /** The focus player always; a fading player while the cue runs. The ring is the latest

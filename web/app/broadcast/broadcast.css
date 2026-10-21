@@ -581,3 +581,11 @@
 .bc-whatif-gap { font-weight: 800; font-variant-numeric: tabular-nums; }
 .bc-whatif-row.lead .bc-whatif-gap { color: var(--bc-accent); font-size: 1.5em; }
 .bc-whatif-recap { grid-column: 1 / -1; margin: 0.4em 0 0; color: var(--bc-muted); font-size: 0.85em; }
+
+.bc-cuesheet {
+  margin: 0;
+  padding: var(--gutter);
+  font-size: 12px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
