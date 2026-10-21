@@ -15,28 +15,28 @@ NARRATOR_BAD = json.dumps({
     "headline": "RFC-03 is fading (60%).",
     "reason": "Changing now: +4.9 pts win probability (strong).",
 })
-LOCALIZER_ES_OK = json.dumps({
-    "headline": "RFC-03 se está agotando (60%).",
-    "reason": "Cambiar ahora: +3,9 pts de probabilidad de victoria (fuerte).",
+LOCALIZER_OK = json.dumps({
+    "headline": "RFC-03 is tiring (60%).",
+    "reason": "Changing now is worth +3.9 points of win probability (strong).",
 })
-LOCALIZER_ES_BAD = LOCALIZER_ES_OK.replace("+3,9", "+3,8")
+LOCALIZER_BAD = LOCALIZER_OK.replace("+3.9", "+3.8")
 
 
-def run(script, locale="es", mode="analyst", payload=SAMPLE_PAYLOAD):
+def run(script, locale="en", mode="casual", payload=SAMPLE_PAYLOAD):
     client = StubClient(script)
     return NarrationPipeline(client).run(payload, locale, mode), client
 
 
 def test_passes_first_time():
-    card, client = run([NARRATOR_OK, LOCALIZER_ES_OK])
+    card, client = run([NARRATOR_OK, LOCALIZER_OK])
     assert card.source == "model"
-    assert card.headline == "RFC-03 se está agotando (60%)."
-    assert card.reason.startswith("Cambiar ahora: +3,9")
+    assert card.headline == "RFC-03 is tiring (60%)."
+    assert card.reason.startswith("Changing now is worth +3.9")
     assert len(client.calls) == 2
 
 
 def test_passes_on_retry_with_errors_attached():
-    card, client = run([NARRATOR_BAD, NARRATOR_OK, LOCALIZER_ES_OK])
+    card, client = run([NARRATOR_BAD, NARRATOR_OK, LOCALIZER_OK])
     assert card.source == "model"
     assert len(client.calls) == 3
     retry_user = json.loads(client.calls[1].user)
@@ -46,22 +46,23 @@ def test_passes_on_retry_with_errors_attached():
 
 def test_narrator_failing_twice_falls_back_to_template():
     card, client = run([NARRATOR_BAD, NARRATOR_BAD])
-    expected = template_narration(SAMPLE_PAYLOAD, "es", "analyst")
+    expected = template_narration(SAMPLE_PAYLOAD, "en", "casual")
     assert (card.source, card.headline, card.reason) == ("template", expected.headline, expected.reason)
     assert len(client.calls) == 2
 
 
 def test_localizer_failing_twice_falls_back_to_template():
-    card, client = run([NARRATOR_OK, LOCALIZER_ES_BAD, LOCALIZER_ES_BAD])
-    expected = template_narration(SAMPLE_PAYLOAD, "es", "analyst")
+    card, client = run([NARRATOR_OK, LOCALIZER_BAD, LOCALIZER_BAD])
+    expected = template_narration(SAMPLE_PAYLOAD, "en", "casual")
     assert (card.source, card.reason) == ("template", expected.reason)
     assert len(client.calls) == 3
 
 
-def test_localizer_output_is_checked_in_the_target_locale():
-    decimal_point = LOCALIZER_ES_OK.replace("+3,9", "+3.9")
-    card, _ = run([NARRATOR_OK, decimal_point, LOCALIZER_ES_OK])
-    assert card.source == "model" and "+3,9" in card.reason
+def test_localizer_output_is_checked_strictly_in_english():
+    decimal_comma = LOCALIZER_OK.replace("+3.9", "+3,9")
+    card, client = run([NARRATOR_OK, decimal_comma, LOCALIZER_OK])
+    assert card.source == "model" and "+3.9" in card.reason
+    assert any("decimal separator" in e for e in json.loads(client.calls[2].user)["errors"])
 
 
 @pytest.mark.parametrize("failure", [ModelTimeout(), TimeoutError()])
@@ -78,7 +79,7 @@ def test_localizer_timeout_falls_back_to_template():
 
 
 def test_reply_that_is_not_json_counts_as_a_failed_attempt():
-    card, client = run(["not json", NARRATOR_OK, LOCALIZER_ES_OK])
+    card, client = run(["not json", NARRATOR_OK, LOCALIZER_OK])
     assert card.source == "model" and len(client.calls) == 3
 
 
@@ -90,7 +91,7 @@ def test_word_limits_apply_to_model_replies():
 
 @pytest.mark.parametrize("payload", [SAMPLE_PAYLOAD, toss_up_payload()], ids=["strong", "toss_up"])
 @pytest.mark.parametrize("mode", ["casual", "analyst"])
-@pytest.mark.parametrize("locale", ["en", "es", "ca"])
+@pytest.mark.parametrize("locale", ["en"])
 def test_default_stub_client_produces_grounded_cards(locale, mode, payload):
     card = NarrationPipeline(StubClient()).run(payload, locale, mode)
     assert card.source == "model"

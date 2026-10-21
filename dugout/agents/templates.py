@@ -1,4 +1,4 @@
-"""Locale formatting and the template fallback (always available, also used when the model is slow)."""
+"""Number formatting and the template fallback (always available, also used when the model is slow)."""
 
 from __future__ import annotations
 
@@ -88,40 +88,6 @@ _TEXT = {
             "change": "The model rates changing now about {n} {unit} {direction} ({strength}).",
             "keep": "No change looks better: the model rates changing now about {n} {unit} worse ({strength}).",
             "close": "The options are close: the model sees almost no difference ({strength}).",
-        },
-    },
-    "es": {
-        "headline": "{player} se está agotando ({condition}%).",
-        "headline_plain": "Cambio en estudio para {player}.",
-        "headline_none": "Sustitución en estudio.",
-        "interval": ", intervalo del 90%: {ci_low} a {ci_high}",
-        "units": ("punto", "puntos"), "better": "mejor", "worse": "peor",
-        "analyst": {
-            "change": "Cambiar ahora: {delta} pts de probabilidad de victoria{interval} ({strength}).",
-            "keep": "Mejor no cambiar: cambiar ahora mueve la probabilidad de victoria {delta} pts{interval} ({strength}).",
-            "close": "Las opciones están muy parejas: cambiar ahora mueve la probabilidad de victoria {delta} pts{interval} ({strength}).",
-        },
-        "casual": {
-            "change": "El modelo valora cambiar ahora unos {n} {unit} {direction} ({strength}).",
-            "keep": "Mejor no cambiar: el modelo valora cambiar ahora unos {n} {unit} peor ({strength}).",
-            "close": "Las opciones están muy parejas: el modelo no ve apenas diferencia ({strength}).",
-        },
-    },
-    "ca": {
-        "headline": "{player} s'està esgotant ({condition}%).",
-        "headline_plain": "Canvi en estudi per a {player}.",
-        "headline_none": "Substitució en estudi.",
-        "interval": ", interval del 90%: {ci_low} a {ci_high}",
-        "units": ("punt", "punts"), "better": "millor", "worse": "pitjor",
-        "analyst": {
-            "change": "Canviar ara: {delta} punts de probabilitat de victòria{interval} ({strength}).",
-            "keep": "Millor no canviar: canviar ara mou la probabilitat de victòria {delta} punts{interval} ({strength}).",
-            "close": "Les opcions estan molt igualades: canviar ara mou la probabilitat de victòria {delta} punts{interval} ({strength}).",
-        },
-        "casual": {
-            "change": "El model valora canviar ara uns {n} {unit} {direction} ({strength}).",
-            "keep": "Millor no canviar: el model valora canviar ara uns {n} {unit} pitjor ({strength}).",
-            "close": "Les opcions estan molt igualades: el model gairebé no hi veu diferència ({strength}).",
         },
     },
 }

@@ -5,11 +5,7 @@ import pytest
 from dugout.agents.grounding import Narration, check_grounding, check_narration
 from dugout.agents.sample import SAMPLE_PAYLOAD
 
-GROUNDED = {
-    "en": "RFC-03 is fading (60%). Changing now: +3.9 pts win probability (strong).",
-    "es": "RFC-03 se esta agotando (60%). Cambiar ahora: +3,9 pts de probabilidad de victoria (fuerte).",
-    "ca": "RFC-03 s'esta esgotant (60%). Canviar ara: +3,9 punts de probabilitat de victoria (forta).",
-}
+GROUNDED = {"en": "RFC-03 is fading (60%). Changing now: +3.9 pts win probability (strong)."}
 
 
 def payload_with(**delta):
@@ -18,9 +14,14 @@ def payload_with(**delta):
     return payload
 
 
-@pytest.mark.parametrize("locale", ["en", "es", "ca"])
-def test_grounded_line_has_no_errors(locale):
-    assert check_grounding(GROUNDED[locale], SAMPLE_PAYLOAD, locale) == []
+def test_grounded_line_has_no_errors():
+    assert check_grounding(GROUNDED["en"], SAMPLE_PAYLOAD, "en") == []
+
+
+@pytest.mark.parametrize("locale", ["fr", "de"])
+def test_only_english_is_checked(locale):
+    with pytest.raises(ValueError, match="locale"):
+        check_grounding(GROUNDED["en"], SAMPLE_PAYLOAD, locale)
 
 
 def test_wrong_number_is_reported():
@@ -56,16 +57,6 @@ def test_xpts_matches_with_two_decimals():
     assert check_grounding("xPts 2.49 (strong).", SAMPLE_PAYLOAD, "en")
 
 
-def test_decimal_comma_is_parsed_for_es_and_ca():
-    for locale in ("es", "ca"):
-        assert check_grounding(GROUNDED[locale].replace("+3,9", "+4,9"), SAMPLE_PAYLOAD, locale)
-
-
-def test_decimal_point_is_rejected_in_decimal_comma_locales():
-    errors = check_grounding(GROUNDED["es"].replace("+3,9", "+3.9"), SAMPLE_PAYLOAD, "es")
-    assert any("decimal" in e for e in errors)
-
-
 def test_decimal_comma_is_rejected_in_english():
     errors = check_grounding(GROUNDED["en"].replace("+3.9", "+3,9"), SAMPLE_PAYLOAD, "en")
     assert any("decimal" in e for e in errors)
@@ -90,9 +81,9 @@ def test_missing_label_is_reported():
     assert any("strong" in e for e in errors)
 
 
-def test_label_in_other_locale_is_wrong_label():
-    errors = check_grounding(GROUNDED["es"].replace("fuerte", "leve"), SAMPLE_PAYLOAD, "es")
-    assert any("fuerte" in e for e in errors)
+def test_decimal_comma_with_a_matching_value_is_still_rejected():
+    errors = check_grounding("Win 72,6% (strong).", SAMPLE_PAYLOAD, "en")
+    assert any("decimal" in e for e in errors)
 
 
 def test_narration_word_limits():

@@ -11,11 +11,11 @@ from dataclasses import asdict
 from threading import Lock
 from typing import Callable, Protocol
 
+from dugout.agents.lexicon import LOCALES
 from dugout.agents.pipeline import NarrationPipeline, StubClient
 from dugout.engine.payload import decide
 from dugout.service.store import MemoryStore, Store
 
-LOCALES = ("en", "es", "ca")
 MODES = ("casual", "analyst")
 
 Engine = Callable[..., dict]  # (snapshot, team, trigger, *, decision_id=None)

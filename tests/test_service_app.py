@@ -74,18 +74,20 @@ def test_post_decisions_rejects_a_team_not_in_the_snapshot(env):
     assert calls == [] and pub.sent == []
 
 
-def test_post_decisions_rejects_an_unsupported_locale(env):
+@pytest.mark.parametrize("locale", ["fr", "de"])
+def test_post_decisions_rejects_an_unsupported_locale(env, locale):
     client, _, _ = env
-    assert open_decision(client, locale="fr").status_code == 422
+    assert open_decision(client, locale=locale).status_code == 422
 
 
-def test_get_decision_serves_other_locales_from_the_cache(env):
+def test_get_decision_serves_the_other_mode_from_the_cache(env):
     client, _, calls = env
     open_decision(client)
-    r = client.get("/decisions/rfc-62-01", params={"locale": "es", "mode": "analyst"})
+    r = client.get("/decisions/rfc-62-01", params={"locale": "en", "mode": "analyst"})
     assert r.status_code == 200
-    assert r.json()["locale"] == "es" and r.json()["mode"] == "analyst"
-    assert client.get("/decisions/rfc-62-01", params={"locale": "es", "mode": "analyst"}).json() == r.json()
+    assert r.json()["locale"] == "en" and r.json()["mode"] == "analyst"
+    assert client.get("/decisions/rfc-62-01", params={"locale": "en", "mode": "analyst"}).json() == r.json()
+    assert client.get("/decisions/rfc-62-01", params={"locale": "fr"}).status_code == 422
     assert len(calls) == 1
 
 
