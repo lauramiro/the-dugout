@@ -6,6 +6,7 @@ from decimal import Decimal
 
 from dugout.agents.grounding import Narration, PLAYER_ID, recommended_option, round_half_up
 from dugout.agents.lexicon import DECIMAL_SEPARATOR, LOCALES, STRENGTH_LABELS
+from dugout.stream.triggers import CONDITION_LINE
 
 MODES = ("casual", "analyst")
 WHOLE_NUMBER_MAX_POINTS = 1  # under this many points the options are "close" in casual wording
@@ -64,8 +65,14 @@ def format_payload(payload: dict, locale: str) -> dict[str, str]:
 
 _TEXT = {
     "en": {
-        "headline": "{player} is fading ({condition}%).",
-        "headline_plain": "Change under review for {player}.",
+        # Per trigger: the player fading (only below the condition line), else the plain line.
+        "headline": {
+            "condition_drop": ("{player} is fading ({condition}%).", "Change under review for {player}."),
+            "goal_after_55": ("After the goal, {player} is fading ({condition}%).",
+                              "After the goal: a change under review."),
+            "manager_sub": ("After the change, {player} is fading ({condition}%).",
+                            "After the change: the next move under review."),
+        },
         "headline_none": "Substitution under review.",
         "interval": ", 90% interval {ci_low} to {ci_high}",
         "units": ("point", "points"), "better": "better", "worse": "worse",
@@ -81,8 +88,13 @@ _TEXT = {
         },
     },
     "es": {
-        "headline": "{player} se está agotando ({condition}%).",
-        "headline_plain": "Cambio en estudio para {player}.",
+        "headline": {
+            "condition_drop": ("{player} se está agotando ({condition}%).", "Cambio en estudio para {player}."),
+            "goal_after_55": ("Tras el gol, {player} se está agotando ({condition}%).",
+                              "Tras el gol: un cambio en estudio."),
+            "manager_sub": ("Tras el cambio, {player} se está agotando ({condition}%).",
+                            "Tras el cambio: el siguiente movimiento en estudio."),
+        },
         "headline_none": "Sustitución en estudio.",
         "interval": ", intervalo del 90%: {ci_low} a {ci_high}",
         "units": ("punto", "puntos"), "better": "mejor", "worse": "peor",
@@ -108,12 +120,16 @@ def template_narration(payload: dict, locale: str, mode: str) -> Narration:
     strength = payload["recommendation"]["strength"]
     option = recommended_option(payload)
 
-    if "player" not in values:
-        headline = text["headline_none"]
-    elif "condition" not in values:
-        headline = text["headline_plain"].format(**values)
+    condition = _find_condition(payload)
+    fading, plain = text["headline"][payload["trigger"]]
+    if condition is not None and condition["value"] < CONDITION_LINE and "player" in values:
+        headline = fading.format(**values)
+    elif payload["trigger"] != "condition_drop":
+        headline = plain
+    elif "player" in values:
+        headline = plain.format(**values)
     else:
-        headline = text["headline"].format(**values)
+        headline = text["headline_none"]
 
     if strength == "toss_up":
         kind = "close"

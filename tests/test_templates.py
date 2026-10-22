@@ -73,3 +73,34 @@ def test_format_payload_preformats_numbers_per_locale():
 def test_negative_delta_reads_as_worse_in_casual():
     narration = template_narration(no_change_payload(), "en", "casual")
     assert "worse" in narration.reason
+
+
+def trigger_payload(trigger: str, condition: float) -> dict:
+    payload = copy.deepcopy(SAMPLE_PAYLOAD)
+    payload["trigger"] = trigger
+    payload["evidence"][0]["value"] = condition
+    return payload
+
+
+@pytest.mark.parametrize("locale", LOCALES)
+def test_manager_sub_above_the_condition_line_is_not_fading(locale):
+    # The 69' demo card: the manager's change raised it, the flagged player is at 75%.
+    payload = trigger_payload("manager_sub", 0.75)
+    narration = template_narration(payload, locale, "casual")
+    assert "fading" not in narration.text and "agotando" not in narration.text
+    assert narration.headline != template_narration(trigger_payload("goal_after_55", 0.75), locale, "casual").headline
+
+
+@pytest.mark.parametrize("trigger", ["condition_drop", "goal_after_55", "manager_sub"])
+def test_headline_says_fading_only_below_the_condition_line(trigger):
+    assert "fading (60%)" in template_narration(trigger_payload(trigger, 0.60), "en", "casual").headline
+    assert "fading" not in template_narration(trigger_payload(trigger, 0.75), "en", "casual").headline
+
+
+@pytest.mark.parametrize("trigger", ["condition_drop", "goal_after_55", "manager_sub"])
+@pytest.mark.parametrize("condition", [0.60, 0.75])
+@pytest.mark.parametrize("mode", MODES)
+@pytest.mark.parametrize("locale", LOCALES)
+def test_every_trigger_headline_passes_grounding(locale, mode, condition, trigger):
+    payload = trigger_payload(trigger, condition)
+    assert check_narration(template_narration(payload, locale, mode), payload, locale, mode=mode) == []

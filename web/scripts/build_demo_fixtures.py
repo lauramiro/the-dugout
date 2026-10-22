@@ -5,8 +5,10 @@ Everything here is pipeline output; nothing is hand-shaped:
 - snapshots (slimmed like the live feed) and decision points from dugout.stream (state engine and triggers), fed the
   recorded events in seq order, exactly as `python -m dugout.stream.snapshots` does;
 - one card per decision point: the payload from dugout.engine.payload.decide on the
-  point's own snapshot, narrated by dugout.agents.pipeline with the stub client (which
-  answers with the template text, so every line still goes through the grounding check);
+  point's own snapshot, narrated by the Foundry workflow (dugout.agents.workflow) when
+  FOUNDRY_ENDPOINT is set (environment or .env), else by the stub client, which answers
+  with the template text; either way every line goes through the grounding check, and
+  each narration keeps its own source ("model", or "template" when it fell back);
 - manager_action on each payload from the deciding team's sub events (see manager_action);
 - a review block per card for the full-time screen: the manager's call priced by the
   engine on the same draws as the card, the gap to the model's call, and a recap line
@@ -15,26 +17,33 @@ Everything here is pipeline output; nothing is hand-shaped:
 
     uv run python web/scripts/build_demo_fixtures.py
 
+With Foundry: 10 cards x (1 narrator + 4 localizer) = 50 model calls, up to 100 with
+grounding retries (the narrator writes one English draft per card, shared by the targets).
+
 Writes match.jsonl, tracking/ (1 Hz chunks plus index.json), roster.json,
 snapshots.jsonl, cards.json and winprob.jsonl.
 """
 from __future__ import annotations
 
 import json
+import os
 import shutil
+from dataclasses import dataclass, field
 from pathlib import Path
 
 import yaml
 from numpy.random import SeedSequence
 
 from dugout.agents.lexicon import LOCALES
-from dugout.agents.pipeline import NarrationPipeline, StubClient
+from dugout.agents.foundry import ENV_ENDPOINT, client_from_env
+from dugout.agents.pipeline import ModelClient, NarrationPipeline, StubClient
 from dugout.agents.recap import RecapRow, template_line
 from dugout.agents.templates import MODES
+from dugout.agents.workflow import NarrationWorkflow
 from dugout.engine.options import Option, evaluate
 from dugout.engine.payload import decide
 from dugout.stream.pipeline import PUBLISH_EVERY_MS, slim_snapshot
-from dugout.stream.replay import read_events
+from dugout.stream.replay import load_dotenv, read_events
 from dugout.stream.snapshots import lineup_from_scenario, process
 from dugout.stream.winprob import situation, winprob_point
 
@@ -47,6 +56,8 @@ HALF_MS = 2_700_000
 MIN_MS = 60_000
 CHUNK_MS = 10 * MIN_MS
 ATTACK_OFF, ATTACK_ON = {"CM", "FB"}, {"ST", "W"}  # the simulated manager's attacking change
+# Offline build: room for a slow reply, where the live service gives up after 3 s.
+FOUNDRY_TIMEOUT_S = 30.0
 
 
 def read_jsonl(path: Path) -> list[dict]:
@@ -210,6 +221,32 @@ def review(payload: dict, manager: dict | None) -> dict:
             "recap": recap, "recap_source": "template"}
 
 
+@dataclass
+class Memo:
+    """A ModelClient that answers a repeated request from its first reply. The narrator's
+    request is the same for every locale and mode of a card, so it is made once per card.
+    Failures are not kept."""
+
+    client: ModelClient
+    replies: dict[tuple[str, str], str] = field(default_factory=dict)
+    calls: int = 0
+
+    def complete(self, system: str, user: str, *, timeout_s: float) -> str:
+        key = (system, user)
+        if key not in self.replies:
+            self.calls += 1
+            self.replies[key] = self.client.complete(system, user, timeout_s=timeout_s)
+        return self.replies[key]
+
+
+def narrator() -> tuple[NarrationPipeline | NarrationWorkflow, Memo | None]:
+    load_dotenv(ROOT / ".env")
+    if not os.environ.get(ENV_ENDPOINT):
+        return NarrationPipeline(StubClient()), None
+    memo = Memo(client_from_env())
+    return NarrationWorkflow(memo, timeout_s=FOUNDRY_TIMEOUT_S), memo
+
+
 def main() -> None:
     end = write_tracking()
     shutil.copyfile(EVENTS, DEMO / "match.jsonl")
@@ -229,7 +266,7 @@ def main() -> None:
 
     windows = sub_windows(events)
     full_time = (2, end[2])
-    pipeline = NarrationPipeline(StubClient())
+    pipeline, memo = narrator()
     cards = []
     for point in points:
         payload = decide(point["snapshot"], point["team"], point["trigger"])
@@ -240,7 +277,10 @@ def main() -> None:
             for mode in MODES:
                 card = pipeline.run(payload, loc, mode)
                 # The stub client returns the template text; label it as such, not as a model.
-                narration[loc][mode] = {"headline": card.headline, "reason": card.reason, "source": "template"}
+                source = card.source if memo else "template"
+                narration[loc][mode] = {"headline": card.headline, "reason": card.reason, "source": source}
+                if card.fallback:
+                    print(f"{payload['decision_id']} {loc} {mode}: template ({card.fallback})")
         c = closed[point["id"]]
         cards.append({"period": point["period"], "point_id": point["id"], "payload": payload, "narration": narration,
                       "closed": {"period": c["period"], "t_ms": c["t_ms"], "reason": c["reason"]},
@@ -262,6 +302,9 @@ def main() -> None:
         print(f"{p['t_ms'] // MIN_MS:>3}' {p['decision_id']:<11} {p['trigger']:<19} model {p['recommendation']['option_id']}"
               f" ({p['recommendation']['strength']}); manager {a['option_id']} at {a['t_ms'] // MIN_MS}' {a['subs']};"
               f" gap {r['gap_win']} / {r['gap_xpts']}")
+    sources = [n["source"] for c in cards for loc in c["narration"].values() for n in loc.values()]
+    print(f"narration: {sources.count('model')} model, {sources.count('template')} template"
+          + (f"; {memo.calls} Foundry calls" if memo else " (stub client; set FOUNDRY_* for Foundry)"))
 
 
 main()

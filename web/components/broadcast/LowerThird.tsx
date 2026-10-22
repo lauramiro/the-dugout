@@ -64,6 +64,7 @@ export function LowerThird({ card, roster, mode, locale, vote, onVote, running, 
         <div className="bc-lower-text">
           <p className="bc-lower-headline">{withNames(narration.headline, roster)}</p>
           <p className="bc-lower-reason">{withNames(narration.reason, roster)}</p>
+          <p className="bc-lower-reason" style={{ fontSize: "0.75em" }}>{t(narration.source === "model" ? "creditModel" : "creditTemplate")}</p>
         </div>
       )}
       <ol className={`bc-options${open ? " voting" : ""}`}>

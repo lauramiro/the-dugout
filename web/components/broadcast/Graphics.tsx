@@ -148,8 +148,15 @@ export function WhatIf({ cue, cards, roster, locale, mode, t, next }: {
   /** Next steps under the rows. */
   next?: ReactNode;
 }) {
-  const rows = (cue.data.rows as Row[]) ?? [];
-  const lead = cue.data.lead as string | null;
+  // A manager_sub card was raised by the manager's own change, so it has no call of his to
+  // price against the model's: leave it out rather than count that change twice.
+  const trigger = (id: string) => cards.find((c) => c.payload.decision_id === id)?.payload.trigger;
+  const rows = ((cue.data.rows as Row[]) ?? []).filter((row) => trigger(row.decision_id) !== "manager_sub");
+  const cueLead = cue.data.lead as string | null;
+  const lead = rows.some((row) => row.decision_id === cueLead)
+    ? cueLead
+    : rows.reduce<Row | null>((best, row) => (row.gap_win !== null && row.gap_win > (best?.gap_win ?? -Infinity) ? row : best), null)
+        ?.decision_id ?? null;
   // The lead first, then the next largest gaps; a TV graphic has room for five lines.
   const ordered = [...rows]
     .sort((a, b) => Number(b.decision_id === lead) - Number(a.decision_id === lead) || (b.gap_win ?? -1) - (a.gap_win ?? -1))
