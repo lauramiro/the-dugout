@@ -104,7 +104,7 @@ Claude Code: `claude mcp add --transport http the-dugout https://dugout-service.
 
 ## Results
 
-The counterfactual check compares the engine's estimated gap with the true simulated gap at 149 decision points over 31 seeds, calibrating three constants on the fit seeds and reporting on held-out seeds. On the test set the correlation is 0.72, mean error -0.12 points, and sign agreement 75.7%. The limits are stated in full in [docs/evaluation.md](docs/evaluation.md).
+The counterfactual check compares the engine's estimated gap with the true simulated gap at 149 decision points over 31 seeds, calibrating three constants on the fit seeds and reporting on held-out seeds. On the test set the correlation is 0.74, mean error +0.08 points, and sign agreement 78.4%. The limits are stated in full in [docs/evaluation.md](docs/evaluation.md).
 
 ## Repository layout
 

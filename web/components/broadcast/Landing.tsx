@@ -162,12 +162,12 @@ export function AboutPanel({ onClose, onPanel, t }: { onClose: () => void; onPan
   );
 }
 
-// From docs/evaluation.md (rerun 2026-10-21, test set, calibrated constants) and
+// From docs/evaluation.md (rerun 2026-10-22, test set, calibrated constants) and
 // eval/results/narration.md (run 2026-10-22). Rerun those and update these together.
 const GRADED = {
-  r: 0.72,
-  rCi: [0.58, 0.82],
-  sign: 75.7,
+  r: 0.74,
+  rCi: [0.62, 0.83],
+  sign: 78.4,
   points: 74,
   fadeSign: 100,
   fadePoints: 16,

@@ -10,7 +10,7 @@ Rerun with one command (about 35 minutes on 4 workers; the pairs step saves afte
 
 Outputs in `eval/results/`: `counterfactual_pairs.csv` (every point, with the engine's inputs), `calibration.json` (every number below), `counterfactual.svg` (the scatter).
 
-This page was rerun on 2026-10-21 after lanes K and O changed the engine's input: the condition estimate is now mostly accumulated load, starts lower for a player with recent minutes, and the condition card is `condition_drop`. The first version of this page (lane J before K and O) is in git history; its headline numbers are at the end.
+This page was rerun on 2026-10-21 after lanes K and O changed the engine's input: the condition estimate is now mostly accumulated load, starts lower for a player with recent minutes, and the condition card is `condition_drop`. It was rerun again on 2026-10-22 after the engine began pricing both teams' tired players (the opponent's most tired outfielder now lifts the deciding team's scoring rate, so an away team's card and the home win-probability line agree); the constants were refit and every number below is from that run. The first version of this page (lane J before K and O) is in git history; its headline numbers are at the end.
 
 ## Method
 
@@ -42,37 +42,37 @@ Test set: seeds 1 to 29 odd and 73, 74 trigger points. Gaps and errors are in po
 
 | Test set (16 seeds, 74 points) | Illustrative constants | Calibrated |
 | --- | --- | --- |
-| Constants (slope, floor, bench) | 0.6, 0.8, 1.03 | 1.35, 0.925, 1.06 |
-| Mean engine gap | +0.38 | +1.86 |
+| Constants (slope, floor, bench) | 0.6, 0.8, 1.03 | 1.5, 0.925, 1.075 |
+| Mean engine gap | +0.38 | +2.05 |
 | Mean true gap | +1.98 | +1.98 |
-| Mean error (engine minus true) | -1.60 [-2.17, -1.09] | -0.12 [-0.62, +0.30] |
-| Mean absolute error | 1.77 | 1.47 |
-| RMSE | 2.83 | 2.17 |
-| Correlation | 0.71 [0.56, 0.82] | 0.72 [0.58, 0.82] |
-| Sign agreement | 67.6% | 75.7% |
-| True gap inside the engine's 90% interval | 8.1% | 10.8% |
+| Mean error (engine minus true) | -1.60 [-2.16, -1.09] | +0.08 [-0.40, +0.50] |
+| Mean absolute error | 1.77 | 1.40 |
+| RMSE | 2.83 | 2.09 |
+| Correlation | 0.71 [0.57, 0.82] | 0.74 [0.62, 0.83] |
+| Sign agreement | 67.6% | 78.4% |
+| True gap inside the engine's 90% interval | 9.5% | 10.8% |
 
-The mean standard error of a true gap at 500 forks is 1.44 points, so much of the remaining RMSE of 2.17 is noise in the truth itself. Fit-set RMSE after calibration was 2.45 (74 points; reported only as a fit diagnostic).
+The mean standard error of a true gap at 500 forks is 1.44 points, so much of the remaining RMSE of 2.09 is noise in the truth itself. Fit-set RMSE after calibration was 2.32 (74 points; reported only as a fit diagnostic).
 
 By trigger, test set, before and after calibration:
 
 | Trigger | Points | Mean true gap | Mean error | Correlation | Sign agreement |
 | --- | --- | --- | --- | --- | --- |
-| Condition drop | 16 | +4.65 | -3.51 / -0.11 | 0.70 / 0.75 | 93.8% / 100% |
-| Goal after 55' | 23 | +1.22 | -0.95 / +0.30 | 0.75 / 0.74 | 73.9% / 65.2% |
-| Manager substitution | 35 | +1.25 | -1.15 / -0.40 | 0.25 / 0.26 | 51.4% / 71.4% |
+| Condition drop | 16 | +4.65 | -3.52 / +0.11 | 0.70 / 0.78 | 93.8% / 100% |
+| Goal after 55' | 23 | +1.22 | -0.95 / +0.47 | 0.74 / 0.77 | 73.9% / 69.6% |
+| Manager substitution | 35 | +1.25 | -1.14 / -0.19 | 0.26 / 0.30 | 51.4% / 74.3% |
 
 Seed 73, calibrated constants:
 
-- Condition card at 60:00, RFC-03 (estimate 0.689, hidden 0.617): engine +6.3 [+6.0, +6.6], true +4.4 (standard error 3.0).
-- Story point at 64:00, RFC-03 off for RFC-15 (estimate 0.683, hidden 0.599): engine +4.8 [+4.6, +5.1], true +10.0 (standard error 3.0, 500 forks; lane G measured +9.3 with 1,000). With the illustrative constants the engine gave +1.0.
+- Condition card at 60:00, RFC-03 (estimate 0.689, hidden 0.617): engine +5.8 [+5.5, +6.1], true +4.4 (standard error 3.0).
+- Story point at 64:00, RFC-03 off for RFC-15 (estimate 0.683, hidden 0.599): engine +4.7, true +10.0 (standard error 3.0, 500 forks; lane G measured +9.3 with 1,000). With the illustrative constants the engine gave +1.0.
 
 What the numbers say:
 
-- **The engine now ranks the points.** Correlation on the test set went from 0.13 (the first version of this page) to 0.72. Calibration did not do that: with the illustrative constants it is already 0.71. The input did. The condition estimate of the player the engine would take off now correlates 0.91 with his hidden condition at the test points (it was -0.01), and only 9.5% of true gaps are negative (23.5% before): the engine mostly replaces players who are actually tired.
+- **The engine now ranks the points.** Correlation on the test set went from 0.13 (the first version of this page) to 0.74. Calibration did not do that: with the illustrative constants it is already 0.71. The input did. The condition estimate of the player the engine would take off now correlates 0.91 with his hidden condition at the test points (it was -0.01), and only 9.5% of true gaps are negative (23.5% before): the engine mostly replaces players who are actually tired.
 - **Calibration fixes the level.** The illustrative constants understate the gap by 1.6 points on the new estimate, which reads lower than the old one did; the fitted ones are unbiased within noise. Sign agreement rises from 68% to 76%.
 - **The ranking is carried by the condition cards.** Condition-drop points have the largest true gaps (mean +4.65) and the engine gets their sign right every time. Substitution points made by the simulated manager are close to zero on both sides, and there the engine ranks poorly (correlation 0.26).
-- **Big gaps are still understated at the demo moment.** At seed 73's 64' fade the engine says +4.8 against a true +10.0. At the 60' card it says +6.3 against +4.4. The engine's one fatigue penalty per player, a straight line below a floor, does not capture how fast a tired full-back's flank degrades in the simulator; a single seed cannot say more than that.
+- **Big gaps are still understated at the demo moment.** At seed 73's 64' fade the engine says +4.7 against a true +10.0. At the 60' card it says +5.8 against +4.4. The engine's one fatigue penalty per player, a straight line below a floor, does not capture how fast a tired full-back's flank degrades in the simulator; a single seed cannot say more than that.
 - **The engine's 90% interval is not a statement about the truth.** It covers only the engine's own Monte Carlo noise (about half a point wide at 20,000 runs), not model error or input error, so the true gap lands inside it about 10% of the time. The card's interval should not be read as "the true gap is in here".
 
 First version of this page, for comparison (old estimate, `condition_below_60`, 153 test points): correlation 0.14 illustrative and 0.13 calibrated, mean error +0.93 and -0.23, RMSE 3.19 and 2.44, constants 0.3, 0.725, 1.0, and the 64' story point at 0.0 calibrated.
@@ -83,5 +83,5 @@ First version of this page, for comparison (old estimate, `condition_below_60`, 
 - **Win probability only.** The engine's draw, loss and expected points per option are not compared; the CSV keeps the true expected-points gap for later.
 - **Noise in the truth.** 500 forks give a standard error of about 1.4 points per point; individual pairs are noisy, which also caps the correlation any engine could reach.
 - **One scenario, 31 seeds.** The fit and test seeds share squads, ratings and levers, including RFC-03's midweek start in every match. Most condition cards are his. Calibrated constants are for this scenario's simulator and should not be read as football effects.
-- **An optimistic input.** The condition estimate uses the simulator's own cost assumptions and a recent-minutes cost close to the hidden lever (see "Why this is not circular"). The correlation of 0.72 is an upper bound on what the same engine would show on real tracking data.
+- **An optimistic input.** The condition estimate uses the simulator's own cost assumptions and a recent-minutes cost close to the hidden lever (see "Why this is not circular"). The correlation of 0.74 is an upper bound on what the same engine would show on real tracking data.
 - **Story point by hand.** The 64' point is added to show the demo moment; it is not part of the test metrics.
