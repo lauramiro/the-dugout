@@ -95,6 +95,11 @@ test("buildStory: a goal on the other flank gets the plain equaliser caption", (
   assert.equal(eq.startPos, pos(2, 4_355_000) - 8_000);
 });
 
+test("buildStory: the manager step starts at the change itself, so the phone opens on the call", () => {
+  const steps = buildStory(demoLog(), { club: "RFC", phone: true })!;
+  assert.equal(steps.find((s) => s.id === "manager")!.startPos, demoPos(2, 4_740_000));
+});
+
 test("buildStory: the equaliser and the manager's change play at 1x, slow enough to read", () => {
   const steps = buildStory(demoLog(), { club: "RFC", phone: true })!;
   for (const id of ["equaliser", "manager"] as const) {

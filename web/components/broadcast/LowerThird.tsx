@@ -114,7 +114,7 @@ export function LowerThird({ card, roster, mode, locale, vote, onVote, running, 
 }
 
 /** Whole seconds left of VOTE_SECONDS, counting only while `running`; calls onDone at zero. */
-function useVoteTimer(running: boolean, onDone: () => void): number {
+export function useVoteTimer(running: boolean, onDone: () => void): number {
   const [leftMs, setLeftMs] = useState(VOTE_SECONDS * 1000);
   useEffect(() => {
     if (!running) return;

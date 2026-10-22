@@ -1096,3 +1096,4 @@ button.bc-option.bc-voted { color: var(--bc-ink); border-color: var(--bc-accent)
   /* the picture is a short letterbox here: centre the cards on the screen, not on the picture */
   .st-intro, .st-end { position: fixed; width: calc(100vw - 32px); font-size: 14px; z-index: 40; }
 }
+.st-screen.phone { background: #0a110d; }

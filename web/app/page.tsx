@@ -16,6 +16,7 @@ import {
 } from "../components/broadcast/SettingsChip";
 import { Stage } from "../components/broadcast/Stage";
 import { DeskView } from "../components/desk/DeskView";
+import { FanView } from "../components/fan/FanView";
 import { markStorySeen, StoryEnd, StoryIntro, StoryOverlay, StoryScreen, storySeen } from "../components/story/Story";
 import { useStory } from "../components/story/useStory";
 import { optionLabel } from "../components/DecisionCard";
@@ -32,6 +33,7 @@ import { leaveUrl } from "../lib/storyPlayer";
 import { useDataSource, useFeed } from "../lib/useFeed";
 import { useVotes } from "../lib/useVotes";
 import "./broadcast.css";
+import "./fan.css";
 
 // The broadcast picture: the match full-bleed from the tracking data, graphics on top, with
 // the name, links and chapters around it. The analyst desk is at /desk; /broadcast is kept
@@ -67,7 +69,7 @@ export default function BroadcastPage() {
   const [askedMinute, setAskedMinute] = useState(false);
   useEffect(() => setAskedMinute(new URLSearchParams(window.location.search).has("t")), []);
   const steps = useMemo(
-    () => (live || askedMinute || feed.status !== "ready" || !log.roster ? null : buildStory(log, { club: log.roster.home, phone: false })),
+    () => (live || askedMinute || feed.status !== "ready" || !log.roster ? null : buildStory(log, { club: log.roster.home, phone: true })),
     [live, askedMinute, feed.status, log],
   );
   const story = useStory(steps, source);
@@ -269,11 +271,18 @@ export default function BroadcastPage() {
           <DeskView source={source} feed={feed} highlight={story.step.caption.vars.player ? flaggedId(log, story.step) : null} embedded />
         </StoryScreen>
       )}
+      {story.active && story.step?.screen === "phone" && log.roster && (
+        <StoryScreen device="phone">
+          <FanView log={log} playhead={pos} club={log.roster.home} locale={prefs.locale} mode={prefs.mode} votes={votes}
+            onVote={castVote} running={feed.playing} leadId={storyCardId} t={t} />
+        </StoryScreen>
+      )}
       {story.state.status === "done" && (
         <StoryEnd
           onReplay={startStory}
           onClose={() => story.send({ type: "leave" })}
           onPanel={openPanel}
+          extra={<a href="/fan">{t("fanView")}</a>}
           t={t}
         />
       )}

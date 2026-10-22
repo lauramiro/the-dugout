@@ -38,7 +38,6 @@ export const VOTE_MS = 15_000;
 export const FULL_TIME_HOLD_MS = 12_000;
 const GOAL_LEAD_MS = 8_000;
 const GOAL_TAIL_MS = 6_000;
-const MANAGER_LEAD_MS = 3_000;
 const MANAGER_TAIL_MS = 6_000;
 const CARD_TAIL_MS = 2_000;
 
@@ -97,7 +96,7 @@ export function buildStory(log: MatchLog, options: StoryOptions): StoryStep[] | 
   const changedAt = managerPos(card.item, log.firstHalfEnd);
   if (changedAt !== null) {
     steps.push({
-      id: "manager", screen: voteScreen, startPos: changedAt - MANAGER_LEAD_MS,
+      id: "manager", screen: voteScreen, startPos: changedAt, // the call is revealed at the change; earlier the phone has nothing to show
       wait: { kind: "play", untilPos: changedAt + MANAGER_TAIL_MS, speed: 1 },
       caption: { key: "story_manager", vars: { minutes: String(Math.round((changedAt - card.pos) / 60_000)) } },
     });

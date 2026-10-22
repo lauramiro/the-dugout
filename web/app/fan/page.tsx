@@ -1,0 +1,105 @@
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
+import { FanView } from "../../components/fan/FanView";
+import type { Locale, Mode, TeamCode } from "../../lib/contracts";
+import { SPEEDS } from "../../lib/datasource";
+import { LOCALES, translator } from "../../lib/i18n";
+import { useDataSource, useFeed } from "../../lib/useFeed";
+import { useVotes } from "../../lib/useVotes";
+import "../fan.css";
+
+// The fan's phone on its own: one club's cards with their context and the vote, on the replay
+// (or ?source=live). The guided story on / shows the same view inside a phone.
+
+interface FanPrefs {
+  club: TeamCode | null;
+  mode: Mode;
+  locale: Locale;
+}
+
+const PREFS_KEY = "dugout.fan";
+
+function readPrefs(): Partial<FanPrefs> {
+  try {
+    const raw = JSON.parse(localStorage.getItem(PREFS_KEY) ?? "{}") as Record<string, unknown>;
+    const out: Partial<FanPrefs> = {};
+    if (typeof raw.club === "string") out.club = raw.club;
+    if (raw.mode === "casual" || raw.mode === "analyst") out.mode = raw.mode;
+    if (LOCALES.includes(raw.locale as Locale)) out.locale = raw.locale as Locale;
+    return out;
+  } catch {
+    return {};
+  }
+}
+
+function writePrefs(prefs: FanPrefs): void {
+  try {
+    localStorage.setItem(PREFS_KEY, JSON.stringify(prefs));
+  } catch {
+    // storage blocked: keep the choice for this visit only
+  }
+}
+
+export default function FanPage() {
+  const source = useDataSource();
+  const feed = useFeed(source);
+  const { log, playhead, status } = feed;
+  const live = source.kind === "live";
+  const { votes, castVote } = useVotes(live);
+  const [prefs, setPrefs] = useState<FanPrefs>({ club: null, mode: "casual", locale: "en" });
+  useEffect(() => setPrefs((p) => ({ ...p, ...readPrefs() })), []);
+  useEffect(() => {
+    document.documentElement.lang = prefs.locale;
+  }, [prefs.locale]);
+  const set = (patch: Partial<FanPrefs>) => {
+    const next = { ...prefs, ...patch };
+    setPrefs(next);
+    writePrefs(next);
+  };
+  const t = useMemo(() => translator(prefs.locale), [prefs.locale]);
+  const roster = log.roster;
+  const club = roster && prefs.club && prefs.club in roster.teams ? prefs.club : (roster?.home ?? "");
+  const controls = source.controls;
+
+  const header = (
+    <nav className="fan-nav" aria-label={t("fanView")}>
+      <span className="fan-brand">The Dugout</span>
+      {roster && (
+        <label className="fan-pick">
+          <span>{t("fanClub")}</span>
+          <select value={club} onChange={(e) => set({ club: e.target.value })}>
+            {[roster.home, roster.away].map((team) => <option key={team} value={team}>{roster.teams[team]?.name ?? team}</option>)}
+          </select>
+        </label>
+      )}
+      <span className="fan-toggles">
+        {(["casual", "analyst"] as const).map((m) => (
+          <button key={m} type="button" aria-pressed={prefs.mode === m} onClick={() => set({ mode: m })}>{t(m)}</button>
+        ))}
+        {LOCALES.map((l) => (
+          <button key={l} type="button" aria-pressed={prefs.locale === l} onClick={() => set({ locale: l })}>{l.toUpperCase()}</button>
+        ))}
+      </span>
+      {controls && status === "ready" && (
+        <span className="fan-toggles">
+          <button type="button" onClick={() => (feed.playing ? controls.pause() : controls.play())}>
+            {feed.playing ? t("pause") : t("play")}
+          </button>
+          {SPEEDS.map((s) => (
+            <button key={s} type="button" aria-pressed={feed.speed === s} onClick={() => controls.setSpeed(s)}>{s}x</button>
+          ))}
+        </span>
+      )}
+      <a className="fan-link" href="/">{t("broadcastView")}</a>
+    </nav>
+  );
+
+  if (status !== "ready" && !live) {
+    return <main className="fan"><p className="fan-waiting">{status === "error" ? t("loadError", { error: feed.error ?? "" }) : t("loading")}</p></main>;
+  }
+  return (
+    <FanView log={log} playhead={playhead} club={club} locale={prefs.locale} mode={prefs.mode} votes={votes}
+      onVote={castVote} running={live || feed.playing} header={header} t={t} />
+  );
+}
