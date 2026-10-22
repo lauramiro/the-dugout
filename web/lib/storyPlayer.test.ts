@@ -93,10 +93,10 @@ test("storyReducer: ticks and votes do nothing once the viewer has left or skipp
   assert.equal(skipped.status, "left");
 });
 
-test("leaveUrl: the step's own screen at the playhead's whole minute", () => {
-  assert.equal(leaveUrl(steps[0], pos2(3_620_000), FIRST_HALF_END), "/?t=60");
-  assert.equal(leaveUrl(steps[1], pos2(3_620_000), FIRST_HALF_END), "/desk?t=60");
-  assert.equal(leaveUrl(steps[2], pos2(3_659_999), FIRST_HALF_END), "/fan?t=60");
+test("leaveUrl: the step's own screen at the playhead, in hundredths of a minute so a card that just opened is still open", () => {
+  assert.equal(leaveUrl(steps[0], pos2(3_600_000), FIRST_HALF_END), "/?t=60");
+  assert.equal(leaveUrl(steps[1], pos2(3_622_000), FIRST_HALF_END), "/desk?t=60.36"); // 60:22, after the 60:20 card
+  assert.equal(leaveUrl(steps[2], pos2(3_622_000), FIRST_HALF_END), "/fan?t=60.36");
   assert.equal(leaveUrl(steps[0], 1_500_000, FIRST_HALF_END), "/?t=25");
-  assert.equal(leaveUrl(steps[3], pos2(5_800_000), FIRST_HALF_END), "/?t=96");
+  assert.equal(leaveUrl(steps[3], pos2(5_800_000), FIRST_HALF_END), "/?t=96.66");
 });

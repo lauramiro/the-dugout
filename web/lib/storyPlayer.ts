@@ -91,8 +91,9 @@ export function storyReducer(steps: readonly StoryStep[], state: StoryState, eve
 
 const PATHS = { tv: "/", tablet: "/desk", phone: "/fan", end: "/" } as const;
 
-/** Where leaving the story takes the viewer: the step's own screen at the playhead's minute. */
+/** Where leaving the story takes the viewer: the step's own screen at the playhead, in
+ *  hundredths of a minute (?t= takes decimals), so a card that opened seconds ago is still open. */
 export function leaveUrl(step: StoryStep, playhead: number, firstHalfEnd: number): string {
   const { tMs } = fromPos(playhead, firstHalfEnd);
-  return `${PATHS[step.screen]}?t=${Math.floor(tMs / 60_000)}`;
+  return `${PATHS[step.screen]}?t=${Math.floor(tMs / 600) / 100}`;
 }
