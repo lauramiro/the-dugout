@@ -949,6 +949,8 @@ button.bc-option.bc-voted { color: var(--bc-ink); border-color: var(--bc-accent)
   .bc-stage { overflow: visible; }
   .bc-field { overflow: hidden; }
   .bc-settings { top: calc(100% + 8px); right: 8px; }
+  /* the controls also sit under the picture here: leave the chip its own row above them */
+  .bc-chrome { padding-top: 44px; }
   .bc-panel { max-height: 55vh; }
   .bc-lower { width: calc(100% - 3.2cqw); }
   .bc-call,
