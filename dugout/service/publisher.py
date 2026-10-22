@@ -6,8 +6,14 @@ Without a connection string there is no publisher and callers skip the push.
 
 from __future__ import annotations
 
+import logging
 import os
 from typing import Protocol
+
+# A dependency sets the root logger to INFO with a stderr handler, which turns on the Azure SDK's
+# request logging: about 20 lines per publish, every one of them ingested by Log Analytics. Keep
+# the Azure SDK (Web PubSub and Event Hubs) to warnings and errors, in the service and the runner.
+logging.getLogger("azure").setLevel(logging.WARNING)
 
 
 class Publisher(Protocol):
