@@ -223,3 +223,46 @@ def test_casual_text_quotes_no_win_draw_or_loss_probability(locale, reason):
 def test_casual_text_may_quote_condition_as_a_percentage():
     narration = Narration("RFC-03 is fading (60%).", "The model rates changing now about 4 points better (strong).")
     assert check_narration(narration, SAMPLE_PAYLOAD, "en", mode="casual") == []
+
+
+@pytest.mark.parametrize("locale, line", [
+    ("en", "The model rates a like-for-like change +3.9 points in expected points (strong)."),
+    ("en", "About 4 points better in expected points (strong)."),
+    ("es", "El modelo: +3,9 puntos en puntos esperados (fuerte)."),
+])
+def test_gap_called_expected_points_is_reported(locale, line):
+    errors = check_grounding(line, SAMPLE_PAYLOAD, locale)
+    assert any("expected-points value" in e for e in errors)
+
+
+@pytest.mark.parametrize("locale, line", [
+    ("en", "+3.9 points of win probability, expected points 2.39 against 2.30 (strong)."),
+    ("es", "+3,9 puntos de victoria, 2,39 puntos esperados frente a 2,30 (fuerte)."),
+])
+def test_expected_points_beside_their_value_pass(locale, line):
+    assert check_grounding(line, SAMPLE_PAYLOAD, locale) == []
+
+
+def test_taking_off_a_player_who_is_not_tiring_is_reported():
+    errors = check_grounding("Take RFC-09 off for a fresh player, +3.9 points (strong).", SAMPLE_PAYLOAD, "en")
+    assert any("not the tiring player" in e for e in errors)
+
+
+def test_taking_off_when_the_pick_is_another_option_is_reported():
+    payload = copy.deepcopy(SAMPLE_PAYLOAD)
+    payload["options"][1]["id"] = "attacking"
+    payload["recommendation"]["option_id"] = "attacking"
+    tiring = next(e["player_id"] for e in payload["evidence"] if e["type"] == "condition")
+    for locale, line in (("en", f"Take {tiring} off for a fresh player (strong)."),
+                         ("es", f"Sacar a {tiring} por un jugador fresco (fuerte).")):
+        assert any("model's pick is another option" in e for e in check_grounding(line, payload, locale))
+
+
+def test_taking_off_the_tiring_player_on_a_like_for_like_card_passes():
+    tiring = next(e["player_id"] for e in SAMPLE_PAYLOAD["evidence"] if e["type"] == "condition")
+    assert check_grounding(f"Take {tiring} off for a fresh player, +3.9 points (strong).", SAMPLE_PAYLOAD, "en") == []
+
+
+def test_casual_zero_points_is_reported():
+    narration = Narration(headline="Go for an attacking change", reason="The model sees about 0 points of difference (strong).")
+    assert any("about even" in e for e in check_narration(narration, SAMPLE_PAYLOAD, "en", mode="casual"))

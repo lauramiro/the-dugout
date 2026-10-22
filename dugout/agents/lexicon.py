@@ -44,6 +44,25 @@ CLOSE_PHRASES = {
     "es": (r"\bcercan[oa]s?\b", r"\bparej[oa]s?\b", r"\bigualad[oa]s\b", r"\bigualada\b"),
 }
 
+# Phrases that take a player off for a fresh one: the like-for-like change. Only the tiring player
+# in the condition evidence goes off, and only when that change is the model's pick (a headline
+# once said "Take CAS-02 off" on a card that picked an attacking change).
+TAKING_OFF = {
+    "en": (r"\b(?:take|takes|taking|took)\s+{id}\s+off\b", r"\bfresh\s+(?:player|legs)\s+for\s+{id}"),
+    "es": (r"\bsacar\s+a\s+{id}", r"\bsaca\s+a\s+{id}", r"\bjugador\s+fresco\s+por\s+{id}"),
+}
+
+# A casual gap of zero points: say the options are about even instead ("about 0 points better").
+ZERO_POINTS = {"en": r"(?<![\d.])0\s+points?\b", "es": r"(?<![\d,])0\s+puntos?\b"}
+
+# Expected points, which a text may name only beside an expected-points value: the gap between
+# options is in points of win probability, and the model sometimes calls it expected points
+# ("+5.8 points in expected points" for a 0.15 gain).
+EXPECTED_POINTS = {
+    "en": r"\bexpected[\s-]+points?\b",
+    "es": r"\bpuntos?\s+esperados?\b",
+}
+
 # The article before a lower-case word ("an like-for-like", "a attacking change"). Upper-case
 # ids ("an RFC-03") and "a one-off" are left alone.
 WRONG_ARTICLE = {

@@ -13,7 +13,8 @@ from dataclasses import dataclass
 from decimal import ROUND_HALF_UP, Decimal
 
 from dugout.agents.lexicon import (
-    CLOSE_PHRASES, COMING_ON, DECIMAL_SEPARATOR, FOREIGN_WORDS, LOCALES, STRENGTH_LABELS, WRONG_ARTICLE,
+    CLOSE_PHRASES, COMING_ON, DECIMAL_SEPARATOR, EXPECTED_POINTS, FOREIGN_WORDS, LOCALES, STRENGTH_LABELS,
+    TAKING_OFF, WRONG_ARTICLE, ZERO_POINTS,
 )
 
 MAX_HEADLINE_WORDS = 12
@@ -33,6 +34,13 @@ _FOREIGN = {locale: tuple(re.compile(rf"\b{w}\b", re.IGNORECASE) for w in words)
             for locale, words in FOREIGN_WORDS.items()}
 _CLOSE = {locale: tuple(re.compile(p, re.IGNORECASE) for p in patterns) for locale, patterns in CLOSE_PHRASES.items()}
 _ARTICLE = {locale: tuple(re.compile(p) for p in patterns) for locale, patterns in WRONG_ARTICLE.items()}
+_TAKING_OFF = {
+    locale: tuple(re.compile(p.replace("{id}", rf"(?P<id>{PLAYER_ID.pattern})"), re.IGNORECASE)
+                  for p in patterns)
+    for locale, patterns in TAKING_OFF.items()
+}
+_ZERO_POINTS = {locale: re.compile(p, re.IGNORECASE) for locale, p in ZERO_POINTS.items()}
+_EXPECTED_POINTS = {locale: re.compile(p, re.IGNORECASE) for locale, p in EXPECTED_POINTS.items()}
 _INTERVAL_WORD = {"en": re.compile(r"\binterval\b", re.IGNORECASE), "es": re.compile(r"\bintervalo\b", re.IGNORECASE)}
 
 
@@ -141,8 +149,19 @@ def check_grounding(text: str, payload: dict, locale: str) -> list[str]:
                               for match in pattern.finditer(text))
     for player_id in (p for p in coming_on if p in tiring):
         errors.append(f"player {player_id} is the one who would come off, not on")
+    taking_off = dict.fromkeys(match.group("id") for pattern in _TAKING_OFF[locale]
+                               for match in pattern.finditer(text))
+    pick = payload["recommendation"]["option_id"]
+    for player_id in taking_off:
+        if player_id not in tiring:
+            errors.append(f"player {player_id} is not the tiring player; only he would come off")
+        elif not pick.startswith("sub_"):
+            errors.append(f"taking {player_id} off is the like-for-like change, but the model's pick is "
+                          f"another option; name that option instead")
 
     candidates = payload_numbers(payload)
+    xpts = [_dec(option["xpts"]) for option in payload["options"]]
+    quotes_xpts = False
     separator = DECIMAL_SEPARATOR[locale]
     for match in _NUMBER.finditer(PLAYER_ID.sub(" ", text)):
         sign, whole, point, fraction = match.groups()
@@ -156,6 +175,11 @@ def check_grounding(text: str, payload: dict, locale: str) -> list[str]:
         magnitude = Decimal(f"{whole}.{fraction}" if fraction else whole)
         if not _matches(candidates, sign or "", magnitude, digits):
             errors.append(f"number {quoted} does not match any payload field")
+        elif digits == 2 and _matches(xpts, sign or "", magnitude, digits):
+            quotes_xpts = True
+    if (match := _EXPECTED_POINTS[locale].search(text)) and not quotes_xpts:
+        errors.append(f"'{match.group(0)}' without an expected-points value; "
+                      "the gap between options is in points of win probability")
 
     for pattern in _FOREIGN[locale]:
         if (match := pattern.search(text)):
@@ -190,6 +214,8 @@ def check_narration(narration: Narration, payload: dict, locale: str, mode: str 
         for match in _NUMBER.finditer(PLAYER_ID.sub(" ", narration.text)):
             if match.group(4):
                 errors.append(f"casual text uses whole numbers; {match.group(0)} has decimals")
+        if (match := _ZERO_POINTS[locale].search(narration.text)):
+            errors.append(f"'{match.group(0)}': say the options are about even, without a number")
         # Casual gives the gap in points only: rounded probabilities read as nonsense ("2% from 2%").
         # A percentage that is a piece of evidence (a player's condition) is still fine.
         probabilities, evidence = _probabilities(payload), _evidence_numbers(payload)
