@@ -33,6 +33,17 @@ function readPrefs(): Partial<FanPrefs> {
   }
 }
 
+/** ?club= and ?lang= from a link (leaving the story passes the viewer's): they win over storage. */
+function fromUrl(): Partial<FanPrefs> {
+  const q = new URLSearchParams(window.location.search);
+  const out: Partial<FanPrefs> = {};
+  const club = q.get("club");
+  const lang = q.get("lang");
+  if (club) out.club = club;
+  if (LOCALES.includes(lang as Locale)) out.locale = lang as Locale;
+  return out;
+}
+
 function writePrefs(prefs: FanPrefs): void {
   try {
     localStorage.setItem(PREFS_KEY, JSON.stringify(prefs));
@@ -48,7 +59,7 @@ export default function FanPage() {
   const live = source.kind === "live";
   const { votes, castVote } = useVotes(live);
   const [prefs, setPrefs] = useState<FanPrefs>({ club: null, mode: "casual", locale: "en" });
-  useEffect(() => setPrefs((p) => ({ ...p, ...readPrefs() })), []);
+  useEffect(() => setPrefs((p) => ({ ...p, ...readPrefs(), ...fromUrl() })), []);
   useEffect(() => {
     document.documentElement.lang = prefs.locale;
   }, [prefs.locale]);

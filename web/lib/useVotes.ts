@@ -6,7 +6,12 @@ import { LocalVotes, ServiceVotes, type VoteStore } from "./votes";
 
 /** "Your call" votes for one page: replay votes stay in the page; live votes also go to the
  *  service, which answers with the crowd tally. The first call on a card stands. */
-export function useVotes(live: boolean): { votes: Record<string, Vote>; castVote: (id: string, option: string | null) => void } {
+export function useVotes(live: boolean): {
+  votes: Record<string, Vote>;
+  castVote: (id: string, option: string | null) => void;
+  /** Forget this page's calls (a fresh run of the story). */
+  reset: () => void;
+} {
   const voteStore = useMemo<VoteStore>(() => (live ? new ServiceVotes() : new LocalVotes()), [live]);
   const [votes, setVotes] = useState<Record<string, Vote>>({});
   const castVote = useCallback(
@@ -20,5 +25,6 @@ export function useVotes(live: boolean): { votes: Record<string, Vote>; castVote
     },
     [voteStore],
   );
-  return { votes, castVote };
+  const reset = useCallback(() => setVotes({}), []);
+  return { votes, castVote, reset };
 }

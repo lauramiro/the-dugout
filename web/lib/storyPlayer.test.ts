@@ -100,3 +100,30 @@ test("leaveUrl: the step's own screen at the playhead, in hundredths of a minute
   assert.equal(leaveUrl(steps[0], 1_500_000, FIRST_HALF_END), "/?t=25");
   assert.equal(leaveUrl(steps[3], pos2(5_800_000), FIRST_HALF_END), "/?t=96.66");
 });
+
+test("storyReducer: a vote cast before the vote step (on the TV lower third) skips the step", () => {
+  const onTablet = run(INITIAL_STORY, { type: "start", now: 0 }, { type: "vote", decisionId: "rfc-60-20", now: 1 }, { type: "next", now: 2 });
+  assert.equal(onTablet.index, 1);
+  assert.equal(storyReducer(steps, onTablet, { type: "next", now: 3 }).state.index, 3); // over the vote step
+});
+
+test("storyReducer: the viewer's own Pause pauses the story, and their Play resumes it", () => {
+  const started = run(INITIAL_STORY, { type: "start", now: 0 });
+  const paused = storyReducer(steps, started, { type: "viewer-pause", now: 5 });
+  assert.equal(paused.state.status, "paused");
+  const resumed = storyReducer(steps, paused.state, { type: "viewer-play", now: 9 });
+  assert.equal(resumed.state.status, "playing");
+  assert.deepEqual(resumed.command, { play: true });
+});
+
+test("storyReducer: the viewer's Play on a held step leaves the story and lets the replay run", () => {
+  const onTablet = run(INITIAL_STORY, { type: "start", now: 0 }, { type: "next", now: 1 });
+  const { state, command } = storyReducer(steps, onTablet, { type: "viewer-play", now: 2 });
+  assert.equal(state.status, "left");
+  assert.deepEqual(command, { play: true });
+});
+
+test("leaveUrl: carries the viewer's club and language, so /fan and /desk open as they were", () => {
+  assert.equal(leaveUrl(steps[2], pos2(3_622_000), FIRST_HALF_END, { club: "RFC", lang: "es" }), "/fan?t=60.36&club=RFC&lang=es");
+  assert.equal(leaveUrl(steps[1], pos2(3_622_000), FIRST_HALF_END, { lang: "en" }), "/desk?t=60.36&lang=en");
+});

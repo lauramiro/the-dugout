@@ -59,13 +59,6 @@ export default function BroadcastPage() {
   };
   const t = useMemo(() => translator(prefs.locale), [prefs.locale]);
 
-  // A broadcast runs on its own: replay starts once loaded; space pauses and resumes.
-  const started = useRef(false);
-  useEffect(() => {
-    if (started.current || feed.status !== "ready" || !source.controls) return;
-    started.current = true;
-    source.controls.play();
-  }, [feed.status, source]);
   // The guided story: replay only, and not when the link opens a minute of its own (?t=).
   const [askedMinute, setAskedMinute] = useState(false);
   useEffect(() => setAskedMinute(new URLSearchParams(window.location.search).has("t")), []);
@@ -76,9 +69,21 @@ export default function BroadcastPage() {
   const story = useStory(steps, source);
   const [seen, setSeen] = useState(true);
   useEffect(() => setSeen(storySeen()), []);
+  const introShown = !!steps && !seen && story.state.status === "intro";
+
+  // A broadcast runs on its own: replay starts once loaded (after the intro, if one is offered);
+  // space pauses and resumes.
+  const started = useRef(false);
+  useEffect(() => {
+    if (started.current || feed.status !== "ready" || !source.controls || introShown) return;
+    started.current = true;
+    source.controls.play();
+  }, [feed.status, source, introShown]);
+
   const startStory = () => {
     markStorySeen();
     setSeen(true);
+    resetVotes(); // a fresh run: every card can be called again
     story.send({ type: "start", now: performance.now() });
   };
   const skipStory = () => {
@@ -91,7 +96,7 @@ export default function BroadcastPage() {
     story.send({ type: "leave" });
     source.controls?.pause();
     if (!step) return;
-    const url = leaveUrl(step, source.getState().playhead, log.firstHalfEnd);
+    const url = leaveUrl(step, source.getState().playhead, log.firstHalfEnd, { club: log.roster?.home, lang: prefs.locale });
     if (step.screen === "tv" || step.screen === "end") window.history.replaceState(null, "", url);
     else window.location.assign(url);
   };
@@ -117,7 +122,7 @@ export default function BroadcastPage() {
 
   // Your call from the lower third: replay votes stay in the page; live votes also go to the
   // service. A vote during the story moves it on.
-  const { votes, castVote: cast } = useVotes(live);
+  const { votes, castVote: cast, reset: resetVotes } = useVotes(live);
   const castVote = useCallback(
     (id: string, option: string | null) => {
       cast(id, option);
@@ -132,15 +137,24 @@ export default function BroadcastPage() {
   // About and How it's graded pause the replay while they are open.
   const [panel, setPanel] = useState<PanelId | null>(null);
   const resume = useRef(false);
+  const resumeStory = useRef(false);
   const openPanel = (next: PanelId) => {
-    if (panel === null) resume.current = feed.playing;
-    if (feed.playing) source.controls?.pause();
+    if (panel === null && story.active) {
+      // the story's clock stops with the replay, or a held step would run out behind the panel
+      resumeStory.current = story.state.status === "playing";
+      if (resumeStory.current) story.send({ type: "viewer-pause", now: performance.now() });
+    } else if (panel === null) {
+      resume.current = feed.playing;
+      if (feed.playing) source.controls?.pause();
+    }
     setPanel(next);
   };
   const closePanel = () => {
     setPanel(null);
-    if (resume.current) source.controls?.play();
+    if (resumeStory.current) story.send({ type: "viewer-play", now: performance.now() });
+    else if (resume.current) source.controls?.play();
     resume.current = false;
+    resumeStory.current = false;
   };
 
   const pos = useSmoothedPos(playhead, live);
@@ -235,7 +249,7 @@ export default function BroadcastPage() {
           next={
             <p className="bc-whatif-next">
               {source.controls && (
-                <button type="button" onClick={() => { source.controls?.seek(0); source.controls?.play(); }}>
+                <button type="button" onClick={() => { controls?.seek(0); controls?.play(); }}>
                   {t("watchAgain")}
                 </button>
               )}
@@ -270,7 +284,8 @@ export default function BroadcastPage() {
       )}
       {story.active && story.step?.screen === "tablet" && (
         <StoryScreen device="tablet">
-          <DeskView source={source} feed={feed} highlight={story.step.caption.vars.player ? flaggedId(log, story.step) : null} embedded />
+          <DeskView source={source} feed={feed} highlight={story.step.caption.vars.player ? flaggedId(log, story.step) : null} embedded
+            votes={votes} onVote={castVote} controls={story.viewerControls} locale={prefs.locale} mode={prefs.mode} />
         </StoryScreen>
       )}
       {story.active && story.step?.screen === "phone" && log.roster && (

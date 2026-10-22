@@ -62,8 +62,16 @@ export function useStory(steps: StoryStep[] | null, source: DataSource): StoryRu
     const controls = source.controls;
     if (!controls) return null;
     return {
-      play: () => controls.play(),
-      pause: () => controls.pause(),
+      play: () => {
+        const status = current.current.status;
+        if (status === "playing" || status === "paused") send({ type: "viewer-play", now: performance.now() });
+        else controls.play();
+      },
+      pause: () => {
+        const status = current.current.status;
+        if (status === "playing" || status === "paused") send({ type: "viewer-pause", now: performance.now() });
+        else controls.pause();
+      },
       setSpeed: (speed) => { send({ type: "viewer-speed" }); controls.setSpeed(speed); },
       seek: (pos) => { send({ type: "viewer-seek" }); controls.seek(pos); },
     };

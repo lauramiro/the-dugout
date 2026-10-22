@@ -174,7 +174,7 @@ function Call({ card, c, manager, model, vote, roster, t }: {
   return (
     <section className="fan-card" aria-label={t("fanCallTitle")}>
       <p className="fan-card-head"><span className="fan-minute">{c.minute}</span><span>{t("fanCallTitle")}</span></p>
-      <h2 className="fan-headline">{subs.length ? subs.map((s) => `${names(s.off)} off, ${names(s.on)} on`).join("; ") : label(manager)}</h2>
+      <h2 className="fan-headline">{subs.length ? subs.map((s) => t("subLine", { off: names(s.off), on: names(s.on) })).join("; ") : label(manager)}</h2>
       <dl className="fan-calls">
         <div><dt>{t("manager")}</dt><dd>{label(manager)}</dd></div>
         <div><dt>{t("fanModel")}</dt><dd>{c.strength === "toss_up" ? t("strength_toss_up") : label(model)}</dd></div>

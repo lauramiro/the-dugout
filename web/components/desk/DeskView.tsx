@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { DecisionCard } from "../DecisionCard";
 import { ConditionBars, WindowChips } from "../Dugout";
 import { ModeSwitcher, type Settings } from "../ModeSwitcher";
@@ -11,12 +11,12 @@ import { Review } from "../Review";
 import { YourCall } from "../YourCall";
 import type { Vote } from "../../lib/calls";
 import { fromPos, lastAtOrBefore } from "../../lib/clock";
-import type { DecisionCard as Card, Locale } from "../../lib/contracts";
-import type { DataSource, FeedState } from "../../lib/datasource";
+import type { DecisionCard as Card, Locale, Mode } from "../../lib/contracts";
+import type { DataSource, FeedState, PlaybackControls } from "../../lib/datasource";
 import { benchAt } from "../../lib/bench";
 import { score, tickerEvents } from "../../lib/derive";
 import { LOCALES, translator } from "../../lib/i18n";
-import { LocalVotes, ServiceVotes, type VoteStore } from "../../lib/votes";
+import { useVotes } from "../../lib/useVotes";
 
 const TICKER_LENGTH = 8;
 const SETTINGS_KEY = "dugout.settings";
@@ -50,22 +50,42 @@ interface DeskViewProps {
   highlight?: string | null;
   /** Inside the story: no page links and no replay controls of its own (the story drives the playhead). */
   embedded?: boolean;
+  /** Inside the story: the page's votes, so a call on the tablet is the story's call. */
+  votes?: Record<string, Vote>;
+  onVote?: (id: string, option: string | null) => void;
+  /** Inside the story: the story-aware controls, so a timeline click leaves the story. */
+  controls?: PlaybackControls | null;
+  /** Inside the story: the TV's language and mode. */
+  locale?: Locale;
+  mode?: Mode;
 }
 
 /** The analyst desk: the match, the decision card, the dugout panel and the timeline, on any data source. */
-export function DeskView({ source, feed, highlight = null, embedded = false }: DeskViewProps) {
+export function DeskView(props: DeskViewProps) {
+  const { source, feed, highlight = null, embedded = false } = props;
   const { log, playhead, status } = feed;
   const { roster } = log;
   const [settings, setSettings] = useState<Settings>({ mode: "casual", focus: "", locale: "en" });
-  useEffect(() => setSettings((s) => ({ ...s, ...readSettings() })), []);
   useEffect(() => {
-    document.documentElement.lang = settings.locale;
-  }, [settings.locale]);
+    // ?lang= and ?club= from a link (leaving the story passes the viewer's) win over storage
+    const q = new URLSearchParams(window.location.search);
+    const lang = q.get("lang");
+    const club = q.get("club");
+    setSettings((s) => ({
+      ...s, ...readSettings(),
+      ...(LOCALES.includes(lang as Locale) ? { locale: lang as Locale } : {}),
+      ...(club ? { focus: club } : {}),
+    }));
+  }, []);
+  useEffect(() => {
+    if (!embedded) document.documentElement.lang = settings.locale; // embedded: the host page owns <html lang>
+  }, [embedded, settings.locale]);
   const changeSettings = (next: Settings) => {
     setSettings(next);
     writeSettings(next);
   };
-  const { mode, locale } = settings;
+  const mode = props.mode ?? settings.mode;
+  const locale = props.locale ?? settings.locale;
   const t = useMemo(() => translator(locale), [locale]);
 
   // The focus club is listed first in the dugout panel.
@@ -97,20 +117,10 @@ export function DeskView({ source, feed, highlight = null, embedded = false }: D
   const focus = roster && settings.focus in roster.teams ? settings.focus : (roster?.home ?? "");
   const allGoals = useMemo(() => log.events.filter((e) => e.item.type === "goal"), [log.events]);
 
-  // Your call: replay votes stay in the page; live votes also go to the service.
-  const voteStore = useMemo<VoteStore>(() => (source.kind === "live" ? new ServiceVotes() : new LocalVotes()), [source.kind]);
-  const [votes, setVotes] = useState<Record<string, Vote>>({});
-  const castVote = useCallback(
-    (id: string, option: string | null) => {
-      setVotes((v) => (id in v ? v : { ...v, [id]: { option, tally: null, error: null } }));
-      if (option === null) return;
-      voteStore.cast(id, option).then(
-        (tally) => setVotes((v) => ({ ...v, [id]: { ...v[id], tally } })),
-        (err: unknown) => setVotes((v) => ({ ...v, [id]: { ...v[id], error: err instanceof Error ? err.message : String(err) } })),
-      );
-    },
-    [voteStore],
-  );
+  // Your call: the desk's own votes, or the host page's inside the story.
+  const own = useVotes(source.kind === "live");
+  const votes = props.votes ?? own.votes;
+  const castVote = props.onVote ?? own.castVote;
 
   // The review opens by itself once at full time, and from its button at any point.
   const [reviewOpen, setReviewOpen] = useState(false);
@@ -137,7 +147,7 @@ export function DeskView({ source, feed, highlight = null, embedded = false }: D
           <span className="tagline">{t("tagline")}</span>
         </div>
         <div className="topbar-actions">
-          <ModeSwitcher settings={{ ...settings, focus }} roster={roster} onChange={changeSettings} t={t} />
+          {!embedded && <ModeSwitcher settings={{ ...settings, focus }} roster={roster} onChange={changeSettings} t={t} />}
           {!embedded && (
             <>
               <a className="review-open" href="/" onClick={(e) => { e.currentTarget.href = `/${window.location.search}`; }}>
@@ -190,7 +200,7 @@ export function DeskView({ source, feed, highlight = null, embedded = false }: D
         firstHalfEnd={log.firstHalfEnd}
         roster={roster}
         focus={focus}
-        onSeek={source.controls?.seek ?? null}
+        onSeek={(props.controls !== undefined ? props.controls : source.controls)?.seek ?? null}
         t={t}
       />
 
