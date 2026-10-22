@@ -36,7 +36,7 @@ export const DECISION_HOLD_MS = 7_000;
 export const TABLET_HOLD_MS = 12_000;
 export const VOTE_MS = 15_000;
 export const FULL_TIME_HOLD_MS = 12_000;
-const GOAL_LEAD_MS = 15_000;
+const GOAL_LEAD_MS = 8_000;
 const GOAL_TAIL_MS = 6_000;
 const MANAGER_LEAD_MS = 3_000;
 const MANAGER_TAIL_MS = 6_000;
@@ -87,7 +87,7 @@ export function buildStory(log: MatchLog, options: StoryOptions): StoryStep[] | 
     const flank = down !== null && player !== undefined && down === player.side;
     steps.push({
       id: "equaliser", screen: "tv", startPos: goal.pos - GOAL_LEAD_MS,
-      wait: { kind: "play", untilPos: goal.pos + GOAL_TAIL_MS, speed: 5 },
+      wait: { kind: "play", untilPos: goal.pos + GOAL_TAIL_MS, speed: 1 }, // at 5x a goal is gone in a blink
       caption: flank
         ? { key: "story_equaliser_flank", vars: { team: teamName(goal.item.team), player: playerName } }
         : { key: "story_equaliser", vars: { team: teamName(goal.item.team) } },
@@ -98,7 +98,7 @@ export function buildStory(log: MatchLog, options: StoryOptions): StoryStep[] | 
   if (changedAt !== null) {
     steps.push({
       id: "manager", screen: voteScreen, startPos: changedAt - MANAGER_LEAD_MS,
-      wait: { kind: "play", untilPos: changedAt + MANAGER_TAIL_MS, speed: 5 },
+      wait: { kind: "play", untilPos: changedAt + MANAGER_TAIL_MS, speed: 1 },
       caption: { key: "story_manager", vars: { minutes: String(Math.round((changedAt - card.pos) / 60_000)) } },
     });
   }

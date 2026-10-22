@@ -143,16 +143,18 @@ interface Row {
 }
 
 /** Full time: each decision the review priced, the largest gap first and large. */
-export function WhatIf({ cue, cards, roster, locale, mode, t, next }: {
+export function WhatIf({ cue, cards, roster, locale, mode, t, next, leadId }: {
   cue: Cue; cards: readonly DecisionCard[]; roster: Roster | null; locale: Locale; mode: Mode; t: Translate;
   /** Next steps under the rows. */
   next?: ReactNode;
+  /** The decision to lead with instead of the largest gap (the story's own card). */
+  leadId?: string | null;
 }) {
   // A manager_sub card was raised by the manager's own change, so it has no call of his to
   // price against the model's: leave it out rather than count that change twice.
   const trigger = (id: string) => cards.find((c) => c.payload.decision_id === id)?.payload.trigger;
   const rows = ((cue.data.rows as Row[]) ?? []).filter((row) => trigger(row.decision_id) !== "manager_sub");
-  const cueLead = cue.data.lead as string | null;
+  const cueLead = leadId ?? (cue.data.lead as string | null);
   const lead = rows.some((row) => row.decision_id === cueLead)
     ? cueLead
     : rows.reduce<Row | null>((best, row) => (row.gap_win !== null && row.gap_win > (best?.gap_win ?? -Infinity) ? row : best), null)

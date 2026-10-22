@@ -92,7 +92,15 @@ test("buildStory: a goal on the other flank gets the plain equaliser caption", (
   const eq = steps.find((s) => s.id === "equaliser")!;
   assert.equal(eq.caption.key, "story_equaliser");
   assert.equal(eq.caption.vars.team, "Castleton Athletic");
-  assert.equal(eq.startPos, pos(2, 4_355_000) - 15_000);
+  assert.equal(eq.startPos, pos(2, 4_355_000) - 8_000);
+});
+
+test("buildStory: the equaliser and the manager's change play at 1x, slow enough to read", () => {
+  const steps = buildStory(demoLog(), { club: "RFC", phone: true })!;
+  for (const id of ["equaliser", "manager"] as const) {
+    const wait = steps.find((s) => s.id === id)!.wait;
+    assert.equal(wait.kind === "play" && wait.speed, 1);
+  }
 });
 
 test("buildStory: a card in the first two minutes opens the story at kick-off, not before it", () => {

@@ -997,3 +997,102 @@ button.bc-option.bc-voted { color: var(--bc-ink); border-color: var(--bc-accent)
 @media (max-width: 700px) {
   .bc-kickoff { font-size: 2.7cqw; width: 84cqw; padding: 2cqh 2cqw; }
 }
+
+/* Guided story (components/story/Story.tsx): the intro and end card sit on the picture like the
+   title card; the caption bar and a step's screen sit over the whole window. */
+.st-intro,
+.st-end {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  translate: -50% -50%;
+  width: min(56cqw, 92%);
+  display: grid;
+  gap: 1.4cqh;
+  justify-items: center;
+  text-align: center;
+  padding: 3.4cqh 2.8cqw 3cqh;
+  font-size: max(12px, 1.25cqw);
+  background: var(--bc-glass-strong);
+  border: 1px solid var(--bc-line);
+  border-top: 0.5cqh solid var(--bc-accent);
+  border-radius: 0.5cqw;
+  box-shadow: 0 1cqw 3cqw rgba(0, 0, 0, 0.5);
+  z-index: 6;
+  animation: bc-slide-in 500ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+.st-intro p, .st-end p { margin: 0; }
+.st-intro h1 {
+  margin: 0;
+  font-family: var(--font-display), sans-serif;
+  font-weight: 900;
+  font-size: 3.4em;
+  line-height: 1;
+  letter-spacing: 0.04em;
+}
+.st-end h2 { margin: 0; font-size: 1.3em; line-height: 1.35; max-width: 32em; }
+.st-intro-premise { font-size: 1.1em; line-height: 1.35; max-width: 34em; }
+.st-intro-lead { color: var(--bc-accent); font-weight: 700; }
+.st-intro-note { color: var(--bc-muted); font-size: 0.85em; }
+.st-intro-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.6em; }
+.st-intro-actions button,
+.st-intro-actions a,
+.st-controls button {
+  font: inherit;
+  color: var(--bc-ink, #f4f7f5);
+  background: var(--bc-glass, rgba(10, 16, 13, 0.82));
+  border: 1px solid var(--bc-line, rgba(255, 255, 255, 0.16));
+  border-radius: 999px;
+  padding: 0.4em 1em;
+  text-decoration: none;
+  cursor: pointer;
+}
+.st-intro-actions .st-primary { background: var(--bc-accent, #ffb627); color: #0b110e; font-weight: 800; border-color: transparent; }
+.st-intro-actions :focus-visible,
+.st-controls :focus-visible { outline: 2px solid var(--bc-accent, #ffb627); outline-offset: 2px; }
+
+.st-bar {
+  position: fixed;
+  left: 50%;
+  bottom: 14px;
+  translate: -50% 0;
+  width: min(960px, calc(100vw - 32px));
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 16px;
+  color: #f4f7f5;
+  background: rgba(8, 12, 10, 0.94);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-left: 4px solid #ffb627;
+  border-radius: 8px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  font-family: var(--font-body), system-ui, sans-serif;
+  font-size: 15px;
+  z-index: 40;
+}
+.st-count { color: #ffb627; font-weight: 800; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.st-caption { margin: 0; line-height: 1.35; }
+.st-controls { display: flex; gap: 8px; }
+.st-controls button { font-size: 13px; white-space: nowrap; }
+
+.st-screen {
+  position: fixed;
+  inset: 0;
+  overflow: auto;
+  /* the desk's own page colours and type, not the broadcast's white-on-black */
+  background: var(--chalk);
+  color: var(--ink);
+  font-size: 15px;
+  line-height: 1.4;
+  z-index: 30;
+  padding-bottom: 96px; /* room for the caption bar */
+}
+
+@media (max-width: 700px) {
+  .st-bar { grid-template-columns: 1fr; gap: 8px; bottom: 8px; font-size: 14px; }
+  .st-controls { flex-wrap: wrap; }
+  /* the picture is a short letterbox here: centre the cards on the screen, not on the picture */
+  .st-intro, .st-end { position: fixed; width: calc(100vw - 32px); font-size: 14px; z-index: 40; }
+}

@@ -29,12 +29,14 @@ interface ChromeProps {
   controls: PlaybackControls | null;
   onPanel: (panel: PanelId) => void;
   onSeek: () => void;
+  /** Starts the guided story; absent when there is none (live, or a ?t= link). */
+  onStory?: () => void;
   t: Translate;
 }
 
 /** Name and links, always on; on a replay, play, speed and one chapter per decision plus
  *  kick-off and full time. */
-export function Chrome({ cards, duration, feed, controls, onPanel, onSeek, t }: ChromeProps) {
+export function Chrome({ cards, duration, feed, controls, onPanel, onSeek, onStory, t }: ChromeProps) {
   const ready = feed.status === "ready";
   const chapters = [
     { pos: 0, label: t("kickOffShort"), title: t("jumpKickOff") },
@@ -55,6 +57,7 @@ export function Chrome({ cards, duration, feed, controls, onPanel, onSeek, t }: 
     <div className="bc-chrome">
       <nav className="bc-nav" aria-label="The Dugout">
         <span className="bc-brand">The Dugout</span>
+        {onStory && <button type="button" onClick={onStory}>{t("watchStory")}</button>}
         <button type="button" onClick={() => onPanel("about")}>{t("about")}</button>
         <DeskLink t={t} />
         <button type="button" onClick={() => onPanel("graded")}>{t("howGraded")}</button>

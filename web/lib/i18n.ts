@@ -203,6 +203,18 @@ const en = {
   story_manager: "The manager's change comes {minutes} minutes after the card.",
   story_full_time: "Full time: what the {minute} call was worth.",
   story_end: "Keep exploring: the TV picture, the analyst desk, the fan view, or how it's graded.",
+  storyIntroLead: "One decision, seen three ways: on TV, on the manager's tablet, in your hand. About a minute.",
+  storyStart: "Watch the story",
+  storySkip: "Skip",
+  storyPause: "Pause",
+  storyResume: "Resume",
+  storyNext: "Next",
+  storyLeave: "Leave the story",
+  storyReplay: "Watch the story again",
+  storyLabel: "The story",
+  storyStep: "{n} of {total}",
+  storyTv: "Back to the TV picture",
+  watchStory: "Story",
 } as const;
 
 export type StringKey = keyof typeof en;
@@ -407,6 +419,18 @@ const es: Dict = {
   story_manager: "El cambio del entrenador llega {minutes} minutos después de la tarjeta.",
   story_full_time: "Final: lo que valía la decisión del {minute}.",
   story_end: "Sigue explorando: la tele, el panel de análisis, la vista del aficionado o cómo se evalúa.",
+  storyIntroLead: "Una decisión vista de tres maneras: en la tele, en la tableta del entrenador y en tu mano. Un minuto.",
+  storyStart: "Ver la historia",
+  storySkip: "Saltar",
+  storyPause: "Pausa",
+  storyResume: "Seguir",
+  storyNext: "Siguiente",
+  storyLeave: "Salir de la historia",
+  storyReplay: "Ver la historia otra vez",
+  storyLabel: "La historia",
+  storyStep: "{n} de {total}",
+  storyTv: "Volver a la tele",
+  watchStory: "Historia",
 };
 
 

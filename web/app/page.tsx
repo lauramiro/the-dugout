@@ -15,6 +15,9 @@ import {
   DEFAULT_PREFS, readPrefs, SettingsChip, writePrefs, type BroadcastPrefs,
 } from "../components/broadcast/SettingsChip";
 import { Stage } from "../components/broadcast/Stage";
+import { DeskView } from "../components/desk/DeskView";
+import { markStorySeen, StoryEnd, StoryIntro, StoryOverlay, StoryScreen, storySeen } from "../components/story/Story";
+import { useStory } from "../components/story/useStory";
 import { optionLabel } from "../components/DecisionCard";
 import type { Vote } from "../lib/calls";
 import { aheadPos, fromPos, lastAtOrBefore, toPos } from "../lib/clock";
@@ -24,8 +27,10 @@ import type { DataSource, FeedState, MatchLog, PitchFrame } from "../lib/datasou
 import { playerName } from "../lib/derive";
 import { decimal, translator, type Translate } from "../lib/i18n";
 import { ReplayDataSource } from "../lib/replay";
+import { buildStory } from "../lib/story";
+import { leaveUrl } from "../lib/storyPlayer";
 import { useDataSource, useFeed } from "../lib/useFeed";
-import { LocalVotes, ServiceVotes, type VoteStore } from "../lib/votes";
+import { useVotes } from "../lib/useVotes";
 import "./broadcast.css";
 
 // The broadcast picture: the match full-bleed from the tracking data, graphics on top, with
@@ -58,33 +63,68 @@ export default function BroadcastPage() {
     started.current = true;
     source.controls.play();
   }, [feed.status, source]);
+  // The guided story: replay only, and not when the link opens a minute of its own (?t=).
+  const [askedMinute, setAskedMinute] = useState(false);
+  useEffect(() => setAskedMinute(new URLSearchParams(window.location.search).has("t")), []);
+  const steps = useMemo(
+    () => (live || askedMinute || feed.status !== "ready" || !log.roster ? null : buildStory(log, { club: log.roster.home, phone: false })),
+    [live, askedMinute, feed.status, log],
+  );
+  const story = useStory(steps, source);
+  const [seen, setSeen] = useState(true);
+  useEffect(() => setSeen(storySeen()), []);
+  const startStory = () => {
+    markStorySeen();
+    setSeen(true);
+    story.send({ type: "start", now: performance.now() });
+  };
+  const skipStory = () => {
+    markStorySeen();
+    setSeen(true);
+    story.send({ type: "skip-intro" });
+  };
+  const leaveStory = () => {
+    const step = story.step;
+    story.send({ type: "leave" });
+    source.controls?.pause();
+    if (!step) return;
+    const url = leaveUrl(step, source.getState().playhead, log.firstHalfEnd);
+    if (step.screen === "tv" || step.screen === "end") window.history.replaceState(null, "", url);
+    else window.location.assign(url);
+  };
+  const storyRef = useRef(story);
+  useEffect(() => {
+    storyRef.current = story;
+  });
+
   useEffect(() => {
     const controls = source.controls;
     if (!controls) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.code !== "Space" || (e.target as HTMLElement | null)?.closest("button, select, input")) return;
       e.preventDefault();
-      if (source.getState().playing) controls.pause();
+      const run = storyRef.current;
+      if (run.active) run.send({ type: run.state.status === "paused" ? "resume" : "pause", now: performance.now() });
+      else if (source.getState().playing) controls.pause();
       else controls.play();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [source]);
 
-  // Your call from the lower third: replay votes stay in the page; live votes also go to the service.
-  const voteStore = useMemo<VoteStore>(() => (live ? new ServiceVotes() : new LocalVotes()), [live]);
-  const [votes, setVotes] = useState<Record<string, Vote>>({});
+  // Your call from the lower third: replay votes stay in the page; live votes also go to the
+  // service. A vote during the story moves it on.
+  const { votes, castVote: cast } = useVotes(live);
   const castVote = useCallback(
     (id: string, option: string | null) => {
-      setVotes((v) => (id in v ? v : { ...v, [id]: { option, tally: null, error: null } }));
-      if (option === null) return;
-      voteStore.cast(id, option).then(
-        (tally) => setVotes((v) => ({ ...v, [id]: { ...v[id], tally } })),
-        (err: unknown) => setVotes((v) => ({ ...v, [id]: { ...v[id], error: err instanceof Error ? err.message : String(err) } })),
-      );
+      cast(id, option);
+      if (option !== null) storyRef.current.send({ type: "vote", decisionId: id, now: performance.now() });
     },
-    [voteStore],
+    [cast],
   );
+  const controls = steps ? story.viewerControls : source.controls;
+  // The card the story is built around: its vote step names it.
+  const storyCardId = steps?.flatMap((s) => (s.wait.kind === "vote" ? [s.wait.decisionId] : []))[0] ?? null;
 
   // About and How it's graded pause the replay while they are open.
   const [panel, setPanel] = useState<PanelId | null>(null);
@@ -148,9 +188,10 @@ export default function BroadcastPage() {
           cards={log.cards}
           duration={log.duration}
           feed={feed}
-          controls={source.controls}
+          controls={controls}
           onPanel={openPanel}
           onSeek={hideTitle}
+          onStory={steps ? startStory : undefined}
           t={t}
         />
       }
@@ -179,8 +220,9 @@ export default function BroadcastPage() {
       {focusCue && prefs.player && (
         <FocusCard key={focusCue.id} cue={focusCue} focus={prefs.player} roster={log.roster} t={t} />
       )}
-      {whatifCue && (
+      {whatifCue && story.state.status !== "done" && (
         <WhatIf
+          leadId={story.active ? storyCardId : null}
           cue={whatifCue}
           cards={log.cards.map((c) => c.item)}
           roster={log.roster}
@@ -218,12 +260,31 @@ export default function BroadcastPage() {
       {live && schedule && feed.status !== "error" && (
         <KickoffSlate schedule={schedule} empty={liveEmpty} locale={prefs.locale} t={t} />
       )}
-      {!slate && titleShown && <TitleCard replay={!live} onDone={hideTitle} t={t} />}
+      {!slate && steps && !seen && story.state.status === "intro" && <StoryIntro onStart={startStory} onSkip={skipStory} t={t} />}
+      {!slate && titleShown && !story.active && story.state.status !== "done" && (seen || !steps) && (
+        <TitleCard replay={!live} onDone={hideTitle} t={t} />
+      )}
+      {story.active && story.step?.screen === "tablet" && (
+        <StoryScreen device="tablet">
+          <DeskView source={source} feed={feed} highlight={story.step.caption.vars.player ? flaggedId(log, story.step) : null} embedded />
+        </StoryScreen>
+      )}
+      {story.state.status === "done" && (
+        <StoryEnd
+          onReplay={startStory}
+          onClose={() => story.send({ type: "leave" })}
+          onPanel={openPanel}
+          t={t}
+        />
+      )}
+      {story.active && story.step && (
+        <StoryOverlay step={story.step} state={story.state} total={steps?.length ?? 0} send={story.send} onLeave={leaveStory} t={t} />
+      )}
       <SettingsChip
         prefs={prefs}
         onChange={changePrefs}
         roster={log.roster}
-        controls={source.controls}
+        controls={controls}
         feed={feed}
         recordedTracking={recorded.active}
         extra={
@@ -239,6 +300,13 @@ export default function BroadcastPage() {
       {panel === "graded" && <GradedPanel onClose={closePanel} locale={prefs.locale} t={t} />}
     </Stage>
   );
+}
+
+/** The story's flagged player: the condition evidence on the card the story is built around. */
+function flaggedId(log: MatchLog, step: { startPos: number }): string | null {
+  const at = lastAtOrBefore(log.cards, step.startPos);
+  const evidence = at >= 0 ? log.cards[at].item.payload.evidence.find((e) => e.type === "condition") : undefined;
+  return evidence && evidence.type === "condition" ? evidence.player_id : null;
 }
 
 /** The viewer's vote on the card a manager's call cue belongs to, for the reveal; agrees when
