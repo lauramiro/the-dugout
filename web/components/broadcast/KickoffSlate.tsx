@@ -34,7 +34,7 @@ export function KickoffSlate({ schedule, empty, locale, t }: {
   }, [schedule]);
   if (now === null) return null;
 
-  const k = kickoff(schedule, now);
+  const k = kickoff(schedule, now, empty);
   if (k.kind === "on" && !empty) return null;
   const time = (ms: number) => new Date(ms).toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
   return (

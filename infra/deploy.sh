@@ -156,7 +156,13 @@ SWA_HOST="$(capture az staticwebapp show --name "$SWA" --resource-group "$RG" --
 need SWA_HOST "$SWA_HOST"
 
 echo "# 5. Container Apps environment and decision service"
-run az containerapp env create --name "$CAE" --resource-group "$RG" --location "$REGION"
+# Create only when missing: without a workspace argument every create makes a new Log Analytics
+# workspace and moves the environment's logs to it (18 had piled up by 2026-10-22).
+if [[ $APPLY == 1 ]] && az containerapp env show --name "$CAE" --resource-group "$RG" >/dev/null 2>&1; then
+  echo "container apps environment $CAE exists, keeping it"
+else
+  run az containerapp env create --name "$CAE" --resource-group "$RG" --location "$REGION"
+fi
 WPS_CONN="$(capture az webpubsub key show --name "$WPS" --resource-group "$RG" --query primaryConnectionString -o tsv)"
 # 'up' builds the repo Dockerfile in Azure and creates or updates the app.
 need WPS_CONN "$WPS_CONN"

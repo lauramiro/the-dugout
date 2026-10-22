@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { countdown, GRACE_MS, kickoff, parseSchedule } from "./schedule.ts";
+import { countdown, GRACE_MS, JOIN_WAIT_MS, kickoff, parseSchedule } from "./schedule.ts";
 
 // As dugout/stream/replay.py writes it for the demo match at 5x, every 30 minutes.
 const schedule = { match_id: "rfc-cas-0073", every_min: 30, speed: 5, duration_ms: 1_176_800 };
@@ -19,6 +19,12 @@ test("kickoff: a match from the slot until its end plus the grace, then the next
   assert.equal(kickoff(schedule, slot + schedule.duration_ms + GRACE_MS - 1).kind, "on");
   assert.deepEqual(kickoff(schedule, slot + schedule.duration_ms + GRACE_MS), { kind: "next", at: slot + 30 * 60_000 });
   assert.deepEqual(kickoff(schedule, slot - 1), { kind: "next", at: slot });
+});
+
+test("kickoff: a slot that has sent nothing after JOIN_WAIT_MS is missed, so count down to the next", () => {
+  assert.equal(kickoff(schedule, slot + JOIN_WAIT_MS, true).kind, "on");
+  assert.deepEqual(kickoff(schedule, slot + JOIN_WAIT_MS + 1, true), { kind: "next", at: slot + 30 * 60_000 });
+  assert.equal(kickoff(schedule, slot + JOIN_WAIT_MS + 1, false).kind, "on"); // messages arriving: the match is on
 });
 
 test("countdown shows minutes and seconds, hours only when needed", () => {

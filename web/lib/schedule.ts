@@ -33,11 +33,18 @@ export function parseSchedule(json: unknown): Schedule | null {
   };
 }
 
-/** The match on now (epoch ms, from the latest slot), or the next kick-off. */
-export function kickoff(schedule: Schedule, now: number): Kickoff {
+/** How long after a kick-off the page waits for the first message before it takes the slot as
+ *  missed (the job did not run, for example on the deploy that created it) and counts down to the
+ *  next one instead of saying the match is under way. */
+export const JOIN_WAIT_MS = 120_000;
+
+/** The match on now (epoch ms, from the latest slot), or the next kick-off. `empty`: nothing has
+ *  arrived from the feed; a slot that has sent nothing by JOIN_WAIT_MS counts as missed. */
+export function kickoff(schedule: Schedule, now: number, empty = false): Kickoff {
   const period = schedule.every_min * 60_000;
   const last = Math.floor(now / period) * period;
-  if (now < last + schedule.duration_ms + GRACE_MS) return { kind: "on", since: last, until: last + schedule.duration_ms };
+  const missed = empty && now - last > JOIN_WAIT_MS;
+  if (!missed && now < last + schedule.duration_ms + GRACE_MS) return { kind: "on", since: last, until: last + schedule.duration_ms };
   return { kind: "next", at: last + period };
 }
 
