@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Azure walking skeleton: resource group, Event Hubs, Web PubSub, Static Web Apps,
-# Container Apps (decision service and live pipeline runner) and a budget alert.
+# Container Apps (decision service, live pipeline runner and a scheduled replay job) and a budget alert.
 #
 # Dry run by default: prints every az command and runs nothing.
 #   BUDGET_EMAIL=... infra/deploy.sh
@@ -11,7 +11,8 @@
 #            Container Apps narrate through its model deployment)
 # Optional:  REGION (default northeurope; westeurope refused new customers on the free
 #            subscription), SWA_REGION (default eastus2; westeurope refused, northeurope not offered), BUDGET_USD (default 20),
-#            PREFIX (default dugout)
+#            PREFIX (default dugout), LIVE_EVERY_MIN (default 30: the demo match kicks off every
+#            30 minutes from midnight UTC; 0 skips the replay job), LIVE_SPEED (default 5)
 #
 # Idempotent: each create is an upsert or is skipped when the resource exists.
 # Secrets are read into shell variables and passed on, never echoed or written to disk,
@@ -28,6 +29,11 @@
 # the Dockerfile's decision service; $PREFIX-runner runs the live pipeline (Event Hubs in, Web PubSub out)
 # with a command of its own, no ingress and one replica (no checkpoint store, so a second replica would
 # publish everything twice). It replaces the old $PREFIX-stub app, which this script no longer touches.
+# $PREFIX-replay is a scheduled Container Apps job on the same image: two minutes before each kick-off
+# slot it starts dugout/stream/replay.py, which waits for the slot and replays the demo match into
+# Event Hubs for the runner. The page reads the same schedule from schedule.json (step 7).
+# Checked against Microsoft Learn (az containerapp job, 2026-09 CLI reference; jobs concepts page:
+# cron in UTC, five fields), not yet by an apply.
 set -euo pipefail
 # Git Bash on Windows rewrites /app/... arguments into C:/Program Files/Git/app/...; keep them as written.
 export MSYS_NO_PATHCONV=1
@@ -44,7 +50,7 @@ if [[ "${CHECK_HELP:-0}" == 1 ]]; then
   for c in "containerapp up" "containerapp env create" "containerapp secret set" \
            "containerapp update" "containerapp create" "containerapp secret list" "containerapp show" "staticwebapp secrets list" \
            "eventhubs namespace authorization-rule keys list" "webpubsub key show" \
-           "webpubsub hub create" "consumption budget create-with-rg"; do
+           "webpubsub hub create" "consumption budget create-with-rg"            "containerapp job create" "containerapp job update" "containerapp job secret set"; do
     echo "=== az $c -h"; az $c -h
   done
   exit 0
@@ -55,6 +61,18 @@ SWA_REGION="${SWA_REGION:-eastus2}"
 : "${BUDGET_EMAIL:?set BUDGET_EMAIL}"
 BUDGET_USD="${BUDGET_USD:-20}"
 PREFIX="${PREFIX:-dugout}"
+LIVE_EVERY_MIN="${LIVE_EVERY_MIN:-30}"
+LIVE_SPEED="${LIVE_SPEED:-5}"
+# The job starts two minutes before each slot, so slots must be at least 5 minutes apart.
+if (( LIVE_EVERY_MIN != 0 && (LIVE_EVERY_MIN < 5 || 60 % LIVE_EVERY_MIN != 0) )); then
+  echo "LIVE_EVERY_MIN must be 0 or a divisor of 60 from 5 up" >&2; exit 2
+fi
+# A match must end before the next kick-off: about 100 minutes at 1x, 20 at 5x, 5 at 20x.
+case "$LIVE_SPEED" in 1) MIN_EVERY=61 ;; 5) MIN_EVERY=30 ;; 20) MIN_EVERY=10 ;;
+  *) echo "LIVE_SPEED must be 1, 5 or 20" >&2; exit 2 ;; esac
+if (( LIVE_EVERY_MIN != 0 && LIVE_EVERY_MIN < MIN_EVERY )); then
+  echo "at ${LIVE_SPEED}x a match overruns a ${LIVE_EVERY_MIN}-minute slot (slots are at most 60)" >&2; exit 2
+fi
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 # With path conversion off, Windows programs (az, npx) need C:/Users/... rather than /c/Users/...;
@@ -77,6 +95,8 @@ CAE="$PREFIX-env"
 FOUNDRY="$PREFIX-foundry-$SUFFIX"  # created by infra/foundry.sh
 APP="$PREFIX-service"
 RUNNER="$PREFIX-runner"
+REPLAY_JOB="$PREFIX-replay"
+DEMO_EVENTS="data/demo-rfc-cas-0073.jsonl"  # copied into the image by the Dockerfile
 
 run() { echo "+ $*"; [[ $APPLY == 1 ]] && "$@"; return 0; }
 # For commands whose arguments carry secrets: print the label only.
@@ -175,6 +195,26 @@ else
     "EVENTHUB_NAME=$HUB" "WEBPUBSUB_CONNECTION_STRING=secretref:wps-conn" "WEBPUBSUB_HUB=$PUBSUB_HUB"
 fi
 
+echo "# 5c. Scheduled replay: the demo match every $LIVE_EVERY_MIN minutes at ${LIVE_SPEED}x"
+if [[ $LIVE_EVERY_MIN == 0 ]]; then
+  echo "skipped (LIVE_EVERY_MIN=0); an existing $REPLAY_JOB job is left as it is"
+else
+  # Two minutes before each slot (UTC): 28,58 for every 30 minutes. replay.py then waits for the slot,
+  # so the container's start-up time does not move the kick-off.
+  CRON="$(seq $((LIVE_EVERY_MIN - 2)) "$LIVE_EVERY_MIN" 59 | paste -sd, -) * * * *"
+  # No flags in the command (az would read them as its own): REPLAY_* stand in for them.
+  REPLAY_ENV=("REPLAY_EVENTS=/app/$DEMO_EVENTS" "REPLAY_SPEED=$LIVE_SPEED" "REPLAY_EVERY_MIN=$LIVE_EVERY_MIN"
+              "EVENTHUB_CONNECTION_STRING=secretref:eh-conn" "EVENTHUB_NAME=$HUB")
+  # Two minutes early plus about 20 minutes of match at 5x fit in the 30-minute timeout; no retry
+  # (a retry would kick off mid-slot).
+  if [[ $APPLY == 1 ]] && az containerapp job show --name "$REPLAY_JOB" --resource-group "$RG" >/dev/null 2>&1; then
+    run_quiet "refresh replay job secret" az containerapp job secret set --name "$REPLAY_JOB" --resource-group "$RG"       --secrets "eh-conn=$EH_CONN"
+    run az containerapp job update --name "$REPLAY_JOB" --resource-group "$RG" --image "$IMAGE"       --cron-expression "$CRON" --set-env-vars "${REPLAY_ENV[@]}"
+  else
+    run_quiet "create replay job (secret in arguments)"       az containerapp job create --name "$REPLAY_JOB" --resource-group "$RG" --environment "$CAE"       --trigger-type Schedule --cron-expression "$CRON"       --replica-timeout 1800 --replica-retry-limit 0 --parallelism 1 --replica-completion-count 1       --image "$IMAGE" --command python /app/dugout/stream/replay.py --cpu 0.25 --memory 0.5Gi       --registry-server "$REG_SERVER" --registry-identity system       --secrets "eh-conn=$EH_CONN" --env-vars "${REPLAY_ENV[@]}"
+  fi
+fi
+
 echo "# 6. Local .env for the replayer (git-ignored)"
 if [[ $APPLY == 1 ]]; then
   umask 077
@@ -190,6 +230,10 @@ fi
 echo "# 7. Build and upload the web page"
 run bash -c "cd '$ROOT/web' && npm ci && npm run build"
 run bash -c "printf '{ \"stubUrl\": \"https://%s\" }\n' '$SERVICE_FQDN' > '$ROOT/web/out/config.json'"
+# The kick-off times the live page counts down to; without the file it only waits for the feed.
+if [[ $LIVE_EVERY_MIN != 0 ]]; then
+  run bash -c "cd '$ROOT' && uv run python -m dugout.stream.replay '$DEMO_EVENTS' --speed '$LIVE_SPEED'     --every '$LIVE_EVERY_MIN' --write-schedule web/out/schedule.json"
+fi
 SWA_TOKEN="$(capture az staticwebapp secrets list --name "$SWA" --resource-group "$RG" --query properties.apiKey -o tsv)"
 need SWA_TOKEN "$SWA_TOKEN"
 if [[ $APPLY == 1 ]]; then
@@ -223,3 +267,6 @@ echo "page: https://$SWA_HOST"
 echo "service: https://$SERVICE_FQDN/healthz"
 echo "mcp: https://$SERVICE_FQDN/mcp"
 echo "runner: $RUNNER (logs: az containerapp logs show --name $RUNNER --resource-group $RG --follow)"
+if [[ $LIVE_EVERY_MIN != 0 ]]; then
+  echo "replay job: $REPLAY_JOB, cron '$CRON' UTC (runs: az containerapp job execution list --name $REPLAY_JOB --resource-group $RG)"
+fi

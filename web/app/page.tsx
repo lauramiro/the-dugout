@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { FieldView, type PlayerTag } from "../components/broadcast/FieldView";
 import { FocusCard, GoalFlash, ManagerCall, StatsCard, WhatIf } from "../components/broadcast/Graphics";
+import { KickoffSlate, useLiveSchedule } from "../components/broadcast/KickoffSlate";
 import {
   AboutPanel, Chrome, GradedPanel, Slate, TitleCard, useTitleCard, type PanelId,
 } from "../components/broadcast/Landing";
@@ -130,9 +131,12 @@ export default function BroadcastPage() {
   }, [voteId, castVote]);
 
   // Nothing to draw yet: the files are loading, the live feed has sent nothing, or it failed.
+  // Live with a schedule (schedule.json): the kick-off countdown stands in for the waiting slate.
+  const schedule = useLiveSchedule(source);
+  const liveEmpty = live && log.events.length === 0 && log.snapshots.length === 0;
   const slate = feed.status === "error" ? "error"
-    : live && log.events.length === 0 && log.snapshots.length === 0 ? "waiting"
-    : feed.status === "loading" ? "loading" : null;
+    : liveEmpty && !schedule ? "waiting"
+    : feed.status === "loading" && !(live && schedule) ? "loading" : null;
 
   if (cuesJson) return <CueSheetView log={log} focus={prefs.player} source={source.kind} />;
 
@@ -211,6 +215,9 @@ export default function BroadcastPage() {
       />
       <Scorebug roster={log.roster} score={goals} tMs={tMs} live={live} fullTime={fullTime} club={prefs.club} t={t} />
       {slate && <Slate kind={slate} error={feed.error} t={t} />}
+      {live && schedule && feed.status !== "error" && (
+        <KickoffSlate schedule={schedule} empty={liveEmpty} locale={prefs.locale} t={t} />
+      )}
       {!slate && titleShown && <TitleCard replay={!live} onDone={hideTitle} t={t} />}
       <SettingsChip
         prefs={prefs}

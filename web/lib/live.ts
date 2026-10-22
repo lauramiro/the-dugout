@@ -3,7 +3,9 @@
 // decision_id (the service's card carries the payload under `payload`; the old stub sent a
 // bare payload), an event by seq (the pipeline sends key events only), a tracking frame by
 // ball, a snapshot by subs_left. The roster comes from the demo's team sheet; until the
-// pipeline sends period ends, only what arrives is shown.
+// pipeline sends period ends, only what arrives is shown. The demo match replays on a schedule
+// (schedule.json, see ./schedule); a first-half message after the second half has started is
+// the next replay, and starts a fresh log.
 
 import { HALF_MS, lastAtOrBefore, liveHalf, toPos, type LiveHalf } from "./clock";
 import type {
@@ -11,6 +13,7 @@ import type {
   WinProbPoint,
 } from "./contracts";
 import { emptyLog, interpolate, type DataSource, type FeedState, type PitchFrame, type Timed } from "./datasource";
+import { parseSchedule, type Schedule } from "./schedule";
 
 // public/config.json is written at deploy time by infra/deploy.sh: {"stubUrl": "https://..."}
 async function loadStubUrl(): Promise<string> {
@@ -31,6 +34,8 @@ export class LiveDataSource implements DataSource {
   private connecting: Promise<void> | null = null;
   private generation = 0;
   private half: LiveHalf = { firstHalfEnd: HALF_MS, secondHalf: false };
+  /** Kick-off times, from schedule.json; null when the deployment has no scheduled replay. */
+  schedule: Schedule | null = null;
 
   getState = (): FeedState => this.state;
 
@@ -65,6 +70,7 @@ export class LiveDataSource implements DataSource {
     const generation = ++this.generation;
     try {
       void this.loadRoster(generation);
+      void this.loadSchedule(generation);
       const base = await loadStubUrl();
       const res = await fetch(`${base}/negotiate`);
       const { url } = (await res.json()) as { url: string | null };
@@ -100,7 +106,26 @@ export class LiveDataSource implements DataSource {
     }
   }
 
+  private async loadSchedule(generation: number): Promise<void> {
+    try {
+      const res = await fetch("/schedule.json");
+      if (!res.ok) return;
+      const schedule = parseSchedule(await res.json());
+      if (this.disposed || generation !== this.generation) return;
+      this.schedule = schedule;
+      for (const l of this.listeners) l();
+    } catch {
+      // no schedule: the page waits for the feed without a kick-off time
+    }
+  }
+
   private receive(msg: Record<string, unknown>): void {
+    if (msg.period === 1 && this.half.secondHalf) {
+      // the next replay kicked off: keep the team sheet, drop the finished match
+      this.half = { firstHalfEnd: HALF_MS, secondHalf: false };
+      this.frames = [];
+      this.set({ log: { ...emptyLog(), roster: this.state.log.roster }, playhead: 0 });
+    }
     const log = this.state.log;
     const add = <T>(list: Timed<T>[], item: T, pos: number) => [...list, { pos, item }].sort((a, b) => a.pos - b.pos);
     // Each message's period (its own, or inferred) moves the learned end of the first half,

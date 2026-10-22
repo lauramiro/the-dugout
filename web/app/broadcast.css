@@ -957,3 +957,43 @@ button.bc-option.bc-voted { color: var(--bc-ink); border-color: var(--bc-accent)
   .bc-focus,
   .bc-stats { display: none; }
 }
+
+/* Live: next kick-off of the scheduled demo replay (components/broadcast/KickoffSlate.tsx). */
+.bc-kickoff {
+  position: absolute;
+  left: 50%;
+  top: 46%;
+  translate: -50% -50%;
+  width: min(44cqw, 92%);
+  padding: 2.6cqh 2cqw;
+  font-size: 1.3cqw;
+  text-align: center;
+  background: var(--bc-glass-strong);
+  border: 1px solid var(--bc-line);
+  border-top: 0.5cqh solid var(--bc-accent);
+  border-radius: 0.5cqw;
+  box-shadow: 0 1cqw 3cqw rgba(0, 0, 0, 0.5);
+}
+.bc-kickoff p { margin: 0; }
+.bc-kickoff-label {
+  font-family: var(--font-display), sans-serif;
+  font-weight: 800;
+  font-size: 1.4em;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.bc-kickoff-time {
+  margin-top: 0.6cqh !important;
+  font-family: var(--font-led), monospace;
+  font-weight: 900;
+  font-size: 4.4em;
+  line-height: 1;
+  color: var(--bc-accent);
+  font-variant-numeric: tabular-nums;
+}
+.bc-kickoff-in { margin-top: 0.6cqh !important; font-size: 1.3em; font-weight: 700; font-variant-numeric: tabular-nums; }
+.bc-kickoff-note { margin-top: 1.6cqh !important; color: var(--bc-muted); }
+.bc-kickoff-replay { display: inline-block; margin-top: 1.2cqh; color: var(--bc-ink); font-weight: 700; }
+@media (max-width: 700px) {
+  .bc-kickoff { font-size: 2.7cqw; width: 84cqw; padding: 2cqh 2cqw; }
+}
