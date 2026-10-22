@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from decimal import Decimal
 
-from dugout.agents.grounding import Narration, PLAYER_ID, round_half_up
+from dugout.agents.grounding import Narration, PLAYER_ID, recommended_option, round_half_up
 from dugout.agents.lexicon import DECIMAL_SEPARATOR, LOCALES, STRENGTH_LABELS
 
 MODES = ("casual", "analyst")
@@ -27,16 +27,6 @@ def _find_condition(payload: dict) -> dict | None:
     return next((e for e in payload.get("evidence", []) if e["type"] == "condition"), None)
 
 
-def _recommended_and_alternative(payload: dict) -> dict:
-    """The option the strength label is about, or the best alternative to no change."""
-    by_id = {o["id"]: o for o in payload["options"]}
-    recommended = by_id[payload["recommendation"]["option_id"]]
-    if recommended["id"] != "no_change":
-        return recommended
-    alternatives = [o for o in payload["options"] if o["id"] != "no_change"]
-    return max(alternatives, key=lambda o: o["delta_win"]) if alternatives else recommended
-
-
 def _player(payload: dict, option: dict) -> str | None:
     condition = _find_condition(payload)
     if condition and condition.get("player_id"):
@@ -49,7 +39,7 @@ def format_payload(payload: dict, locale: str) -> dict[str, str]:
     """Preformat the payload numbers for a locale, so no model has to round or localize."""
     if locale not in LOCALES:
         raise ValueError(f"unknown locale: {locale}")
-    option = _recommended_and_alternative(payload)
+    option = recommended_option(payload)
     delta = _pct(option["delta_win"])
     out = {
         "minute": str(payload["t_ms"] // 60000),
@@ -116,7 +106,7 @@ def template_narration(payload: dict, locale: str, mode: str) -> Narration:
     values = format_payload(payload, locale)
     text = _TEXT[locale]
     strength = payload["recommendation"]["strength"]
-    option = _recommended_and_alternative(payload)
+    option = recommended_option(payload)
 
     if "player" not in values:
         headline = text["headline_none"]

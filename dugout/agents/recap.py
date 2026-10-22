@@ -179,8 +179,8 @@ def _parse(reply: str) -> str | list[str]:
     return line.strip()
 
 
-def _errors(line: str, row: RecapRow, locale: str) -> list[str]:
-    errors = check_narration(Narration(headline="", reason=line), recap_payload(row), locale)
+def _errors(line: str, row: RecapRow, locale: str, mode: str) -> list[str]:
+    errors = check_narration(Narration(headline="", reason=line), recap_payload(row), locale, mode)
     errors += [f"'{m.group(0)}' is not allowed in a recap line" for m in _FORBIDDEN[locale].finditer(line)]
     return errors
 
@@ -210,7 +210,7 @@ def _write_line(row: RecapRow, locale: str, mode: str, client: ModelClient,
         except ModelError:
             return template("error")
         parsed = _parse(reply)
-        errors = parsed if isinstance(parsed, list) else _errors(parsed, row, locale)
+        errors = parsed if isinstance(parsed, list) else _errors(parsed, row, locale, mode)
         if not errors:
             return RecapLine(row.decision_id, row.minute, row.team, parsed, "model")
         request["previous"] = reply

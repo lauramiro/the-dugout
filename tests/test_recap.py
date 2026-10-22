@@ -109,7 +109,7 @@ def test_unknown_locale_and_mode_are_refused():
 @pytest.mark.parametrize("mode", MODES)
 def test_every_template_passes_the_grounding_check(row, mode):
     text = template_line(row, "en", mode)
-    assert check_narration(Narration("", text), recap_payload(row), "en") == []
+    assert check_narration(Narration("", text), recap_payload(row), "en", mode=mode) == []
     assert "would have" not in text and "wrong" not in text
 
 
@@ -155,7 +155,7 @@ ES_ROWS = [
 @pytest.mark.parametrize("mode", MODES)
 def test_every_spanish_template_passes_the_grounding_check(row, mode):
     text = template_line(row, "es", mode)
-    assert check_narration(Narration("", text), recap_payload(row), "es") == []
+    assert check_narration(Narration("", text), recap_payload(row), "es", mode=mode) == []
     assert "modelo" in text and "change" not in text.lower()
 
 

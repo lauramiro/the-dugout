@@ -130,7 +130,7 @@ class NarrationPipeline:
             except ModelError as exc:
                 raise _Unavailable("error") from exc
             parsed = parse_reply(reply)
-            errors = [parsed] if isinstance(parsed, str) else check_narration(parsed, payload, locale)
+            errors = [parsed] if isinstance(parsed, str) else check_narration(parsed, payload, locale, mode)
             if not errors:
                 return parsed
             request["previous"] = reply

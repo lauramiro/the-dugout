@@ -141,3 +141,55 @@ def test_player_named_as_coming_on_is_reported(locale, text):
 ])
 def test_player_coming_off_is_fine(locale, text):
     assert check_grounding(text, SAMPLE_PAYLOAD, locale) == []
+
+
+# Slips the Foundry model made that the prompts already forbid (live replay, 2026-10-22).
+
+def test_english_left_in_spanish_is_reported():
+    line = "El modelo valora cambiar ahora about 4 puntos mejor (fuerte)."
+    errors = check_grounding(line, SAMPLE_PAYLOAD, "es")
+    assert any("'about'" in e for e in errors)
+    assert check_grounding(line.replace("about", "cerca de"), SAMPLE_PAYLOAD, "es") == []
+
+
+@pytest.mark.parametrize("line", [
+    "Make an like-for-like change: about 4 points better (strong).",
+    "A attacking change rates about 4 points better (strong).",
+])
+def test_wrong_english_article_is_reported(line):
+    assert any("article" in e for e in check_grounding(line, SAMPLE_PAYLOAD, "en"))
+
+
+@pytest.mark.parametrize("line", [
+    "Make a like-for-like change: about 4 points better (strong).",
+    "An attacking change rates about 4 points better (strong).",
+    "A one-off change rates about 4 points better (strong).",
+])
+def test_right_english_article_passes(line):
+    assert check_grounding(line, SAMPLE_PAYLOAD, "en") == []
+
+
+@pytest.mark.parametrize("locale, line", [
+    ("en", "The options are close: about 4 points better (strong)."),
+    ("en", "Neck and neck, about 4 points better (strong)."),
+    ("es", "Opciones cercanas: cerca de 4 puntos mejor (fuerte)."),
+    ("es", "Opciones muy parejas: cerca de 4 puntos mejor (fuerte)."),
+])
+def test_strong_card_called_close_is_reported(locale, line):
+    assert any("close" in e for e in check_grounding(line, SAMPLE_PAYLOAD, locale))
+
+
+def test_close_is_allowed_when_the_gap_rounds_to_zero_points():
+    payload = payload_with(delta_win=0.004)
+    assert check_grounding("The options are close: the model sees almost no difference (strong).", payload, "en") == []
+    assert check_grounding("Las opciones están muy parejas (fuerte).", payload, "es") == []
+
+
+@pytest.mark.parametrize("reason", [
+    "About 4 points better, 90% interval +2.1 to +5.7 (strong).",
+    "Changing now: +3.9 points (strong).",
+])
+def test_casual_text_quotes_no_interval_or_decimals(reason):
+    narration = Narration("RFC-03 is fading (60%).", reason)
+    assert check_narration(narration, SAMPLE_PAYLOAD, "en", mode="casual")
+    assert check_narration(narration, SAMPLE_PAYLOAD, "en", mode="analyst") == []

@@ -3,7 +3,7 @@
 Payloads come from the recorded demo match: the state engine finds the decision points, the
 decision engine values the options, and any shortfall up to --count is filled with snapshots
 spaced across the match (trigger "eval_sample"), alternating teams. Each payload is narrated
-in English in both modes through the Agent Framework workflow, and every model reply is graded
+in English (or --locale es) in both modes through the Agent Framework workflow, and every model reply is graded
 again by the grounding check, so the pass rate does not depend on the workflow's own bookkeeping.
 
     uv run python eval/narration.py --client stub          # offline, free
@@ -45,7 +45,7 @@ RESULTS = ROOT / "eval" / "results" / "narration.md"
 SAMPLE_TRIGGER = "eval_sample"
 SAMPLE_FROM_MS = 25 * 60_000  # condition estimates exist after the 20-minute baseline
 SAMPLE_TO_MS = 88 * 60_000
-LOCALE = "en"
+LANGUAGE = {"en": "English", "es": "Spanish"}
 MODES = ("casual", "analyst")
 
 
@@ -117,7 +117,7 @@ def grade(calls: list[RecordedCall]) -> list[GradedCall]:
             continue
         parsed = parse_reply(call.reply)
         errors = [parsed] if isinstance(parsed, str) else check_narration(
-            parsed, call.request["payload"], call.request["target"]["locale"])
+            parsed, call.request["payload"], call.request["target"]["locale"], call.request["target"]["mode"])
         graded.append(GradedCall(stage, retry, "ok", call.latency_s, not errors, errors))
     return graded
 
@@ -153,6 +153,16 @@ def classify(error: str) -> str:
         return "not valid JSON"
     if error.startswith("internal name"):
         return "internal name"
+    if error.startswith("wrong article"):
+        return "wrong article"
+    if "calls the options close" in error:
+        return "close on a strong or lean card"
+    if error.startswith("casual text"):
+        return "interval or decimals in casual"
+    if "write the whole text in" in error:
+        return "wrong language"
+    if "would come off" in error:
+        return "tiring player brought on"
     return "other"
 
 
@@ -212,7 +222,7 @@ Run {date.today().isoformat()} with {label}.
 
 {payload_note}
 
-Each payload is narrated in English in both modes (casual, analyst) through the Agent Framework workflow:
+Each payload is narrated in {s.get('language', 'English')} in both modes (casual, analyst) through the Agent Framework workflow:
 {s['cards']} cards, {s['calls']} model calls. Every reply is graded again by `dugout/agents/grounding.py`, unchanged.
 
 | Measure | Result |
@@ -240,6 +250,7 @@ def main(argv: list[str] | None = None) -> None:
     ap.add_argument("--client", choices=("stub", "foundry"), default="foundry")
     ap.add_argument("--count", type=int, default=50, help="decision payloads")
     ap.add_argument("--timeout", type=float, default=3.0, help="seconds per model call")
+    ap.add_argument("--locale", choices=tuple(LANGUAGE), default="en")
     ap.add_argument("--out", type=Path, default=RESULTS)
     args = ap.parse_args(argv)
 
@@ -261,11 +272,12 @@ def main(argv: list[str] | None = None) -> None:
     cards = []
     for i, payload in enumerate(payloads, 1):
         for mode in MODES:
-            cards.append(timed(workflow, payload, LOCALE, mode))
+            cards.append(timed(workflow, payload, args.locale, mode))
         print(f"{i}/{len(payloads)} {payload['decision_id']}", flush=True)
 
     summary = summarize(cards, grade(recorder.calls))
     summary["timeout_note"] = f"{args.timeout:g} s"
+    summary["language"] = LANGUAGE[args.locale]
     report = render(summary, label=label, payload_note=note)
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(report, encoding="utf-8")

@@ -12,7 +12,9 @@ import re
 from dataclasses import dataclass
 from decimal import ROUND_HALF_UP, Decimal
 
-from dugout.agents.lexicon import COMING_ON, DECIMAL_SEPARATOR, LOCALES, STRENGTH_LABELS
+from dugout.agents.lexicon import (
+    CLOSE_PHRASES, COMING_ON, DECIMAL_SEPARATOR, FOREIGN_WORDS, LOCALES, STRENGTH_LABELS, WRONG_ARTICLE,
+)
 
 MAX_HEADLINE_WORDS = 12
 MAX_REASON_WORDS = 25
@@ -27,6 +29,11 @@ _COMING_ON = {
 # Option ids and request keys (sub_like_for_like, delta_whole, numbers.delta) are not words for a viewer.
 _INTERNAL_NAME = re.compile(r"\bnumbers\.\w+|\b[A-Za-z]+(?:_[A-Za-z0-9]+)+\b")
 _NUMBER = re.compile(r"(?<!\w)([+\-−])?(\d+)(?:([.,])(\d+))?")
+_FOREIGN = {locale: tuple(re.compile(rf"\b{w}\b", re.IGNORECASE) for w in words)
+            for locale, words in FOREIGN_WORDS.items()}
+_CLOSE = {locale: tuple(re.compile(p, re.IGNORECASE) for p in patterns) for locale, patterns in CLOSE_PHRASES.items()}
+_ARTICLE = {locale: tuple(re.compile(p) for p in patterns) for locale, patterns in WRONG_ARTICLE.items()}
+_INTERVAL_WORD = {"en": re.compile(r"\binterval\b", re.IGNORECASE), "es": re.compile(r"\bintervalo\b", re.IGNORECASE)}
 
 
 @dataclass(frozen=True, slots=True)
@@ -49,6 +56,16 @@ def _dec(value: float | int) -> Decimal:
 
 def _pct(value: float) -> Decimal:
     return _dec(value) * 100
+
+
+def recommended_option(payload: dict) -> dict:
+    """The option the strength label is about, or the best alternative to no change."""
+    by_id = {o["id"]: o for o in payload["options"]}
+    recommended = by_id[payload["recommendation"]["option_id"]]
+    if recommended["id"] != "no_change":
+        return recommended
+    alternatives = [o for o in payload["options"] if o["id"] != "no_change"]
+    return max(alternatives, key=lambda o: o["delta_win"]) if alternatives else recommended
 
 
 def payload_numbers(payload: dict) -> list[Decimal]:
@@ -131,7 +148,19 @@ def check_grounding(text: str, payload: dict, locale: str) -> list[str]:
         if not _matches(candidates, sign or "", magnitude, digits):
             errors.append(f"number {quoted} does not match any payload field")
 
+    for pattern in _FOREIGN[locale]:
+        if (match := pattern.search(text)):
+            errors.append(f"'{match.group(0)}' is not {locale}; write the whole text in {locale}")
+    for pattern in _ARTICLE[locale]:
+        for match in pattern.finditer(text):
+            errors.append(f"wrong article '{match.group(0).strip()}' before '{text[match.end():].split()[0]}'")
+
     strength = payload["recommendation"]["strength"]
+    whole_points = round_half_up(abs(_pct(recommended_option(payload)["delta_win"])), 0)
+    if strength != "toss_up" and whole_points != 0:
+        for pattern in _CLOSE[locale]:
+            if (match := pattern.search(text)):
+                errors.append(f"'{match.group(0)}' calls the options close, but the card is not a toss-up")
     labels = STRENGTH_LABELS[locale]
     if not _word_boundary(labels[strength]).search(text):
         errors.append(f"strength label '{labels[strength]}' is missing")
@@ -143,8 +172,15 @@ def check_grounding(text: str, payload: dict, locale: str) -> list[str]:
     return errors
 
 
-def check_narration(narration: Narration, payload: dict, locale: str) -> list[str]:
+def check_narration(narration: Narration, payload: dict, locale: str, mode: str | None = None) -> list[str]:
+    """check_grounding plus the word limits; with mode="casual", no interval and whole numbers only."""
     errors = check_grounding(narration.text, payload, locale)
+    if mode == "casual":
+        if _INTERVAL_WORD[locale].search(narration.text):
+            errors.append("casual text does not quote the interval")
+        for match in _NUMBER.finditer(PLAYER_ID.sub(" ", narration.text)):
+            if match.group(4):
+                errors.append(f"casual text uses whole numbers; {match.group(0)} has decimals")
     if len(narration.headline.split()) > MAX_HEADLINE_WORDS:
         errors.append(f"headline is longer than {MAX_HEADLINE_WORDS} words")
     if len(narration.reason.split()) > MAX_REASON_WORDS:

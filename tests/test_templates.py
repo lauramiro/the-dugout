@@ -25,7 +25,7 @@ def no_change_payload():
 @pytest.mark.parametrize("locale", LOCALES)
 def test_template_output_passes_grounding(locale, mode, payload):
     narration = template_narration(payload, locale, mode)
-    assert check_narration(narration, payload, locale) == []
+    assert check_narration(narration, payload, locale, mode=mode) == []
 
 
 def test_english_analyst_matches_the_plan_template():

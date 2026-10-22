@@ -108,7 +108,7 @@ class GroundingStep(Executor):
         parsed = parse_reply(reply.text)
         errors = (
             [parsed] if isinstance(parsed, str)
-            else check_narration(parsed, turn.payload, turn.stage_target[0])
+            else check_narration(parsed, turn.payload, *turn.stage_target)
         )
         if not errors:
             if turn.stage == NARRATOR:
