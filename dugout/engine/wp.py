@@ -65,12 +65,14 @@ def _poisson_icdf(u: np.ndarray, lam: np.ndarray) -> np.ndarray:
 
 def simulate_diff(t0: int, home_goals: int, away_goals: int,
                   lam_home90: float, lam_away90: float, seed: SeedSequence, *,
-                  n: int = 20_000, flank: Flank | None = None,
+                  n: int = 20_000, flank: Flank | None = None, opp_flank: Flank | None = None,
                   sub_at: int | None = None, sub_quality: float = BENCH_QUALITY,
                   home_mult: float = 1.0, away_mult: float = 1.0) -> np.ndarray:
     """Final goal difference (home minus away) for n runs from minute t0.
 
     flank: exposed home defender; while unsubbed his fatigue lifts the away rate.
+    opp_flank: exposed away defender; his fatigue lifts the home rate the same way, so
+    swapping home and away (and the two flanks) mirrors the result.
     sub_at: minute of a like-for-like sub, which removes the penalty (bench player
     slightly weaker, sub_quality). home_mult / away_mult scale each team's rate
     (tactical changes).
@@ -81,6 +83,7 @@ def simulate_diff(t0: int, home_goals: int, away_goals: int,
     base_h = lam_home90 / 90.0 * home_mult
     base_a = lam_away90 / 90.0 * away_mult
     c = flank.c0 if flank is not None else None
+    c_opp = opp_flank.c0 if opp_flank is not None else None
     for minute in range(t0, 90 + ADDED):
         lead = h - a
         lh = np.where(lead > 0, base_h * LEAD_DAMP, np.where(lead < 0, base_h * TRAIL_PUSH, base_h))
@@ -91,6 +94,9 @@ def simulate_diff(t0: int, home_goals: int, away_goals: int,
             else:
                 la = la * (1 + FATIGUE_SLOPE * max(0.0, FATIGUE_FLOOR - c))
             c = max(CONDITION_MIN, c - flank.drain)
+        if c_opp is not None:
+            lh = lh * (1 + FATIGUE_SLOPE * max(0.0, FATIGUE_FLOOR - c_opp))
+            c_opp = max(CONDITION_MIN, c_opp - opp_flank.drain)
         # both uniforms are drawn every minute so the stream never depends on the option
         u_h = rng.random(n)
         u_a = rng.random(n)

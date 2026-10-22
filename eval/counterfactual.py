@@ -73,7 +73,7 @@ ILLUSTRATIVE = {"slope": 0.6, "floor": 0.8, "bench": 1.03}  # wp.py before calib
 
 COLUMNS = ("seed", "set", "point_id", "source", "team", "trigger", "period", "t_ms", "minute",
            "goals_for", "goals_against", "for90", "against90", "off", "off_role", "on",
-           "condition_est", "trend_per_min", "hidden_condition",
+           "condition_est", "trend_per_min", "opp_condition_est", "opp_trend_per_min", "hidden_condition",
            "engine_gap", "engine_lo", "engine_hi", "true_gap", "true_se", "true_win_base",
            "true_win_sub", "true_dxpts", "forks", "skip")
 
@@ -97,9 +97,13 @@ def constants(slope: float, floor: float) -> Iterator[None]:
 
 def situation(row: dict) -> dict:
     """decide()'s simulate_diff inputs, rebuilt from a pairs row."""
+    opp_flank = None
+    if row.get("opp_condition_est", "") != "":
+        opp_flank = Flank(c0=float(row["opp_condition_est"]), drain=max(0.0, -float(row["opp_trend_per_min"])))
     return dict(t0=int(row["minute"]), home_goals=int(row["goals_for"]), away_goals=int(row["goals_against"]),
                 lam_home90=float(row["for90"]), lam_away90=float(row["against90"]),
-                flank=Flank(c0=float(row["condition_est"]), drain=max(0.0, -float(row["trend_per_min"]))))
+                flank=Flank(c0=float(row["condition_est"]), drain=max(0.0, -float(row["trend_per_min"]))),
+                opp_flank=opp_flank)
 
 
 def engine_gap(row: dict, slope: float, floor: float, bench: float, n: int = ENGINE_N
@@ -180,6 +184,10 @@ def _base_row(seed: int, point_id: str, source: str, team: str, trigger: str, sn
     if player is not None:
         row.update(off=player["id"], condition_est=player["condition_est"],
                    trend_per_min=player.get("trend_per_min", 0.0))
+    opp_player = _exposed_player(snapshot, opp)
+    if opp_player is not None:
+        row.update(opp_condition_est=opp_player["condition_est"],
+                   opp_trend_per_min=opp_player.get("trend_per_min", 0.0))
     return row
 
 

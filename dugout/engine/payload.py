@@ -19,6 +19,21 @@ def _exposed_player(snapshot: dict, team: str) -> dict | None:
     return min(tired, key=lambda p: p["condition_est"], default=None)
 
 
+def _flank(player: dict | None) -> Flank | None:
+    if player is None:
+        return None
+    return Flank(c0=player["condition_est"], drain=max(0.0, -player.get("trend_per_min", 0.0)))
+
+
+def situation(snapshot: dict, team: str) -> dict:
+    """simulate_diff inputs from `team`'s side: its goals and rates as home, its exposed player
+    as the flank and the opponent's as opp_flank, so both teams' views mirror each other."""
+    opp = next(t for t in snapshot["score"] if t != team)
+    return dict(t0=snapshot["t_ms"] // 60_000, home_goals=snapshot["score"][team], away_goals=snapshot["score"][opp],
+                lam_home90=snapshot["rates"][team]["for90"], lam_away90=snapshot["rates"][team]["against90"],
+                flank=_flank(_exposed_player(snapshot, team)), opp_flank=_flank(_exposed_player(snapshot, opp)))
+
+
 def _flank_channel(snapshot: dict, team: str) -> tuple[str, float] | None:
     threat = snapshot.get("threat_by_channel", {})
     flanks = [(c, threat[c]) for c in (f"{team}_left", f"{team}_right") if c in threat]
@@ -52,24 +67,18 @@ def decide(snapshot: dict, team: str, trigger: str, seed: SeedSequence | None = 
            n: int = 20_000, decision_id: str | None = None) -> dict:
     """`decision_id` is the decision point's own id when there is one; without it the id is
     derived from the team and the snapshot clock."""
-    opp = next(t for t in snapshot["score"] if t != team)
     minute = snapshot["t_ms"] // 60_000
     player = _exposed_player(snapshot, team)
-    flank = None
-    if player is not None:
-        flank = Flank(c0=player["condition_est"], drain=max(0.0, -player.get("trend_per_min", 0.0)))
-    situation = dict(t0=minute, home_goals=snapshot["score"][team], away_goals=snapshot["score"][opp],
-                     lam_home90=snapshot["rates"][team]["for90"],
-                     lam_away90=snapshot["rates"][team]["against90"], flank=flank)
+    at = situation(snapshot, team)
 
     options = default_options(minute)
-    if flank is None or snapshot["subs_left"].get(team, 0) <= 0:
+    if at["flank"] is None or snapshot["subs_left"].get(team, 0) <= 0:
         options = [o for o in options if o.id != "sub_like_for_like"]
     elif player is not None:
         options = [o if o.id != "sub_like_for_like"
                    else type(o)(o.id, f"Like-for-like substitution for {player['id']}", sub_at=minute)
                    for o in options]
-    results = evaluate(situation, options, seed if seed is not None else SeedSequence(snapshot["t_ms"]), n=n)
+    results = evaluate(at, options, seed if seed is not None else SeedSequence(snapshot["t_ms"]), n=n)
 
     evidence = []
     if player is not None:

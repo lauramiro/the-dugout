@@ -5,6 +5,7 @@ from pathlib import Path
 
 import pytest
 
+from dugout.engine.payload import decide
 from dugout.stream.replay import read_events
 from dugout.stream.snapshots import lineup_from_scenario, process
 from dugout.stream.winprob import winprob_point
@@ -39,3 +40,13 @@ def test_point_is_fast(snapshots):
     start = time.perf_counter()
     winprob_point(s, "RFC", n=4000)
     assert time.perf_counter() - start < 0.25
+
+
+@pytest.mark.parametrize("t_ms", [3_000_000, 4_140_000, 4_920_000, 5_280_000])
+def test_away_card_baseline_matches_the_home_series(snapshots, t_ms):
+    """The away team's no-change card and the home series read the same match: away loss is home win."""
+    s = next(s for s in snapshots if s["period"] == 2 and s["t_ms"] == t_ms)
+    home = winprob_point(s, "RFC", n=20_000)
+    no_change = decide(s, "CAS", "test")["options"][0]
+    assert no_change["loss"] == pytest.approx(home["win"], abs=0.02)
+    assert no_change["win"] == pytest.approx(home["loss"], abs=0.02)
