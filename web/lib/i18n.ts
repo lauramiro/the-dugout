@@ -141,7 +141,18 @@ const en = {
   comesOn: "Comes on",
   whatIf: "What if",
   exportCues: "Export cue sheet",
-  tagStats: "{hsr} m fast running · {sprints} sprints, last 10 min",
+  tagStats: "Last 10 min: {hsr} m fast running · sprints: {sprints}",
+  sprintTag: "{d} m sprint",
+  speedKmh: "{v} km/h",
+  statsAt: "Stats at {m}'",
+  statsHalfTime: "Half-time stats",
+  statPasses: "Passes",
+  statAvgLength: "Average pass",
+  statLongest: "Longest pass",
+  statForward: "Played forward",
+  statSprints: "Sprints",
+  statLongestSprint: "Longest sprint",
+  statFast: "Fast running",
 } as const;
 
 export type StringKey = keyof typeof en;
@@ -285,7 +296,18 @@ const es: Dict = {
   comesOn: "Entra al campo",
   whatIf: "¿Y si...?",
   exportCues: "Exportar guion de grafismos",
-  tagStats: "{hsr} m a alta velocidad · {sprints} sprints, últimos 10 min",
+  tagStats: "Últimos 10 min: {hsr} m a alta velocidad · sprints: {sprints}",
+  sprintTag: "sprint de {d} m",
+  speedKmh: "{v} km/h",
+  statsAt: "Datos al {m}'",
+  statsHalfTime: "Datos al descanso",
+  statPasses: "Pases",
+  statAvgLength: "Pase medio",
+  statLongest: "Pase más largo",
+  statForward: "Hacia delante",
+  statSprints: "Sprints",
+  statLongestSprint: "Sprint más largo",
+  statFast: "Carrera a alta velocidad",
 };
 
 

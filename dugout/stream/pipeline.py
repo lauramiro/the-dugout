@@ -56,9 +56,10 @@ def _request(point: dict, locale: str, mode: str) -> dict:
 
 PUBLISH_EVERY_MS = 30_000
 MIN_MS = 60_000
-# Match events the broadcast graphics use (scorebug, goal flash, manager's call, focus cards);
-# passes, runs and duels stay off the feed.
-KEY_EVENT_TYPES = ("goal", "sub", "shot", "foul", "card")
+# Match events the broadcast graphics use: scorebug, goal flash, manager's call and focus cards,
+# plus passes and runs for the pass and running stats and sprint tags. Duels, restarts and
+# outs stay off the feed. Events go out without their empty fields.
+KEY_EVENT_TYPES = ("goal", "sub", "shot", "foul", "card", "pass", "sprint", "hsr")
 # match_id stays: a page opened mid-match matches recorded tracking by it.
 _UNREAD_SNAPSHOT_KEYS = ("threat_by_channel",)
 _UNREAD_PLAYER_KEYS = ("team", "role")
@@ -155,7 +156,7 @@ class PipelineRunner:
         for e in events:
             self._handle(self._engine.feed(e))
             if e.get("type") in KEY_EVENT_TYPES:
-                self._publish(e)
+                self._publish({k: v for k, v in e.items() if v is not None})
 
     def end_run(self) -> None:
         """End of the stream: last snapshots, close the open card, and start clean for the next run."""

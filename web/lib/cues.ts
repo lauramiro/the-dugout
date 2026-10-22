@@ -8,7 +8,7 @@ import { toPos } from "./clock.ts";
 import type { DecisionCard, MatchEvent, TeamCode } from "./contracts";
 import type { MatchLog, Timed } from "./datasource";
 
-export type CueKind = "decision" | "fading" | "manager_call" | "goal" | "focus_event" | "whatif";
+export type CueKind = "decision" | "fading" | "manager_call" | "goal" | "focus_event" | "whatif" | "sprint" | "stats";
 
 export interface Cue {
   id: string;
@@ -24,6 +24,12 @@ export const MANAGER_CALL_MS = 25_000;
 export const GOAL_MS = 20_000;
 export const FOCUS_EVENT_MS = 15_000;
 export const WHATIF_MS = 120_000;
+export const SPRINT_MS = 6_000;
+export const STATS_MS = 12_000;
+/** A sprint this long (about the longest tenth) gets a tag; the focus player's always do. */
+export const SPRINT_TAG_M = 30;
+/** Stat graphics: these minutes of each half, plus half-time. */
+const STATS_AT: readonly [1 | 2, number][] = [[1, 15], [1, 30], [2, 60], [2, 75], [2, 90]];
 
 const MIN_MS = 60_000;
 const LIVE_SUB_WINDOW_MS = 10_000;
@@ -38,6 +44,8 @@ export function buildCues(log: MatchLog, focus: string | null): Cue[] {
   }
   cues.push(...goalCues(log, at));
   if (focus) cues.push(...focusCues(log.events, focus));
+  cues.push(...sprintCues(log.events, focus));
+  cues.push(...statsCues(log, focus, at));
   const whatif = whatIfCue(log);
   if (whatif) cues.push(whatif);
 
@@ -169,6 +177,93 @@ function focusCues(events: readonly Timed<MatchEvent>[], focus: string): Cue[] {
       id: `focus_event:${e.item.seq}`, kind: "focus_event" as const, in_pos: e.pos, out_pos: e.pos + FOCUS_EVENT_MS,
       data: { type: e.item.type, player_id: e.item.player_id, player_in_id: e.item.player_in_id ?? null },
     }));
+}
+
+function sprintCues(events: readonly Timed<MatchEvent>[], focus: string | null): Cue[] {
+  return events
+    .filter((e) => e.item.type === "sprint" && ((e.item.dist_m ?? 0) >= SPRINT_TAG_M || e.item.player_id === focus))
+    .map((e) => ({
+      id: `sprint:${e.item.seq}`, kind: "sprint" as const, in_pos: e.pos, out_pos: e.pos + SPRINT_MS,
+      data: { player_id: e.item.player_id, team: e.item.team, dist_m: e.item.dist_m ?? null },
+    }));
+}
+
+export interface PassStats {
+  passes: number;
+  /** Mean length in metres, one decimal; 0 with no passes. */
+  avg_m: number;
+  longest_m: number;
+  /** Passes that end nearer the opponents' goal than they started. */
+  forward: number;
+}
+
+const round1 = (v: number) => Math.round(v * 10) / 10;
+
+/** Passes up to `upto` that `keep` selects, measured from their start and end points.
+ *  Every simulated pass is complete, so there is no accuracy to report. */
+export function passStats(log: MatchLog, upto: number, keep: (e: MatchEvent) => boolean): PassStats {
+  const home = log.roster?.home;
+  let passes = 0;
+  let total = 0;
+  let longest = 0;
+  let forward = 0;
+  for (const { pos, item } of log.events) {
+    if (pos > upto) break;
+    if (item.type !== "pass" || item.x == null || item.end_x == null || !keep(item)) continue;
+    const length = Math.hypot(item.end_x - item.x, (item.end_y ?? 0) - (item.y ?? 0));
+    passes += 1;
+    total += length;
+    longest = Math.max(longest, length);
+    // The home side attacks towards x = 105 in the first half (contract: docs/data-contracts.md).
+    const towards105 = (item.team === home) === (item.period === 1);
+    if ((item.end_x - item.x) * (towards105 ? 1 : -1) > 0) forward += 1;
+  }
+  return { passes, avg_m: passes ? round1(total / passes) : 0, longest_m: round1(longest), forward };
+}
+
+/** Sprints and high-speed running up to `upto`, from the running events' own distances. */
+function running(log: MatchLog, upto: number, keep: (e: MatchEvent) => boolean) {
+  let sprints = 0;
+  let longest = 0;
+  let fast = 0;
+  for (const { pos, item } of log.events) {
+    if (pos > upto) break;
+    if ((item.type !== "sprint" && item.type !== "hsr") || !keep(item)) continue;
+    const d = item.dist_m ?? 0;
+    fast += d;
+    if (item.type === "sprint") {
+      sprints += 1;
+      longest = Math.max(longest, d);
+    }
+  }
+  return { sprints, longest_sprint_m: round1(longest), fast_m: Math.round(fast) };
+}
+
+function statsCues(log: MatchLog, focus: string | null, at: (period: 1 | 2, tMs: number) => number): Cue[] {
+  const moments: { id: string; pos: number }[] = [
+    ...STATS_AT.filter(([p]) => p === 1).map(([p, m]) => ({ id: `stats:${p}-${m}`, pos: at(p, m * MIN_MS) })),
+    { id: "stats:ht", pos: log.firstHalfEnd },
+    ...STATS_AT.filter(([p]) => p === 2).map(([p, m]) => ({ id: `stats:${p}-${m}`, pos: at(p, m * MIN_MS) })),
+  ];
+  const teams = log.roster ? [log.roster.home, log.roster.away] : [];
+  return moments
+    .filter((m) => m.pos <= log.duration)
+    .map(({ id, pos }) => {
+      const data: Record<string, unknown> = focus
+        ? {
+            scope: "player", player_id: focus,
+            passes: passStats(log, pos, (e) => e.player_id === focus),
+            running: running(log, pos, (e) => e.player_id === focus),
+          }
+        : {
+            scope: "teams",
+            teams: Object.fromEntries(teams.map((team) => [team, {
+              passes: passStats(log, pos, (e) => e.team === team),
+              running: running(log, pos, (e) => e.team === team),
+            }])),
+          };
+      return { id, kind: "stats" as const, in_pos: pos, out_pos: pos + STATS_MS, data };
+    });
 }
 
 function whatIfCue(log: MatchLog): Cue | null {

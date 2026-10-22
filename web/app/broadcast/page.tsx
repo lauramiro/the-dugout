@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { FieldView, type PlayerTag } from "../../components/broadcast/FieldView";
-import { FocusCard, GoalFlash, ManagerCall, WhatIf } from "../../components/broadcast/Graphics";
+import { FocusCard, GoalFlash, ManagerCall, StatsCard, WhatIf } from "../../components/broadcast/Graphics";
 import { LowerThird } from "../../components/broadcast/LowerThird";
 import { Worm } from "../../components/broadcast/Worm";
 import { useHeldCues } from "../../components/broadcast/useHeldCues";
@@ -12,11 +12,11 @@ import {
 } from "../../components/broadcast/SettingsChip";
 import { Stage } from "../../components/broadcast/Stage";
 import { aheadPos, fromPos, lastAtOrBefore, toPos } from "../../lib/clock";
-import type { Roster, Snapshot } from "../../lib/contracts";
+import type { Locale, Roster, Snapshot } from "../../lib/contracts";
 import { buildCues, cueSheet, scoreAt, type Cue } from "../../lib/cues";
 import type { DataSource, FeedState, MatchLog, PitchFrame } from "../../lib/datasource";
 import { playerName } from "../../lib/derive";
-import { translator, type Translate } from "../../lib/i18n";
+import { decimal, translator, type Translate } from "../../lib/i18n";
 import { ReplayDataSource } from "../../lib/replay";
 import { useDataSource, useFeed } from "../../lib/useFeed";
 import "./broadcast.css";
@@ -74,12 +74,13 @@ export default function BroadcastPage() {
   const shown = useHeldCues(cues, pos);
   const snapshotAt = lastAtOrBefore(log.snapshots, pos);
   const snapshot = snapshotAt >= 0 ? log.snapshots[snapshotAt].item : null;
-  const tags = playerTags(shown, prefs.player, snapshot, log.roster, t);
+  const tags = playerTags(shown, prefs.player, snapshot, frame, log.roster, prefs.locale, t);
   const latest = (kind: Cue["kind"]) => [...shown].reverse().find((c) => c.kind === kind);
   const decision = latest("decision");
   const goalCue = latest("goal");
   const callCue = latest("manager_call");
   const focusCue = latest("focus_event");
+  const statsCue = latest("stats");
   // Full time: replay's playhead stops at the end, so the segment shows from there on.
   const whatifCue = cues.find((c) => c.kind === "whatif" && pos >= c.in_pos);
   const decisionCard = decision
@@ -103,6 +104,9 @@ export default function BroadcastPage() {
       )}
       {goalCue && <GoalFlash key={goalCue.id} cue={goalCue} roster={log.roster} t={t} />}
       {callCue && <ManagerCall key={callCue.id} cue={callCue} roster={log.roster} t={t} />}
+      {statsCue && (
+        <StatsCard key={statsCue.id} cue={statsCue} roster={log.roster} locale={prefs.locale} mode={prefs.mode} t={t} />
+      )}
       {focusCue && prefs.player && (
         <FocusCard key={focusCue.id} cue={focusCue} focus={prefs.player} roster={log.roster} t={t} />
       )}
@@ -163,10 +167,21 @@ function downloadCueSheet(sheet: ReturnType<typeof cueSheet>): void {
 
 /** The focus player always; a fading player while the cue runs. The ring is the latest
  *  snapshot's condition estimate. */
-function playerTags(shown: readonly Cue[], focus: string | null, snapshot: Snapshot | null, roster: Roster | null,
-  t: Translate): PlayerTag[] {
+/** Speed (m/s) above which a tag shows the player's current speed: about 25 km/h. */
+const SPEED_SHOW_MS = 7;
+/** Speed (m/s) that triggers a tag on any player: 28.8 km/h, about the top 1% of frames. */
+const SPEED_TAG_MS = 8;
+
+/** Tags on the pitch, one per player, in this order of precedence: a fading player while the
+ *  cue runs, a sprinting player (distance from the sprint event), the focus player always
+ *  (running stats from the snapshot), any player above SPEED_TAG_MS. Speed comes from the
+ *  tracking frame as given and shows only while the player is fast. */
+function playerTags(shown: readonly Cue[], focus: string | null, snapshot: Snapshot | null, frame: PitchFrame | null,
+  roster: Roster | null, locale: Locale, t: Translate): PlayerTag[] {
   const stats = (id: string) => snapshot?.players.find((p) => p.id === id);
   const condition = (id: string) => stats(id)?.condition_est ?? null;
+  const speed = (id: string) => frame?.players.find((p) => p.id === id)?.v ?? null;
+  const kmh = (v: number) => t("speedKmh", { v: decimal(v * 3.6, locale, 1) });
   const tags = new Map<string, PlayerTag>();
   for (const cue of shown) {
     if (cue.kind !== "fading") continue;
@@ -174,10 +189,27 @@ function playerTags(shown: readonly Cue[], focus: string | null, snapshot: Snaps
     const value = condition(id) ?? Number(cue.data.condition);
     tags.set(id, { id, label: `${playerName(roster, id)} · ${Math.round(value * 100)}%`, detail: null, ring: value, tone: "fading" });
   }
+  for (const cue of shown) {
+    if (cue.kind !== "sprint") continue;
+    const id = String(cue.data.player_id);
+    if (tags.has(id)) continue;
+    const v = speed(id);
+    const d = Number(cue.data.dist_m);
+    tags.set(id, {
+      id, label: `${playerName(roster, id)} · ${t("sprintTag", { d: decimal(d, locale, 0) })}`,
+      detail: v !== null && v >= SPEED_SHOW_MS ? kmh(v) : null, ring: null, tone: "sprint",
+    });
+  }
   if (focus && !tags.has(focus)) {
     const p = stats(focus);
-    const detail = p ? t("tagStats", { hsr: p.hsr_m_10m, sprints: p.sprints_10m }) : null;
+    const v = speed(focus);
+    const running = p ? t("tagStats", { hsr: p.hsr_m_10m, sprints: p.sprints_10m }) : null;
+    const detail = v !== null && v >= SPEED_SHOW_MS ? [kmh(v), running].filter(Boolean).join(" · ") : running;
     tags.set(focus, { id: focus, label: playerName(roster, focus), detail, ring: condition(focus), tone: "focus" });
+  }
+  for (const p of frame?.players ?? []) {
+    if (p.v < SPEED_TAG_MS || tags.has(p.id)) continue;
+    tags.set(p.id, { id: p.id, label: `${playerName(roster, p.id)} · ${kmh(p.v)}`, detail: null, ring: null, tone: "sprint" });
   }
   return [...tags.values()];
 }
