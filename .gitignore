@@ -10,3 +10,4 @@ data/*.jsonl
 !data/demo-*.jsonl
 .claude/settings.local.json
 .worktrees/
+.superpowers/
