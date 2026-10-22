@@ -16,6 +16,8 @@ interface Props {
   onVote: (option: string | null) => void;
   /** Whether the match clock is running: the vote timer stops while the replay is paused. */
   running: boolean;
+  /** Whether keys 1 to 4 vote here; off while a story screen (tablet, phone) covers the picture. */
+  keys?: boolean;
   t: Translate;
 }
 
@@ -27,7 +29,7 @@ function narrationFor(card: DecisionCard, locale: Locale, mode: Mode): Narration
 /** The decision as a lower third: what triggered it, the model's line, the options as bars.
  *  The rows are the viewer's vote too (click, or keys 1 to 4) for VOTE_SECONDS of running
  *  clock. A manager_sub card is raised by the change itself, so there is nothing to call. */
-export function LowerThird({ card, roster, mode, locale, vote, onVote, running, t }: Props) {
+export function LowerThird({ card, roster, mode, locale, vote, onVote, running, keys = true, t }: Props) {
   const { payload } = card;
   const narration = narrationFor(card, locale, mode);
   const pick = payload.recommendation.option_id;
@@ -36,7 +38,7 @@ export function LowerThird({ card, roster, mode, locale, vote, onVote, running, 
   const left = useVoteTimer(open && running, () => onVote(null));
 
   useEffect(() => {
-    if (!open) return;
+    if (!open || !keys) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
       if ((e.target as HTMLElement | null)?.closest("input, select, textarea, dialog")) return;
@@ -47,7 +49,7 @@ export function LowerThird({ card, roster, mode, locale, vote, onVote, running, 
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [open, payload.options, onVote]);
+  }, [open, keys, payload.options, onVote]);
 
   const chosen = vote?.option ? payload.options.find((o) => o.id === vote.option) : undefined;
   const side = payload.team === roster?.home ? "home" : "away";

@@ -224,6 +224,7 @@ export default function BroadcastPage() {
           vote={votes[decisionCard.payload.decision_id]}
           onVote={onVote}
           running={live || feed.playing}
+          keys={!(story.active && story.step?.screen !== "tv")}
           t={t}
         />
       )}
