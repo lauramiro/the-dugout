@@ -1,0 +1,23 @@
+graph LR
+  replayer["Replayer<br/>recorded match, JSONL"]
+  eh["Azure Event Hubs<br/>hub matchevents, Basic"]
+  runner["Pipeline runner<br/>Azure Container Apps, 1 replica<br/>state engine, triggers,<br/>decision engine, narration"]
+  foundry["Microsoft Foundry<br/>gpt-5-mini"]
+  wps["Azure Web PubSub<br/>hub decisions, Free tier"]
+  swa["Azure Static Web Apps<br/>Next.js static export"]
+  browser["Viewer's browser<br/>broadcast picture, analyst desk"]
+  service["Decision service<br/>Azure Container Apps, 0 to 10 replicas<br/>/negotiate, /votes, /mcp"]
+  mcpc["MCP clients<br/>GitHub Copilot, Claude, Foundry agents"]
+  acr["Azure Container Registry<br/>one image, two apps"]
+
+  replayer -- "match events" --> eh
+  eh -- "consumed as they arrive" --> runner
+  runner -- "cards, snapshots,<br/>events, win probability" --> wps
+  wps -- "WebSocket" --> browser
+  swa -- "page, demo replay" --> browser
+  runner -- "Agent Framework workflow,<br/>grounding check per reply" --> foundry
+  browser -- "negotiate, votes" --> service
+  mcpc -- "Streamable HTTP" --> service
+  service -- "explain_decision" --> foundry
+  acr -. "pull, managed identity" .-> runner
+  acr -. "pull, managed identity" .-> service

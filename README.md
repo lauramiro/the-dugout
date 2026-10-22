@@ -40,19 +40,21 @@ Live (`?source=live`) the same graphics come from the Web PubSub feed: the runne
 
 ## Architecture
 
-```
-simulator -> replayer -> Azure Event Hubs -> pipeline runner (Container Apps)
-                                              state engine -> triggers
-                                              -> decision service (Container Apps)
-                                                 engine -> narration workflow (Agent Framework + Foundry)
-                                              -> Azure Web PubSub -> web page (Static Web Apps)
-```
+![The Dugout on Azure: a replayer sends match events to Event Hubs; the pipeline runner on Container Apps reads them, narrates through Microsoft Foundry and publishes to Web PubSub; the browser loads the page from Static Web Apps and gets cards over WebSocket; the decision service on Container Apps hands out WebSocket URLs, counts votes and serves MCP clients](docs/architecture.png)
+
+Source: [`docs/architecture.mmd`](docs/architecture.mmd) (Mermaid; an editable [Excalidraw](docs/architecture.excalidraw) and an [SVG](docs/architecture.svg) sit beside it).
+
+1. The replayer sends a recorded match into **Azure Event Hubs**, at match speed or faster.
+2. The **pipeline runner** (Azure Container Apps) reads the events as they arrive and runs the whole chain in process: state engine, triggers, decision engine, then the narration workflow, which calls the **Microsoft Foundry** model deployment.
+3. The runner publishes cards (all four language and mode versions), slimmed snapshots, key match events and a win-probability point per minute to **Azure Web PubSub**.
+4. The page, a static export on **Azure Static Web Apps**, asks the **decision service** (Container Apps) for a short-lived WebSocket URL (`/negotiate`) and follows the feed. Without `?source=live` it replays the recorded match from its own files, with no backend at all.
+5. The decision service also counts "Your call" votes and serves the MCP tools, which call the same engine and narration workflow.
 
 ### Agents
 
 Narration is a Microsoft Agent Framework workflow (`dugout/agents/workflow.py`): narrator -> grounding check -> localizer -> grounding check. The narrator writes analyst text in English from the engine's payload; the localizer translates it to the viewer's language (English or Spanish, with Spanish decimal commas) and adjusts it for the viewer's mode. Each check is plain code (`dugout/agents/grounding.py`): every number must match a payload field, every player id must exist in the payload, the strength word must match the recommendation, no internal name may leak, and the word limits hold. A failed check sends the stage back once with the errors attached; a timeout, model error or second failure ends in a template that passes the check by construction, so the screen never waits on or trusts the model. A recap writer (`dugout/agents/recap.py`) writes the full-time lines under the same check, plus a filter on blame and hindsight words.
 
-Measured on 100 cards with the deployed gpt-5-mini model: 93% shown from the model, 93.8% of replies grounded on the first attempt, median 3.25 s per card ([narration eval](eval/results/narration.md)).
+Measured on 100 cards with the deployed gpt-5-mini model: 94% shown from the model, 88.1% of replies grounded on the first attempt (the check also rejects English left in Spanish, a wrong article, a strong card called close, and decimals or the interval in casual text), 18 of 23 retries passed, median 3.33 s per card ([narration eval](eval/results/narration.md)).
 
 ### MCP server
 
@@ -75,14 +77,30 @@ To connect GitHub Copilot in VS Code, add `.vscode/mcp.json`:
 
 Claude Code: `claude mcp add --transport http the-dugout https://dugout-service.wittypond-73564413.northeurope.azurecontainerapps.io/mcp`
 
-## Microsoft technology
+## Built on Azure
 
-- **Microsoft Foundry:** model deployment for the narration and recap agents (`infra/foundry.sh`, `dugout/agents/foundry.py`).
-- **Microsoft Agent Framework:** the narration workflow with grounding checks and retries (`dugout/agents/workflow.py`).
-- **Azure Event Hubs:** match event ingestion (`dugout/stream/replay.py`, `dugout/stream/consumer.py`).
-- **Azure Container Apps:** the decision service (with its MCP server) and the live pipeline runner, two apps from one image (`Dockerfile`, `infra/deploy.sh`).
-- **Azure Web PubSub:** cards, snapshots and events pushed to the page (`dugout/service/publisher.py`, `web/lib/live.ts`).
-- **Azure Static Web Apps:** the web page (`web/`, `infra/deploy.sh`).
+| Service | Role in The Dugout | Configuration |
+| --- | --- | --- |
+| **Azure Event Hubs** | Ingest: the match event stream, decoupled from whoever consumes it | Hub `matchevents`, Basic tier, 2 partitions, 24 h retention |
+| **Azure Container Apps** | Compute: the live pipeline runner and the decision service, two apps from one image | Runner: 1 replica, no ingress, its own start command. Service: external HTTPS ingress, scales 0 to 10 replicas. 0.5 vCPU, 1 GiB each |
+| **Azure Container Registry** | The one image both apps run, built in Azure from the repo's `Dockerfile` by `az containerapp up` | Basic; each app pulls with its system-assigned managed identity, no registry password |
+| **Microsoft Foundry** | The model behind the narration and recap agents | `gpt-5-mini` (2025-08-07), Global Standard, minimal reasoning effort, uksouth |
+| **Microsoft Agent Framework** | The narration workflow: narrator, grounding check, localizer, grounding check, with retries | `dugout/agents/workflow.py` |
+| **Azure Web PubSub** | Push: cards, snapshots, events and win probability to every open page | Hub `decisions`, Free tier; the browser gets a short-lived client URL from `/negotiate` |
+| **Azure Static Web Apps** | The page: a Next.js static export, so it needs no server of its own | Free tier |
+| **Cost Management** | A budget on the resource group | $5 a month, email alerts at 80% and 100% |
+
+**One script, repeatable.** `infra/foundry.sh` and `infra/deploy.sh` create everything above. Both print every `az` command and change nothing without `--apply`, and every step is an upsert, so a rerun updates the running apps in place (about six minutes). Regions are North Europe for the apps, UK South for Foundry and East US 2 for Static Web Apps (the free subscription refused West Europe).
+
+**Secrets.** Connection strings and the Foundry key are read into shell variables and stored as Container Apps secrets, referenced from environment variables with `secretref:`. They are never echoed, committed or written to disk, apart from the git-ignored local `.env` the replayer reads.
+
+**Built to keep going.** The screen never waits on the model: each model call has a 3 s timeout, and a timeout, a model error or a second failed grounding check falls back to a template that passes the check by construction. The runner catches a failed card or a failed publish (Web PubSub's Free tier throttles with 429s), counts it and moves on, so one bad message never stops the match. On the last full live replay: full time reached, no failed publishes and no 429s.
+
+**What would change for production.** Each limit is a deliberate cut for a hackathon budget:
+- The runner keeps one replica, because Event Hubs has no checkpoint store here (a second replica would publish everything twice). A Blob Storage checkpoint store would allow more replicas and a restart without replaying the match.
+- Votes live in the decision service's memory, so they reset when it scales to zero and are not shared across replicas. Azure Cosmos DB would hold them.
+- Event Hubs, Web PubSub and Foundry are reached with keys held as Container Apps secrets. The next step is Microsoft Entra ID role assignments for the apps' managed identities, as the image pull already does.
+- Tracking frames stay off the live feed to fit the Web PubSub Free tier; a Standard unit would carry them.
 
 ## Results
 
@@ -102,7 +120,7 @@ web/           Next.js page (static export)
 infra/         Azure deploy scripts (dry run by default)
 eval/          counterfactual check, condition estimate and narration evals, results
 scenarios/     match scenarios (YAML)
-docs/          data contracts and evaluation
+docs/          architecture diagram, data contracts and evaluation
 tests/         pytest suite
 data/          recorded streams (JSONL)
 ```
