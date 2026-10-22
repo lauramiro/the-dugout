@@ -1,8 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { FieldView, type PlayerTag } from "../components/broadcast/FieldView";
 import { FocusCard, GoalFlash, ManagerCall, StatsCard, WhatIf } from "../components/broadcast/Graphics";
+import {
+  AboutPanel, Chrome, GradedPanel, Slate, TitleCard, useTitleCard, type PanelId,
+} from "../components/broadcast/Landing";
 import { LowerThird } from "../components/broadcast/LowerThird";
 import { Worm } from "../components/broadcast/Worm";
 import { useHeldCues } from "../components/broadcast/useHeldCues";
@@ -11,6 +14,8 @@ import {
   DEFAULT_PREFS, readPrefs, SettingsChip, writePrefs, type BroadcastPrefs,
 } from "../components/broadcast/SettingsChip";
 import { Stage } from "../components/broadcast/Stage";
+import { optionLabel } from "../components/DecisionCard";
+import type { Vote } from "../lib/calls";
 import { aheadPos, fromPos, lastAtOrBefore, toPos } from "../lib/clock";
 import type { Locale, Roster, Snapshot } from "../lib/contracts";
 import { buildCues, cueSheet, scoreAt, type Cue } from "../lib/cues";
@@ -19,10 +24,12 @@ import { playerName } from "../lib/derive";
 import { decimal, translator, type Translate } from "../lib/i18n";
 import { ReplayDataSource } from "../lib/replay";
 import { useDataSource, useFeed } from "../lib/useFeed";
+import { LocalVotes, ServiceVotes, type VoteStore } from "../lib/votes";
 import "./broadcast.css";
 
-// The broadcast picture: the match full-bleed from the tracking data, graphics on top.
-// The analyst desk is at /desk; /broadcast is kept as an alias of this page.
+// The broadcast picture: the match full-bleed from the tracking data, graphics on top, with
+// the name, links and chapters around it. The analyst desk is at /desk; /broadcast is kept
+// as an alias of this page.
 
 export default function BroadcastPage() {
   const source = useDataSource();
@@ -63,6 +70,35 @@ export default function BroadcastPage() {
     return () => window.removeEventListener("keydown", onKey);
   }, [source]);
 
+  // Your call from the lower third: replay votes stay in the page; live votes also go to the service.
+  const voteStore = useMemo<VoteStore>(() => (live ? new ServiceVotes() : new LocalVotes()), [live]);
+  const [votes, setVotes] = useState<Record<string, Vote>>({});
+  const castVote = useCallback(
+    (id: string, option: string | null) => {
+      setVotes((v) => (id in v ? v : { ...v, [id]: { option, tally: null, error: null } }));
+      if (option === null) return;
+      voteStore.cast(id, option).then(
+        (tally) => setVotes((v) => ({ ...v, [id]: { ...v[id], tally } })),
+        (err: unknown) => setVotes((v) => ({ ...v, [id]: { ...v[id], error: err instanceof Error ? err.message : String(err) } })),
+      );
+    },
+    [voteStore],
+  );
+
+  // About and How it's graded pause the replay while they are open.
+  const [panel, setPanel] = useState<PanelId | null>(null);
+  const resume = useRef(false);
+  const openPanel = (next: PanelId) => {
+    if (panel === null) resume.current = feed.playing;
+    if (feed.playing) source.controls?.pause();
+    setPanel(next);
+  };
+  const closePanel = () => {
+    setPanel(null);
+    if (resume.current) source.controls?.play();
+    resume.current = false;
+  };
+
   const pos = useSmoothedPos(playhead, live);
   const recorded = useRecordedTracking(source, log, pos);
   const frame = live ? recorded.frame : source.frameAt(pos);
@@ -86,11 +122,35 @@ export default function BroadcastPage() {
   const decisionCard = decision
     ? log.cards.find((c) => c.item.payload.decision_id === decision.data.decision_id)?.item
     : undefined;
+  const fullTime = !live && feed.status === "ready" && playhead >= log.duration;
+  const [titleShown, hideTitle] = useTitleCard(!!decision);
+  const voteId = decisionCard?.payload.decision_id;
+  const onVote = useCallback((option: string | null) => {
+    if (voteId) castVote(voteId, option);
+  }, [voteId, castVote]);
+
+  // Nothing to draw yet: the files are loading, the live feed has sent nothing, or it failed.
+  const slate = feed.status === "error" ? "error"
+    : live && log.events.length === 0 && log.snapshots.length === 0 ? "waiting"
+    : feed.status === "loading" ? "loading" : null;
 
   if (cuesJson) return <CueSheetView log={log} focus={prefs.player} source={source.kind} />;
 
   return (
-    <Stage label={t("broadcastLabel")}>
+    <Stage
+      label={t("broadcastLabel")}
+      chrome={
+        <Chrome
+          cards={log.cards}
+          duration={log.duration}
+          feed={feed}
+          controls={source.controls}
+          onPanel={openPanel}
+          onSeek={hideTitle}
+          t={t}
+        />
+      }
+    >
       <FieldView frame={frame} roster={log.roster} tags={tags} label={t("broadcastLabel")} />
       {decisionCard && (
         <LowerThird
@@ -99,11 +159,16 @@ export default function BroadcastPage() {
           roster={log.roster}
           mode={prefs.mode}
           locale={prefs.locale}
+          vote={votes[decisionCard.payload.decision_id]}
+          onVote={onVote}
+          running={live || feed.playing}
           t={t}
         />
       )}
       {goalCue && <GoalFlash key={goalCue.id} cue={goalCue} roster={log.roster} t={t} />}
-      {callCue && <ManagerCall key={callCue.id} cue={callCue} roster={log.roster} t={t} />}
+      {callCue && (
+        <ManagerCall key={callCue.id} cue={callCue} roster={log.roster} you={viewerCall(callCue, log, votes, t)} t={t} />
+      )}
       {statsCue && (
         <StatsCard key={statsCue.id} cue={statsCue} roster={log.roster} locale={prefs.locale} mode={prefs.mode} t={t} />
       )}
@@ -118,6 +183,19 @@ export default function BroadcastPage() {
           locale={prefs.locale}
           mode={prefs.mode}
           t={t}
+          next={
+            <p className="bc-whatif-next">
+              {source.controls && (
+                <button type="button" onClick={() => { source.controls?.seek(0); source.controls?.play(); }}>
+                  {t("watchAgain")}
+                </button>
+              )}
+              <a href="/desk" onClick={(e) => { e.currentTarget.href = `/desk${window.location.search}`; }}>
+                {t("analystDesk")}
+              </a>
+              <button type="button" onClick={() => openPanel("graded")}>{t("howGraded")}</button>
+            </p>
+          }
         />
       )}
       <Worm
@@ -131,7 +209,9 @@ export default function BroadcastPage() {
         locale={prefs.locale}
         t={t}
       />
-      <Scorebug roster={log.roster} score={goals} tMs={tMs} live={live} club={prefs.club} t={t} />
+      <Scorebug roster={log.roster} score={goals} tMs={tMs} live={live} fullTime={fullTime} club={prefs.club} t={t} />
+      {slate && <Slate kind={slate} error={feed.error} t={t} />}
+      {!slate && titleShown && <TitleCard replay={!live} onDone={hideTitle} t={t} />}
       <SettingsChip
         prefs={prefs}
         onChange={changePrefs}
@@ -144,16 +224,29 @@ export default function BroadcastPage() {
             <button type="button" onClick={() => downloadCueSheet(cueSheet(log, prefs.player, source.kind))}>
               {t("exportCues")}
             </button>
-            {/* Keeps ?source=live and ?t= when moving between the two views. */}
-            <a href="/desk" onClick={(e) => { e.currentTarget.href = `/desk${window.location.search}`; }}>
-              {t("analystDesk")}
-            </a>
           </>
         }
         t={t}
       />
+      {panel === "about" && <AboutPanel onClose={closePanel} onPanel={openPanel} t={t} />}
+      {panel === "graded" && <GradedPanel onClose={closePanel} locale={prefs.locale} t={t} />}
     </Stage>
   );
+}
+
+/** The viewer's vote on the card a manager's call cue belongs to, for the reveal; agrees when
+ *  it was the model's pick (toss-ups pick nothing). */
+function viewerCall(cue: Cue, log: MatchLog, votes: Record<string, Vote>, t: Translate): { label: string; agrees: boolean } | null {
+  const id = String(cue.data.decision_id);
+  const option = votes[id]?.option;
+  const card = log.cards.find((c) => c.item.payload.decision_id === id)?.item;
+  const voted = option && card ? card.payload.options.find((o) => o.id === option) : undefined;
+  if (!card || !voted) return null;
+  const { recommendation } = card.payload;
+  return {
+    label: optionLabel(voted, card, log.roster, t),
+    agrees: recommendation.strength !== "toss_up" && voted.id === recommendation.option_id,
+  };
 }
 
 /** ?cues=json: the cue sheet as plain JSON instead of the picture, for a graphics system. */

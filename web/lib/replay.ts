@@ -48,7 +48,7 @@ export class ReplayDataSource implements DataSource {
     log: emptyLog(),
     playhead: 0,
     playing: false,
-    speed: 1,
+    speed: 5, // the first card is about 16 s away from the landing minute (lib/source.ts)
   };
   private listeners = new Set<() => void>();
   private frames: Timed<TrackingFrame>[] = [];

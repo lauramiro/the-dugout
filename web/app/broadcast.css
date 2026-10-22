@@ -613,7 +613,7 @@
   position: absolute;
   left: 50%;
   translate: -50% 0;
-  top: 9cqh;
+  top: 13cqh; /* under the name, links and chapters at the top centre */
   min-width: 20cqw;
   padding: 1.2cqh 1.1cqw;
   font-size: 1cqw;
@@ -639,8 +639,296 @@
 .bc-stats tbody th { text-align: left; font-weight: 400; color: var(--bc-muted); }
 .bc-stats td { font-weight: 700; }
 
+/* Landing: the frame around the picture holds the name, links and replay controls */
+.bc-frame {
+  position: relative;
+  width: min(100vw, calc(100vh * 16 / 9));
+  container-type: inline-size;
+}
+
+.bc-chrome {
+  position: absolute;
+  top: 1.24cqw; /* the scorebug's top: 2.2cqh of a 16:9 picture */
+  left: 50%;
+  translate: -50% 0;
+  max-width: 54cqw;
+  display: grid;
+  justify-items: center;
+  gap: 0.5cqw;
+  font-size: max(11px, 0.9cqw);
+  z-index: 4;
+}
+
+.bc-nav,
+.bc-transport,
+.bc-speeds,
+.bc-chapters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35em;
+}
+
+.bc-transport { gap: 0.7em; }
+
+.bc-brand {
+  font-family: var(--font-display), sans-serif;
+  font-weight: 900;
+  font-size: 1.45em;
+  letter-spacing: 0.04em;
+  margin-right: 0.35em; /* mixed case: innerText keeps reading "The Dugout" */
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+}
+
+.bc-chrome button,
+.bc-chrome a,
+.bc-whatif-next button,
+.bc-whatif-next a,
+.bc-dialog button,
+.bc-dialog-links a,
+.bc-slate-link {
+  font: inherit;
+  color: var(--bc-ink, #f4f7f5);
+  background: var(--bc-glass, rgba(10, 16, 13, 0.82));
+  border: 1px solid var(--bc-line, rgba(255, 255, 255, 0.16));
+  border-radius: 999px;
+  padding: 0.3em 0.85em;
+  text-decoration: none;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.bc-chapters button { padding: 0.25em 0.6em; font-variant-numeric: tabular-nums; }
+
+.bc-chrome button[aria-pressed="true"],
+.bc-chapters button[aria-current="true"] {
+  background: var(--bc-ink);
+  color: #0b110e;
+}
+
+.bc-chrome button:hover,
+.bc-chrome a:hover,
+.bc-whatif-next button:hover,
+.bc-whatif-next a:hover,
+.bc-dialog-links a:hover,
+.bc-slate-link:hover { border-color: var(--bc-accent, #ffb627); }
+
+.bc-chrome :focus-visible,
+.bc-whatif-next :focus-visible,
+.bc-dialog :focus-visible,
+.bc-slate-link:focus-visible,
+.bc-title-close:focus-visible,
+.bc-option:focus-visible {
+  outline: 2px solid var(--bc-accent, #ffb627);
+  outline-offset: 2px;
+}
+
+.bc-play { min-width: 5.5em; font-weight: 700; }
+
+/* Title card and slates: centred on the picture */
+.bc-title,
+.bc-slate {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  translate: -50% -50%;
+  width: min(52cqw, 92%);
+  display: grid;
+  gap: 1.2cqh;
+  justify-items: center;
+  text-align: center;
+  padding: 3.2cqh 2.6cqw 2.6cqh;
+  font-size: 1.25cqw;
+  background: var(--bc-glass-strong);
+  border: 1px solid var(--bc-line);
+  border-top: 0.5cqh solid var(--bc-accent);
+  border-radius: 0.5cqw;
+  box-shadow: 0 1cqw 3cqw rgba(0, 0, 0, 0.5);
+  z-index: 3;
+}
+
+.bc-title { cursor: pointer; animation: bc-slide-in 500ms cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+.bc-title p, .bc-slate p { margin: 0; }
+
+.bc-title h1,
+.bc-slate-name {
+  margin: 0;
+  font-family: var(--font-display), sans-serif;
+  font-weight: 900;
+  font-size: 3.4em;
+  line-height: 1;
+  letter-spacing: 0.04em;
+}
+
+.bc-slate-name { font-size: 2.4em; }
+.bc-title-premise { font-size: 1.15em; line-height: 1.35; max-width: 34em; }
+.bc-title-hint { color: var(--bc-accent); font-weight: 700; }
+.bc-title-note, .bc-slate-text { color: var(--bc-muted); }
+.bc-slate.error .bc-slate-text { color: var(--bc-ink); }
+
+.bc-title-close {
+  font: inherit;
+  font-size: 0.85em;
+  color: var(--bc-muted);
+  background: none;
+  border: 1px solid var(--bc-line);
+  border-radius: 999px;
+  padding: 0.25em 0.9em;
+  cursor: pointer;
+}
+
+/* Lower third: the option rows are the vote */
+.bc-options li { display: block; }
+
+button.bc-option {
+  width: 100%;
+  margin: 0;
+  padding: 0.25em 0.4em;
+  font: inherit;
+  font-size: 0.9em;
+  text-align: left;
+  color: var(--bc-muted);
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 0.3em;
+}
+
+button.bc-option.bc-pick { color: var(--bc-ink); }
+button.bc-option:disabled { cursor: default; }
+button.bc-option:not(:disabled) { cursor: pointer; border-color: var(--bc-line); }
+button.bc-option:not(:disabled):hover { border-color: var(--bc-accent); background: rgba(255, 255, 255, 0.05); }
+button.bc-option.bc-voted { color: var(--bc-ink); border-color: var(--bc-accent); }
+
+.bc-options.voting .bc-option { grid-template-columns: 1.4em 14.6em 1fr 4em 6.5em; }
+
+.bc-option-key {
+  display: grid;
+  place-items: center;
+  width: 1.4em;
+  height: 1.4em;
+  font-family: inherit;
+  font-size: 0.85em;
+  font-weight: 800;
+  color: #0b110e;
+  background: var(--bc-ink);
+  border-radius: 0.25em;
+}
+
+.bc-lower-call {
+  display: flex;
+  justify-content: space-between;
+  gap: 1em;
+}
+
+.bc-lower-call.done { color: var(--bc-ink); font-weight: 600; }
+.bc-lower-timer { font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+/* Manager's call: the viewer's own call under the verdict */
+.bc-call-you { margin-top: 0.3em !important; font-weight: 700; color: var(--bc-muted); }
+.bc-call-you.same { color: var(--bc-high); }
+
+/* Full time */
+.bc-sb-clock.ft { letter-spacing: 0.08em; }
+
+.bc-whatif-next {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6em;
+  margin: 1.6cqh 0 0;
+  padding-top: 1.4cqh;
+  border-top: 1px solid var(--bc-line);
+  font-size: 0.85em;
+}
+
+/* About and How it's graded: modal panels in the top layer, sized to the window */
+.bc-dialog {
+  --bc-ink: #f4f7f5;
+  --bc-muted: #b8c4be;
+  --bc-glass: rgba(10, 16, 13, 0.82);
+  --bc-line: rgba(255, 255, 255, 0.16);
+  --bc-accent: #ffb627;
+  width: min(760px, calc(100vw - 32px));
+  max-height: calc(100dvh - 48px);
+  padding: 0;
+  color: var(--bc-ink);
+  background: #0b110e;
+  border: 1px solid var(--bc-line);
+  border-top: 4px solid var(--bc-accent);
+  border-radius: 10px;
+  font-family: var(--font-body), system-ui, sans-serif;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.bc-dialog::backdrop { background: rgba(0, 0, 0, 0.6); }
+
+.bc-dialog-body { display: grid; gap: 14px; padding: 20px 24px 24px; }
+.bc-dialog p { margin: 0; }
+
+.bc-dialog-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.bc-dialog-head h2 {
+  margin: 0;
+  font-family: var(--font-display), sans-serif;
+  font-weight: 900;
+  font-size: 30px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.bc-dialog-lead { font-size: 17px; font-weight: 600; }
+.bc-dialog-note { color: var(--bc-muted); font-size: 14px; }
+.bc-dialog-steps { margin: 0; padding-left: 1.4em; display: grid; gap: 6px; }
+.bc-dialog-links { display: flex; flex-wrap: wrap; gap: 10px; }
+
+.bc-graded-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 10px;
+  margin: 0;
+}
+
+.bc-graded-stats > div {
+  display: grid;
+  align-content: start;
+  gap: 4px;
+  padding: 10px 12px;
+  border: 1px solid var(--bc-line);
+  border-radius: 8px;
+}
+
+.bc-graded-stats dt { color: var(--bc-muted); font-size: 13px; line-height: 1.3; }
+.bc-graded-stats dd { margin: 0; display: grid; }
+.bc-graded-stats strong { font-size: 26px; font-weight: 800; color: var(--bc-accent); font-variant-numeric: tabular-nums; }
+.bc-graded-stats dd span { color: var(--bc-muted); font-size: 13px; }
+
+.bc-graded-figure { margin: 0; display: grid; gap: 6px; }
+.bc-graded-figure img { width: 100%; height: auto; border-radius: 6px; background: #fff; }
+.bc-graded-figure figcaption { color: var(--bc-muted); font-size: 13px; }
+
+/* A tall screen: the controls go under the picture instead of over it */
+@media (max-aspect-ratio: 1 / 1) {
+  .bc-chrome {
+    position: static;
+    translate: none;
+    max-width: none;
+    padding: 12px 16px;
+    font-size: 13px;
+    gap: 10px;
+  }
+
+  .bc-title, .bc-slate { width: 92%; font-size: 2.6cqw; gap: 0.6cqh; padding: 2cqh 3cqw; }
+  .bc-title-hint, .bc-title-note { display: none; }
+}
+
 /* Phones. The stage is a letterboxed 16:9 picture, so in cqw the broadcast type is a few px
-   wide; the decision card keeps a readable size and drops its options table (the desk has it). */
+   wide; the decision card keeps a readable size and a compact options list (the desk has the full table). */
 @media (max-width: 700px), (max-height: 500px) {
   .bc-scorebug { font-size: max(10px, 1.35cqw); height: auto; min-height: 4.4cqh; }
   .bc-lower,
@@ -648,7 +936,10 @@
   .bc-focus,
   .bc-stats { font-size: max(11px, 1cqw); }
   .bc-lower { width: min(max(42cqw, 280px), calc(100% - 3.2cqw)); }
-  .bc-options { display: none; }
+  /* the option rows are the vote (see Lower third): keep them, without the bars and the interval */
+  .bc-option { grid-template-columns: 1fr auto auto; }
+  .bc-options.voting .bc-option { grid-template-columns: 1.4em 1fr auto auto; }
+  .bc-option-bar, .bc-option-ci { display: none; }
   .bc-call { max-width: min(30cqw, 45%); }
 }
 

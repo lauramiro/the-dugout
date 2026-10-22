@@ -7,12 +7,14 @@ interface Props {
   score: Record<TeamCode, number>;
   tMs: number;
   live: boolean;
+  /** Replay at its end: the clock reads FT. */
+  fullTime: boolean;
   club: TeamCode | null;
   t: Translate;
 }
 
-/** Top-left scorebug: clubs, score and the running clock, always on. */
-export function Scorebug({ roster, score, tMs, live, club, t }: Props) {
+/** Top-left scorebug: clubs, score and the running clock, always on; FT once the match is over. */
+export function Scorebug({ roster, score, tMs, live, fullTime, club, t }: Props) {
   const teams = roster ? [roster.home, roster.away] : [];
   return (
     <div className="bc-scorebug" aria-live="off">
@@ -23,7 +25,9 @@ export function Scorebug({ roster, score, tMs, live, club, t }: Props) {
           <span className="bc-sb-goals">{score[team] ?? 0}</span>
         </span>
       ))}
-      <span className="bc-sb-clock">{formatClock(tMs)}</span>
+      <span className={`bc-sb-clock${fullTime ? " ft" : ""}`} title={fullTime ? t("fullTime") : undefined}>
+        {fullTime ? t("fullTimeShort") : formatClock(tMs)}
+      </span>
       <span className={`bc-sb-source${live ? " live" : ""}`}>{live ? t("live") : t("replay")}</span>
     </div>
   );

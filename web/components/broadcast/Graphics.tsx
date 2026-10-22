@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import type { Cue } from "../../lib/cues";
 import type { DecisionCard, Locale, Mode, Roster, TeamCode } from "../../lib/contracts";
 import { playerName, withNames } from "../../lib/derive";
@@ -27,7 +28,10 @@ interface Sub {
   on: string | null;
 }
 
-export function ManagerCall({ cue, roster, t }: { cue: Cue; roster: Roster | null; t: Translate }) {
+/** `you`: the viewer's own call on the card, when they made one; `agrees` when it was the model's pick. */
+export function ManagerCall({ cue, roster, you, t }: {
+  cue: Cue; roster: Roster | null; you?: { label: string; agrees: boolean } | null; t: Translate;
+}) {
   const subs = (cue.data.subs as Sub[]) ?? [];
   const matched = cue.data.matched as boolean | null;
   const team = String(cue.data.team);
@@ -49,6 +53,7 @@ export function ManagerCall({ cue, roster, t }: { cue: Cue; roster: Roster | nul
           {t("minutesAfterCard", { n: Number(cue.data.minutes_after) })}
         </p>
       )}
+      {you && <p className={`bc-call-you${you.agrees ? " same" : ""}`}>{t("youCalled", { option: you.label })}</p>}
     </aside>
   );
 }
@@ -138,8 +143,10 @@ interface Row {
 }
 
 /** Full time: each decision the review priced, the largest gap first and large. */
-export function WhatIf({ cue, cards, roster, locale, mode, t }: {
+export function WhatIf({ cue, cards, roster, locale, mode, t, next }: {
   cue: Cue; cards: readonly DecisionCard[]; roster: Roster | null; locale: Locale; mode: Mode; t: Translate;
+  /** Next steps under the rows. */
+  next?: ReactNode;
 }) {
   const rows = (cue.data.rows as Row[]) ?? [];
   const lead = cue.data.lead as string | null;
@@ -172,6 +179,7 @@ export function WhatIf({ cue, cards, roster, locale, mode, t }: {
           );
         })}
       </ol>
+      {next}
     </section>
   );
 }
