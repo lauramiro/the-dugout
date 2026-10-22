@@ -15,6 +15,7 @@ import {
   DEFAULT_PREFS, readPrefs, SettingsChip, writePrefs, type BroadcastPrefs,
 } from "../components/broadcast/SettingsChip";
 import { Stage } from "../components/broadcast/Stage";
+import { Bench } from "../components/broadcast/Bench";
 import { DeskView } from "../components/desk/DeskView";
 import { FanView } from "../components/fan/FanView";
 import { markStorySeen, StoryEnd, StoryIntro, StoryOverlay, StoryScreen, storySeen } from "../components/story/Story";
@@ -257,6 +258,7 @@ export default function BroadcastPage() {
         locale={prefs.locale}
         t={t}
       />
+      {!whatifCue && <Bench log={log} pos={pos} snapshot={snapshot} t={t} />}
       <Scorebug roster={log.roster} score={goals} tMs={tMs} live={live} fullTime={fullTime} club={prefs.club} t={t} />
       {slate && <Slate kind={slate} error={feed.error} t={t} />}
       {live && schedule && feed.status !== "error" && (

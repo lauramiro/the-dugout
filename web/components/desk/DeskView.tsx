@@ -13,6 +13,7 @@ import type { Vote } from "../../lib/calls";
 import { fromPos, lastAtOrBefore } from "../../lib/clock";
 import type { DecisionCard as Card, Locale } from "../../lib/contracts";
 import type { DataSource, FeedState } from "../../lib/datasource";
+import { benchAt } from "../../lib/bench";
 import { score, tickerEvents } from "../../lib/derive";
 import { LOCALES, translator } from "../../lib/i18n";
 import { LocalVotes, ServiceVotes, type VoteStore } from "../../lib/votes";
@@ -81,6 +82,10 @@ export function DeskView({ source, feed, highlight = null, embedded = false }: D
 
   const snapIdx = lastAtOrBefore(log.snapshots, playhead);
   const snapshot = snapIdx >= 0 ? log.snapshots[snapIdx].item : null;
+  const bench = useMemo(
+    () => Object.fromEntries(teams.map((team) => [team, benchAt(log, playhead, team)])),
+    [log, playhead, teams],
+  );
 
   // One open card at a time: the latest one the playhead has reached.
   const cardIdx = lastAtOrBefore(log.cards, playhead);
@@ -172,7 +177,7 @@ export function DeskView({ source, feed, highlight = null, embedded = false }: D
           roster={roster}
           t={t}
         />
-        <WindowChips snapshot={snapshot} roster={roster} teams={teams} t={t} />
+        <WindowChips snapshot={snapshot} roster={roster} teams={teams} bench={bench} t={t} />
         <ConditionBars snapshot={snapshot} roster={roster} teams={teams} mode={mode} locale={locale} flagged={flaggedId} t={t} />
       </aside>
 

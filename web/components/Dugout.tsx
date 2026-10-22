@@ -1,4 +1,5 @@
 import { memo } from "react";
+import type { BenchPlayer } from "../lib/bench";
 import type { Locale, Mode, Roster, Snapshot, SnapshotPlayer, TeamCode } from "../lib/contracts";
 import { band, CONDITION_LINE, forecasts, playerName, shirt, teamPlayers, trend, type Trend } from "../lib/derive";
 import { pct, type Translate } from "../lib/i18n";
@@ -88,10 +89,12 @@ interface ChipsProps {
   snapshot: Snapshot | null;
   roster: Roster | null;
   teams: TeamCode[];
+  /** Each club's players who have not played yet (lib/bench.ts). */
+  bench?: Record<TeamCode, BenchPlayer[]>;
   t: Translate;
 }
 
-export const WindowChips = memo(function WindowChips({ snapshot, roster, teams, t }: ChipsProps) {
+export const WindowChips = memo(function WindowChips({ snapshot, roster, teams, bench, t }: ChipsProps) {
   if (!snapshot) return null;
   return (
     <section className="windows" aria-label={t("dugout")}>
@@ -111,6 +114,11 @@ export const WindowChips = memo(function WindowChips({ snapshot, roster, teams, 
                     : t("belowIn", { name: playerName(roster, f.playerId), n: f.minutes })}
               </span>
             ))}
+          {bench?.[team] && bench[team].length > 0 && (
+            <p className="bench-names">
+              <span className="bench-label">{t("onTheBench")}</span> {bench[team].map((p) => `${p.name} ${p.role}`).join(", ")}
+            </p>
+          )}
         </div>
       ))}
     </section>

@@ -1140,3 +1140,26 @@ button.bc-option.bc-voted { color: var(--bc-ink); border-color: var(--bc-accent)
   /* the picture is a short letterbox here: centre the cards on the screen, not on the picture */
   .st-intro, .st-end { position: fixed; width: calc(100vw - 32px); font-size: 14px; z-index: 40; }
 }
+
+/* Bench strips: under the scorebug (home) and the settings chip (away), above the goal strip */
+.bc-bench {
+  position: absolute;
+  top: 9.5cqh;
+  width: min(24cqw, 40%);
+  padding: 0.7cqh 0.8cqw;
+  font-size: max(10px, 0.82cqw);
+  line-height: 1.3;
+  background: var(--bc-glass);
+  border-radius: 0.3cqw;
+  z-index: 2;
+}
+.bc-bench.home { left: 1.6cqw; border-left: 0.35cqw solid var(--bc-home); }
+.bc-bench.away { right: 1.6cqw; border-right: 0.35cqw solid var(--bc-away); text-align: right; }
+.bc-bench p { margin: 0; }
+.bc-bench-head { color: var(--bc-muted); text-transform: uppercase; letter-spacing: 0.06em; font-size: 0.85em; }
+.bc-bench-head b { color: var(--bc-ink); }
+.bc-bench-head span { display: block; text-transform: none; letter-spacing: 0; }
+.bc-bench-names { margin-top: 0.3em !important; color: var(--bc-ink); }
+@media (max-width: 700px), (max-height: 500px) {
+  .bc-bench { display: none; } /* a phone's letterbox has no room; the fan view lists the bench */
+}
