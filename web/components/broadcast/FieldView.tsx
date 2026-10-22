@@ -11,7 +11,7 @@ export interface PlayerTag {
   detail: string | null;
   /** Condition 0..1 for the ring, or null for no ring. */
   ring: number | null;
-  tone: "focus" | "fading";
+  tone: "focus" | "fading" | "sprint";
 }
 
 interface Props {

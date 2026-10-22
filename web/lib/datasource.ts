@@ -43,7 +43,8 @@ export interface PlaybackControls {
 /** A frame at an exact pos, interpolated between the two nearest tracking frames. */
 export interface PitchFrame {
   ball: { x: number; y: number };
-  players: { id: string; x: number; y: number }[];
+  /** v: speed in m/s from the nearer tracking frame, as given. */
+  players: { id: string; x: number; y: number; v: number }[];
 }
 
 export interface DataSource {
@@ -70,8 +71,8 @@ export function interpolate(a: Timed<TrackingFrame>, b: Timed<TrackingFrame>, po
   const players = near.players.map((p) => {
     const from = a.item.players.find((q) => q.id === p.id);
     const to = other.get(p.id);
-    if (!from || !to) return { id: p.id, x: p.x, y: p.y };
-    return { id: p.id, x: from.x + (to.x - from.x) * k, y: from.y + (to.y - from.y) * k };
+    if (!from || !to) return { id: p.id, x: p.x, y: p.y, v: p.v };
+    return { id: p.id, x: from.x + (to.x - from.x) * k, y: from.y + (to.y - from.y) * k, v: p.v };
   });
   return {
     ball: {

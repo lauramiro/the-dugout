@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { activeCues, buildCues, cueSheet, holdCues, scoreAt, type Cue } from "./cues.ts";
+import { activeCues, buildCues, cueSheet, holdCues, passStats, scoreAt, type Cue } from "./cues.ts";
 import type { DecisionCard, MatchEvent, Review } from "./contracts.ts";
 import type { MatchLog, Timed } from "./datasource.ts";
 
@@ -205,4 +205,61 @@ test("scoreAt starts from the latest snapshot's score and adds only later goals"
   assert.deepEqual(scoreAt({ ...l, snapshots: [] }, pos(2, 3_020_000)), { RFC: 1, CAS: 2 }, "without snapshots, goals are counted");
   const late = event(3, 2, 3_015_000, "goal", "RFC", "RFC-10");
   assert.deepEqual(scoreAt({ ...l, events: [...goals, late] }, pos(2, 3_020_000)), { RFC: 2, CAS: 1 });
+});
+
+// --- sprint tags and stat graphics ---
+
+function pass(seq: number, period: 1 | 2, tMs: number, team: string, player: string, x: number, endX: number) {
+  return event(seq, period, tMs, "pass", team, player, { x, y: 30, end_x: endX, end_y: 30, outcome: "complete" });
+}
+
+test("long sprints get a sprint cue; the focus player's sprints always do", () => {
+  const sprints = [event(1, 1, 60_000, "sprint", "RFC", "RFC-07", { dist_m: 34.5 }),
+    event(2, 1, 70_000, "sprint", "RFC", "RFC-03", { dist_m: 12.0 }),
+    event(3, 1, 80_000, "sprint", "CAS", "CAS-09", { dist_m: 29.9 })];
+  const plain = ofKind(buildCues(log([], sprints), null), "sprint");
+  assert.deepEqual(plain.map((c) => c.data.player_id), ["RFC-07"]);
+  assert.equal(plain[0].data.dist_m, 34.5);
+  assert.equal(plain[0].out_pos, plain[0].in_pos + 6_000);
+  const focused = ofKind(buildCues(log([], sprints), "RFC-03"), "sprint");
+  assert.deepEqual(focused.map((c) => c.data.player_id), ["RFC-07", "RFC-03"]);
+});
+
+test("passStats measures passes from their start and end points", () => {
+  // RFC is home: attacks towards x = 105 in the first half, towards 0 in the second.
+  const events = [pass(1, 1, 60_000, "RFC", "RFC-04", 20, 50), pass(2, 1, 70_000, "RFC", "RFC-04", 50, 40),
+    pass(3, 2, 2_800_000, "RFC", "RFC-04", 80, 40), pass(4, 1, 80_000, "CAS", "CAS-10", 64, 30.2)];
+  const l = log([], events);
+  const rfc4 = passStats(l, pos(2, 3_000_000), (e) => e.player_id === "RFC-04");
+  assert.equal(rfc4.passes, 3);
+  assert.equal(rfc4.longest_m, 40);
+  assert.equal(rfc4.avg_m, 26.7);
+  assert.equal(rfc4.forward, 2, "30 m up in the first half and 40 m down in the second are forward");
+  const cas = passStats(l, pos(2, 3_000_000), (e) => e.team === "CAS");
+  assert.equal(cas.forward, 1, "the away side attacks towards x = 0 in the first half");
+  assert.equal(passStats(l, 65_000, () => true).passes, 1, "only passes up to pos");
+});
+
+test("stat cues every 15 minutes: the focus player's, or both teams'", () => {
+  const events = [pass(1, 1, 60_000, "RFC", "RFC-04", 20, 50),
+    event(2, 1, 61_000, "sprint", "RFC", "RFC-04", { dist_m: 31 }), event(3, 1, 62_000, "hsr", "RFC", "RFC-04", { dist_m: 12 })];
+  const teams = ofKind(buildCues(log([], events), null), "stats");
+  assert.deepEqual(teams.map((c) => c.id), ["stats:1-15", "stats:1-30", "stats:ht", "stats:2-60", "stats:2-75", "stats:2-90"]);
+  assert.equal(teams[0].in_pos, 900_000);
+  assert.equal(teams[2].in_pos, FIRST_HALF_END);
+  assert.equal(teams[0].out_pos, teams[0].in_pos + 12_000);
+  assert.equal(teams[0].data.scope, "teams");
+  const rfc = (teams[0].data.teams as Record<string, { passes: { passes: number } }>).RFC;
+  assert.equal(rfc.passes.passes, 1);
+  const player = ofKind(buildCues(log([], events), "RFC-04"), "stats")[0];
+  assert.equal(player.data.scope, "player");
+  assert.equal(player.data.player_id, "RFC-04");
+  assert.deepEqual(player.data.running, { sprints: 1, longest_sprint_m: 31, fast_m: 43 });
+});
+
+test("passStats skips a pass sent without its coordinates", () => {
+  const bare = event(1, 1, 60_000, "pass", "RFC", "RFC-04");
+  delete (bare.item as Partial<MatchEvent>).x;
+  delete (bare.item as Partial<MatchEvent>).end_x;
+  assert.equal(passStats(log([], [bare]), 100_000, () => true).passes, 0);
 });

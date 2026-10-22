@@ -255,7 +255,15 @@ def test_key_events_are_published_and_others_are_not(run):
     types = [e["type"] for e in events]
     assert set(types) <= set(live.KEY_EVENT_TYPES)
     assert types.count("goal") == 5 and types.count("sub") == 3
-    assert not {"pass", "hsr", "sprint"} & set(types)
+    assert types.count("pass") == 496 and types.count("sprint") == 473 and types.count("hsr") == 904
+    assert not {"duel", "out", "restart"} & set(types)
+
+
+def test_published_events_leave_out_empty_fields(run):
+    events = [m for m in run[0] if "seq" in m]
+    assert all(None not in e.values() for e in events)
+    sprint = next(e for e in events if e["type"] == "sprint")
+    assert set(sprint) == {"match_id", "seq", "t_ms", "period", "type", "team", "player_id", "dist_m"}
 
 
 def test_one_winprob_point_per_match_minute(run):

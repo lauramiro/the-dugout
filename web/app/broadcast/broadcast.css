@@ -597,3 +597,35 @@
   text-transform: none;
   letter-spacing: 0;
 }
+
+/* Sprint tags and the stats card */
+.bc-tag.sprint .bc-tag-label text { fill: #9fe6ff; }
+
+.bc-stats {
+  position: absolute;
+  right: 1.6cqw;
+  top: 22cqh;
+  min-width: 20cqw;
+  padding: 1.2cqh 1.1cqw;
+  font-size: 1cqw;
+  background: var(--bc-glass-strong);
+  border: 1px solid var(--bc-line);
+  border-top: 0.4cqh solid var(--bc-accent);
+  border-radius: 0.4cqw;
+  animation: bc-slide-left 380ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.bc-stats-title {
+  margin: 0 0 0.8cqh;
+  font-family: var(--font-display), sans-serif;
+  font-weight: 800;
+  font-size: 1.25em;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.bc-stats table { border-collapse: collapse; width: 100%; }
+.bc-stats th, .bc-stats td { padding: 0.25em 0.4em; text-align: right; font-variant-numeric: tabular-nums; }
+.bc-stats thead th { font-weight: 800; border-bottom: 1px solid var(--bc-line); }
+.bc-stats tbody th { text-align: left; font-weight: 400; color: var(--bc-muted); }
+.bc-stats td { font-weight: 700; }
