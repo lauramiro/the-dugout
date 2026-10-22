@@ -172,17 +172,30 @@ export class ReplayDataSource implements DataSource {
     }
   }
 
-  /** Fetch the chunk under the playhead first, then the rest in match order. */
+  /** Fetch the chunks around the playhead (a little behind, a minute and a half ahead), and more as it moves. */
   private async loadTracking(index: TrackingIndex, pos: (p: 1 | 2, t: number) => number): Promise<void> {
-    const pending = index.chunks.map((c) => ({ ...c, from: pos(c.period, c.from_t_ms), to: pos(c.period, c.to_t_ms) }));
-    while (pending.length && !this.disposed) {
+    const chunks = index.chunks.map((c) => ({ ...c, from: pos(c.period, c.from_t_ms), to: pos(c.period, c.to_t_ms), requested: false }));
+    const fetchChunk = async (chunk: (typeof chunks)[number]) => {
+      try {
+        const rows = await getJsonl<TrackingFrame>(`${this.base}/tracking/${chunk.file}`);
+        const timed = rows.map((f) => ({ pos: pos(f.period, f.t_ms), item: f }));
+        this.frames = [...this.frames, ...timed].sort((a, b) => a.pos - b.pos);
+        if (!this.state.playing) this.set({}); // redraw a paused pitch once its frames arrive
+      } catch {
+        chunk.requested = false; // the next playhead move tries again
+      }
+    };
+    const ensure = () => {
+      if (this.disposed) return;
       const at = this.state.playhead;
-      const i = Math.max(0, pending.findIndex((c) => c.to >= at));
-      const [chunk] = pending.splice(i, 1);
-      const rows = await getJsonl<TrackingFrame>(`${this.base}/tracking/${chunk.file}`);
-      const timed = rows.map((f) => ({ pos: pos(f.period, f.t_ms), item: f }));
-      this.frames = [...this.frames, ...timed].sort((a, b) => a.pos - b.pos);
-      if (!this.state.playing) this.set({}); // redraw a paused pitch once its frames arrive
-    }
+      for (const c of chunks) {
+        if (!c.requested && c.to >= at - 5_000 && c.from <= at + 90_000) {
+          c.requested = true;
+          void fetchChunk(c);
+        }
+      }
+    };
+    this.subscribe(ensure);
+    ensure();
   }
 }

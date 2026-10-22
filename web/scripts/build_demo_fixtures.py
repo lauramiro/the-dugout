@@ -2,7 +2,7 @@
 
 Everything here is pipeline output; nothing is hand-shaped:
 
-- snapshots and decision points from dugout.stream (state engine and triggers), fed the
+- snapshots (slimmed like the live feed) and decision points from dugout.stream (state engine and triggers), fed the
   recorded events in seq order, exactly as `python -m dugout.stream.snapshots` does;
 - one card per decision point: the payload from dugout.engine.payload.decide on the
   point's own snapshot, narrated by dugout.agents.pipeline with the stub client (which
@@ -33,6 +33,7 @@ from dugout.agents.recap import RecapRow, template_line
 from dugout.agents.templates import MODES
 from dugout.engine.options import Option, evaluate
 from dugout.engine.payload import decide
+from dugout.stream.pipeline import PUBLISH_EVERY_MS, slim_snapshot
 from dugout.stream.replay import read_events
 from dugout.stream.snapshots import lineup_from_scenario, process
 from dugout.stream.winprob import situation, winprob_point
@@ -221,7 +222,10 @@ def main() -> None:
     snapshots = [r["snapshot"] for r in records if r["kind"] == "snapshot"]
     points = [r for r in records if r["kind"] == "decision_point"]
     closed = {r["id"]: r for r in records if r["kind"] == "card_closed"}
-    write_jsonl(DEMO / "snapshots.jsonl", snapshots)
+    # Slimmed like the live feed: every PUBLISH_EVERY_MS plus the snapshot each card opens on.
+    opens = {(pt["snapshot"]["period"], pt["snapshot"]["t_ms"]) for pt in points}
+    write_jsonl(DEMO / "snapshots.jsonl", [slim_snapshot(s) for s in snapshots
+                                            if s["t_ms"] % PUBLISH_EVERY_MS == 0 or (s["period"], s["t_ms"]) in opens])
 
     windows = sub_windows(events)
     full_time = (2, end[2])

@@ -428,10 +428,11 @@
   left: 0;
   right: 0;
   bottom: 0;
-  height: 6cqh;
+  height: 7cqh;
   display: flex;
   align-items: stretch;
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0));
+  /* dark enough that touchline players under the worm fade out instead of competing with it */
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.88) 0%, rgba(0, 0, 0, 0.7) 55%, rgba(0, 0, 0, 0));
   font-size: 0.95cqw;
 }
 
@@ -607,10 +608,12 @@
 /* Sprint tags and the stats card */
 .bc-tag.sprint .bc-tag-label text { fill: #9fe6ff; }
 
+/* Top centre: clear of both penalty areas, the scorebug and the right-hand cards */
 .bc-stats {
   position: absolute;
-  right: 1.6cqw;
-  top: 22cqh;
+  left: 50%;
+  translate: -50% 0;
+  top: 9cqh;
   min-width: 20cqw;
   padding: 1.2cqh 1.1cqw;
   font-size: 1cqw;
@@ -635,3 +638,29 @@
 .bc-stats thead th { font-weight: 800; border-bottom: 1px solid var(--bc-line); }
 .bc-stats tbody th { text-align: left; font-weight: 400; color: var(--bc-muted); }
 .bc-stats td { font-weight: 700; }
+
+/* Phones. The stage is a letterboxed 16:9 picture, so in cqw the broadcast type is a few px
+   wide; the decision card keeps a readable size and drops its options table (the desk has it). */
+@media (max-width: 700px), (max-height: 500px) {
+  .bc-scorebug { font-size: max(10px, 1.35cqw); height: auto; min-height: 4.4cqh; }
+  .bc-lower,
+  .bc-call,
+  .bc-focus,
+  .bc-stats { font-size: max(11px, 1cqw); }
+  .bc-lower { width: min(max(42cqw, 280px), calc(100% - 3.2cqw)); }
+  .bc-options { display: none; }
+  .bc-call { max-width: min(30cqw, 45%); }
+}
+
+@media (max-width: 700px) and (orientation: portrait) {
+  .bc-wrap { align-items: start; }
+  /* the settings chip leaves the pitch and sits in the black below it */
+  .bc-stage { overflow: visible; }
+  .bc-field { overflow: hidden; }
+  .bc-settings { top: calc(100% + 8px); right: 8px; }
+  .bc-panel { max-height: 55vh; }
+  .bc-lower { width: calc(100% - 3.2cqw); }
+  .bc-call,
+  .bc-focus,
+  .bc-stats { display: none; }
+}

@@ -142,7 +142,7 @@ export default function Page() {
         <Ticker events={ticker} roster={roster} t={t} />
       </section>
 
-      <aside className="dugout" aria-label={t("dugout")}>
+      <aside className="dugout" tabIndex={0} aria-label={t("dugout")}>
         <DecisionCard card={card} snapshot={cardSnapshot} roster={roster} focus={focus} mode={mode} locale={locale} t={t} />
         <YourCall
           card={cardIdx >= 0 ? log.cards[cardIdx] : null}

@@ -69,7 +69,7 @@ export function Timeline({ winprob, goals, cards, playhead, duration, firstHalfE
       </div>
       <div ref={ref} className="timeline-plot">
         {width > 0 && (
-          <svg width={width} height={H} role="img" aria-label={t("timelineTeam", { team: teamName })}>
+          <svg width={width} height={H} role="group" aria-label={t("timelineTeam", { team: teamName })}>
             {[0, 0.25, 0.5, 0.75, 1].map((g) => (
               <g key={g} className={`grid${g === 0.5 ? " mid" : ""}`}>
                 <line x1={PAD.left} x2={PAD.left + innerW} y1={y(g)} y2={y(g)} />
