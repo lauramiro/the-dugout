@@ -20,11 +20,12 @@ LEAD_DAMP = 0.9  # leader sits deeper
 TRAIL_PUSH = 1.15  # trailer pushes
 # Fatigue constants fitted to true gaps on seeds 2-30 even (eval/counterfactual.py,
 # docs/evaluation.md), on the load-based condition estimate with recent minutes and the
-# condition_drop trigger; the illustrative values were 0.6, 0.8 and 1.03.
-FATIGUE_SLOPE = 1.35  # extra opponent rate per unit of condition below FATIGUE_FLOOR
+# condition_drop trigger, and both teams' tired players priced (refit 2026-10-22); the
+# illustrative values were 0.6, 0.8 and 1.03.
+FATIGUE_SLOPE = 1.5  # extra opponent rate per unit of condition below FATIGUE_FLOOR
 FATIGUE_FLOOR = 0.925
 CONDITION_MIN = 0.3
-BENCH_QUALITY = 1.06  # opponent rate multiplier once a like-for-like bench player is on
+BENCH_QUALITY = 1.075  # opponent rate multiplier once a like-for-like bench player is on
 _MAX_GOALS = 4  # per team per minute; the tail beyond this is negligible at these rates
 
 
