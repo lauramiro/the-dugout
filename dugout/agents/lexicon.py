@@ -32,7 +32,8 @@ COMING_ON = {
 FOREIGN_WORDS = {
     "en": (),
     "es": ("the", "and", "about", "points", "point", "better", "worse", "model", "change", "changes",
-           "option", "options", "with", "for", "than", "off", "fresh", "interval", "probability"),
+           "option", "options", "with", "for", "than", "off", "fresh", "interval", "probability",
+           "trade-offs", "trade-off"),
 }
 
 # Phrases that call the options close. Only a toss-up card, or one whose gap rounds to 0 points,

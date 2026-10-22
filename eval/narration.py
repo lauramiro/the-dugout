@@ -158,7 +158,7 @@ def classify(error: str) -> str:
     if "calls the options close" in error:
         return "close on a strong or lean card"
     if error.startswith("casual text"):
-        return "interval or decimals in casual"
+        return "casual: interval, decimals or a probability"
     if "write the whole text in" in error:
         return "wrong language"
     if "would come off" in error:

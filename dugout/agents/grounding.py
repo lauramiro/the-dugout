@@ -26,8 +26,8 @@ _COMING_ON = {
                   for p in patterns)
     for locale, patterns in COMING_ON.items()
 }
-# Option ids and request keys (sub_like_for_like, delta_whole, numbers.delta) are not words for a viewer.
-_INTERNAL_NAME = re.compile(r"\bnumbers\.\w+|\b[A-Za-z]+(?:_[A-Za-z0-9]+)+\b")
+# Option ids and request keys (sub_like_for_like, delta_whole, numbers.delta, xpts) are not words for a viewer.
+_INTERNAL_NAME = re.compile(r"\bnumbers\.\w+|\b[A-Za-z]+(?:_[A-Za-z0-9]+)+\b|\b[xX][pP][tT][sS]\b")
 _NUMBER = re.compile(r"(?<!\w)([+\-−])?(\d+)(?:([.,])(\d+))?")
 _FOREIGN = {locale: tuple(re.compile(rf"\b{w}\b", re.IGNORECASE) for w in words)
             for locale, words in FOREIGN_WORDS.items()}
@@ -78,6 +78,15 @@ def payload_numbers(payload: dict) -> list[Decimal]:
     for item in payload.get("evidence", []):
         numbers += [_pct(item[k]) for k in ("value", "share", "trend_per_min") if k in item]
     return numbers
+
+
+def _probabilities(payload: dict) -> list[Decimal]:
+    return [_pct(option[k]) for option in payload["options"] for k in ("win", "draw", "loss")]
+
+
+def _evidence_numbers(payload: dict) -> list[Decimal]:
+    return [_pct(item[k]) for item in payload.get("evidence", [])
+            for k in ("value", "share", "trend_per_min") if k in item]
 
 
 def payload_player_ids(payload: dict) -> set[str]:
@@ -181,6 +190,20 @@ def check_narration(narration: Narration, payload: dict, locale: str, mode: str 
         for match in _NUMBER.finditer(PLAYER_ID.sub(" ", narration.text)):
             if match.group(4):
                 errors.append(f"casual text uses whole numbers; {match.group(0)} has decimals")
+        # Casual gives the gap in points only: rounded probabilities read as nonsense ("2% from 2%").
+        # A percentage that is a piece of evidence (a player's condition) is still fine.
+        probabilities, evidence = _probabilities(payload), _evidence_numbers(payload)
+        text = PLAYER_ID.sub(" ", narration.text)
+        for match in _NUMBER.finditer(text):
+            if not text[match.end():].lstrip().startswith("%"):
+                continue
+            sign, whole, _, fraction = match.groups()
+            magnitude = Decimal(f"{whole}.{fraction}" if fraction else whole)
+            digits = len(fraction or "")
+            if (_matches(probabilities, sign or "", magnitude, digits)
+                    and not _matches(evidence, sign or "", magnitude, digits)):
+                errors.append(f"casual text quotes no win, draw or loss probability ({match.group(0)}%); "
+                              "give the gap in points")
     if len(narration.headline.split()) > MAX_HEADLINE_WORDS:
         errors.append(f"headline is longer than {MAX_HEADLINE_WORDS} words")
     if len(narration.reason.split()) > MAX_REASON_WORDS:

@@ -51,8 +51,8 @@ def test_interval_bounds_and_probabilities_are_known():
 
 
 def test_xpts_matches_with_two_decimals():
-    assert check_grounding("xPts 2.39 against 2.30 (strong).", SAMPLE_PAYLOAD, "en") == []
-    assert check_grounding("xPts 2.49 (strong).", SAMPLE_PAYLOAD, "en")
+    assert check_grounding("Expected points 2.39 against 2.30 (strong).", SAMPLE_PAYLOAD, "en") == []
+    assert check_grounding("Expected points 2.49 (strong).", SAMPLE_PAYLOAD, "en")
 
 
 def test_decimal_comma_is_parsed_for_es_and_ca():
@@ -193,3 +193,33 @@ def test_casual_text_quotes_no_interval_or_decimals(reason):
     narration = Narration("RFC-03 is fading (60%).", reason)
     assert check_narration(narration, SAMPLE_PAYLOAD, "en", mode="casual")
     assert check_narration(narration, SAMPLE_PAYLOAD, "en", mode="analyst") == []
+
+
+# Slips from the live replay of 2026-10-22, after the checks above.
+
+def test_trade_offs_left_in_english_in_spanish_is_reported():
+    line = "El modelo prefiere un cambio en la misma posición: +3,9 puntos; opciones y trade-offs (fuerte)."
+    assert any("'trade-offs'" in e for e in check_grounding(line, SAMPLE_PAYLOAD, "es"))
+    assert check_grounding(line.replace("trade-offs", "pros y contras"), SAMPLE_PAYLOAD, "es") == []
+
+
+@pytest.mark.parametrize("locale, word", [("en", "xpts"), ("es", "xPTS")])
+def test_xpts_is_an_internal_name(locale, word):
+    line = f"Un cambio da {word} 0,08 (fuerte)." if locale == "es" else f"A change gives {word} 0.08 (strong)."
+    assert any("internal name" in e for e in check_grounding(line, SAMPLE_PAYLOAD, locale))
+
+
+@pytest.mark.parametrize("locale, reason", [
+    ("en", "Win 73% against 69%, about 4 points better (strong)."),
+    ("es", "La victoria sube a 73% desde 69%, cerca de 4 puntos mejor (fuerte)."),
+])
+def test_casual_text_quotes_no_win_draw_or_loss_probability(locale, reason):
+    narration = Narration("RFC-03", reason)
+    errors = check_narration(narration, SAMPLE_PAYLOAD, locale, mode="casual")
+    assert any("probabilit" in e for e in errors)
+    assert check_narration(narration, SAMPLE_PAYLOAD, locale, mode="analyst") == []
+
+
+def test_casual_text_may_quote_condition_as_a_percentage():
+    narration = Narration("RFC-03 is fading (60%).", "The model rates changing now about 4 points better (strong).")
+    assert check_narration(narration, SAMPLE_PAYLOAD, "en", mode="casual") == []
