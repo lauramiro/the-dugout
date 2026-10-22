@@ -2,7 +2,7 @@
 // action. Only ids and counts are handled here; every number shown comes from the payload
 // or the review block as given.
 
-import { toPos } from "./clock";
+import { toPos } from "./clock.ts";
 import type { DecisionCard } from "./contracts";
 import type { Timed } from "./datasource";
 import type { Tally } from "./votes";

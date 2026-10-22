@@ -194,6 +194,15 @@ const en = {
   narrationMore: "Narration eval",
   gradedPoints: "{n} decision points",
   gradedFirstPass: "{v}% of replies pass the check first time",
+  story_open: "On TV: {team} as the match plays.",
+  story_decision: "The model flags {player}: a change is worth discussing.",
+  story_tablet: "In the dugout, the manager sees why: every player's condition, the options priced, the bench. {player} is picked out.",
+  story_vote: "Your call: what would you do?",
+  story_equaliser_flank: "{team} equalise down {player}'s flank.",
+  story_equaliser: "{team} equalise.",
+  story_manager: "The manager's change comes {minutes} minutes after the card.",
+  story_full_time: "Full time: what the {minute} call was worth.",
+  story_end: "Keep exploring: the TV picture, the analyst desk, the fan view, or how it's graded.",
 } as const;
 
 export type StringKey = keyof typeof en;
@@ -389,6 +398,15 @@ const es: Dict = {
   narrationMore: "Evaluación de la narración",
   gradedPoints: "{n} puntos de decisión",
   gradedFirstPass: "el {v}% de las respuestas pasa la comprobación a la primera",
+  story_open: "En la tele: {team} mientras se juega el partido.",
+  story_decision: "El modelo señala a {player}: merece la pena hablar de un cambio.",
+  story_tablet: "En el banquillo, el entrenador ve por qué: el estado físico de cada jugador, el valor de cada opción, el banquillo. {player}, destacado.",
+  story_vote: "Tu decisión: ¿qué harías tú?",
+  story_equaliser_flank: "{team} empata por la banda de {player}.",
+  story_equaliser: "{team} empata.",
+  story_manager: "El cambio del entrenador llega {minutes} minutos después de la tarjeta.",
+  story_full_time: "Final: lo que valía la decisión del {minute}.",
+  story_end: "Sigue explorando: la tele, el panel de análisis, la vista del aficionado o cómo se evalúa.",
 };
 
 
