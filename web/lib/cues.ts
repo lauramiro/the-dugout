@@ -4,7 +4,7 @@
 // Runtime imports carry the .ts extension so Node's test runner can load this file without
 // a bundler; clock.ts imports nothing.
 
-import { toPos } from "./clock.ts";
+import { formatMinute, toPos } from "./clock.ts";
 import type { DecisionCard, MatchEvent, TeamCode } from "./contracts";
 import type { MatchLog, Timed } from "./datasource";
 
@@ -272,6 +272,7 @@ function whatIfCue(log: MatchLog): Cue | null {
   const rows = reviewed.map(({ item }) => ({
     decision_id: item.payload.decision_id,
     minute: Math.floor(item.payload.t_ms / MIN_MS),
+    label: formatMinute(item.period, item.payload.t_ms),
     model: item.review!.model,
     manager: item.review!.manager,
     gap_win: item.review!.gap_win,

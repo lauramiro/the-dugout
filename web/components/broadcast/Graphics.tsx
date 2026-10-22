@@ -133,6 +133,7 @@ const WHATIF_ROWS = 5;
 interface Row {
   decision_id: string;
   minute: number;
+  label: string;
   gap_win: number | null;
 }
 
@@ -158,7 +159,7 @@ export function WhatIf({ cue, cards, roster, locale, mode, t }: {
           const recap = card.review?.recap[locale]?.[mode] ?? card.review?.recap.en?.[mode];
           return (
             <li key={row.decision_id} className={`bc-whatif-row${row.decision_id === lead ? " lead" : ""}`}>
-              <span className="bc-whatif-minute">{row.minute}&apos;</span>
+              <span className="bc-whatif-minute">{row.label}</span>
               <span className="bc-whatif-calls">
                 <span><em>{t("model")}</em> {model.label}</span>
                 <span><em>{t("manager")}</em> {manager ? manager.label : t("notYet")}</span>

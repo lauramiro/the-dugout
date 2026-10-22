@@ -263,3 +263,9 @@ test("passStats skips a pass sent without its coordinates", () => {
   delete (bare.item as Partial<MatchEvent>).end_x;
   assert.equal(passStats(log([], [bare]), 100_000, () => true).passes, 0);
 });
+
+test("what-if rows label added time the way the lower third does", () => {
+  const l = log([card({ id: "a", period: 1, t_ms: 2_820_000, review: review(0.031) }), card({ id: "b", t_ms: 3_600_000, review: review(0.004) })]);
+  const rows = ofKind(buildCues(l, null), "whatif")[0].data.rows as { decision_id: string; label: string }[];
+  assert.deepEqual(rows.map((r) => r.label), ["45+3'", "60'"]);
+});
