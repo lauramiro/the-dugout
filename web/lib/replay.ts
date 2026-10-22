@@ -174,7 +174,9 @@ export class ReplayDataSource implements DataSource {
 
   /** Fetch the chunks around the playhead (a little behind, a minute and a half ahead), and more as it moves. */
   private async loadTracking(index: TrackingIndex, pos: (p: 1 | 2, t: number) => number): Promise<void> {
-    const chunks = index.chunks.map((c) => ({ ...c, from: pos(c.period, c.from_t_ms), to: pos(c.period, c.to_t_ms), requested: false }));
+    const chunks = index.chunks.map((c) => ({
+      ...c, from: pos(c.period, c.from_t_ms), to: pos(c.period, c.to_t_ms), requested: false, failures: 0, retryAt: 0,
+    }));
     const fetchChunk = async (chunk: (typeof chunks)[number]) => {
       try {
         const rows = await getJsonl<TrackingFrame>(`${this.base}/tracking/${chunk.file}`);
@@ -182,14 +184,18 @@ export class ReplayDataSource implements DataSource {
         this.frames = [...this.frames, ...timed].sort((a, b) => a.pos - b.pos);
         if (!this.state.playing) this.set({}); // redraw a paused pitch once its frames arrive
       } catch {
-        chunk.requested = false; // the next playhead move tries again
+        // ensure() runs on every state change (each frame while playing): back off, 1 s doubling to 30 s
+        chunk.failures += 1;
+        chunk.retryAt = performance.now() + Math.min(30_000, 1000 * 2 ** (chunk.failures - 1));
+        chunk.requested = false;
       }
     };
     const ensure = () => {
       if (this.disposed) return;
       const at = this.state.playhead;
+      const now = performance.now();
       for (const c of chunks) {
-        if (!c.requested && c.to >= at - 5_000 && c.from <= at + 90_000) {
+        if (!c.requested && now >= c.retryAt && c.to >= at - 5_000 && c.from <= at + 90_000) {
           c.requested = true;
           void fetchChunk(c);
         }
