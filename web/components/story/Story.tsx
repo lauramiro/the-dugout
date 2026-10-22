@@ -94,7 +94,21 @@ export function StoryEnd({ onReplay, onClose, onPanel, extra, t }: {
   );
 }
 
-/** A step's screen over the TV picture (the tablet's desk, later the phone's fan view). */
+/** A device bezel around a real screen: the manager's tablet or the fan's phone. On a narrow
+ *  window the bezel is dropped by CSS and the screen fills the window. */
+export function DeviceFrame({ device, children }: { device: "tablet" | "phone"; children: ReactNode }) {
+  return (
+    <div className={`st-device ${device}`}>
+      <div className="st-device-screen">{children}</div>
+    </div>
+  );
+}
+
+/** A step's screen over the dimmed TV picture, in its device frame. */
 export function StoryScreen({ device, children }: { device: "tablet" | "phone"; children: ReactNode }) {
-  return <div className={`st-screen ${device}`}>{children}</div>;
+  return (
+    <div className={`st-screen ${device}`}>
+      <DeviceFrame device={device}>{children}</DeviceFrame>
+    </div>
+  );
 }
