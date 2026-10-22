@@ -13,6 +13,7 @@
 #            subscription), SWA_REGION (default eastus2; westeurope refused, northeurope not offered), BUDGET_USD (default 20),
 #            PREFIX (default dugout), LIVE_EVERY_MIN (default 30: the demo match kicks off every
 #            30 minutes from midnight UTC; 0 skips the replay job), LIVE_SPEED (default 5)
+#            WPS_SKU (default Free_F1: 20 connections, 20,000 messages a day; Standard_S1 for judging days)
 #
 # Idempotent: each create is an upsert or is skipped when the resource exists.
 # Secrets are read into shell variables and passed on, never echoed or written to disk,
@@ -63,6 +64,7 @@ BUDGET_USD="${BUDGET_USD:-20}"
 PREFIX="${PREFIX:-dugout}"
 LIVE_EVERY_MIN="${LIVE_EVERY_MIN:-30}"
 LIVE_SPEED="${LIVE_SPEED:-5}"
+WPS_SKU="${WPS_SKU:-Free_F1}"
 # The job starts two minutes before each slot, so slots must be at least 5 minutes apart.
 if (( LIVE_EVERY_MIN != 0 && (LIVE_EVERY_MIN < 5 || 60 % LIVE_EVERY_MIN != 0) )); then
   echo "LIVE_EVERY_MIN must be 0 or a divisor of 60 from 5 up" >&2; exit 2
@@ -134,7 +136,17 @@ run az eventhubs namespace create --name "$EH_NS" --resource-group "$RG" --locat
 run az eventhubs eventhub create --name "$HUB" --namespace-name "$EH_NS" --resource-group "$RG" --partition-count 2 --cleanup-policy Delete --retention-time 24 --output none
 
 echo "# 3. Web PubSub"
-run az webpubsub create --name "$WPS" --resource-group "$RG" --location "$REGION" --sku Free_F1 --output none
+# An existing service keeps its data and keys; a tier change goes through update (create would reset
+# it to the tier given). Free_F1 to Standard_S1 moves the service, with a gap of up to an hour.
+if [[ $APPLY == 1 ]] && az webpubsub show --name "$WPS" --resource-group "$RG" >/dev/null 2>&1; then
+  if [[ "$(az webpubsub show --name "$WPS" --resource-group "$RG" --query sku.name -o tsv)" != "$WPS_SKU" ]]; then
+    run az webpubsub update --name "$WPS" --resource-group "$RG" --sku "$WPS_SKU" --unit-count 1 --output none
+  else
+    echo "web pubsub $WPS is already $WPS_SKU, keeping it"
+  fi
+else
+  run az webpubsub create --name "$WPS" --resource-group "$RG" --location "$REGION" --sku "$WPS_SKU" --unit-count 1 --output none
+fi
 # The hub needs no setup: Web PubSub creates a hub on first use.
 
 echo "# 4. Static Web Apps (no repo: content is uploaded in step 7)"
