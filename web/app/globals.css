@@ -1235,6 +1235,13 @@ p {
   text-transform: uppercase;
 }
 
+a.review-open {
+  display: inline-flex;
+  align-items: center;
+  color: inherit;
+  text-decoration: none;
+}
+
 .review-open:hover:not(:disabled) {
   background: var(--ink);
   color: var(--panel);

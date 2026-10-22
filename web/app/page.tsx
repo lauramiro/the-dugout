@@ -1,188 +1,278 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { DecisionCard } from "../components/DecisionCard";
-import { ConditionBars, WindowChips } from "../components/Dugout";
-import { ModeSwitcher, type Settings } from "../components/ModeSwitcher";
-import { Pitch } from "../components/Pitch";
-import { Timeline } from "../components/Timeline";
-import { Controls, Scoreboard, Ticker } from "../components/MatchZone";
-import { Review } from "../components/Review";
-import { YourCall } from "../components/YourCall";
-import type { Vote } from "../lib/calls";
-import { fromPos, lastAtOrBefore } from "../lib/clock";
-import type { DecisionCard as Card, Locale } from "../lib/contracts";
-import { score, tickerEvents } from "../lib/derive";
-import { LOCALES, translator } from "../lib/i18n";
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import { FieldView, type PlayerTag } from "../components/broadcast/FieldView";
+import { FocusCard, GoalFlash, ManagerCall, StatsCard, WhatIf } from "../components/broadcast/Graphics";
+import { LowerThird } from "../components/broadcast/LowerThird";
+import { Worm } from "../components/broadcast/Worm";
+import { useHeldCues } from "../components/broadcast/useHeldCues";
+import { Scorebug } from "../components/broadcast/Scorebug";
+import {
+  DEFAULT_PREFS, readPrefs, SettingsChip, writePrefs, type BroadcastPrefs,
+} from "../components/broadcast/SettingsChip";
+import { Stage } from "../components/broadcast/Stage";
+import { aheadPos, fromPos, lastAtOrBefore, toPos } from "../lib/clock";
+import type { Locale, Roster, Snapshot } from "../lib/contracts";
+import { buildCues, cueSheet, scoreAt, type Cue } from "../lib/cues";
+import type { DataSource, FeedState, MatchLog, PitchFrame } from "../lib/datasource";
+import { playerName } from "../lib/derive";
+import { decimal, translator, type Translate } from "../lib/i18n";
+import { ReplayDataSource } from "../lib/replay";
 import { useDataSource, useFeed } from "../lib/useFeed";
-import { LocalVotes, ServiceVotes, type VoteStore } from "../lib/votes";
+import "./broadcast.css";
 
-const TICKER_LENGTH = 8;
-const SETTINGS_KEY = "dugout.settings";
+// The broadcast picture: the match full-bleed from the tracking data, graphics on top.
+// The analyst desk is at /desk; /broadcast is kept as an alias of this page.
 
-// Per-viewer preference only; the page works the same without storage.
-function readSettings(): Partial<Settings> {
-  try {
-    const raw = JSON.parse(localStorage.getItem(SETTINGS_KEY) ?? "{}") as Record<string, unknown>;
-    const out: Partial<Settings> = {};
-    if (raw.mode === "casual" || raw.mode === "analyst") out.mode = raw.mode;
-    if (LOCALES.includes(raw.locale as Locale)) out.locale = raw.locale as Locale;
-    if (typeof raw.focus === "string") out.focus = raw.focus;
-    return out;
-  } catch {
-    return {};
-  }
-}
-
-function writeSettings(settings: Settings): void {
-  try {
-    localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
-  } catch {
-    // storage blocked: keep the choice for this visit only
-  }
-}
-
-export default function Page() {
+export default function BroadcastPage() {
   const source = useDataSource();
   const feed = useFeed(source);
-  const { log, playhead, status } = feed;
-  const { roster } = log;
-  const [settings, setSettings] = useState<Settings>({ mode: "casual", focus: "", locale: "en" });
-  useEffect(() => setSettings((s) => ({ ...s, ...readSettings() })), []);
+  const { log, playhead } = feed;
+  const live = source.kind === "live";
+
+  const [cuesJson, setCuesJson] = useState(false);
+  useEffect(() => setCuesJson(new URLSearchParams(window.location.search).get("cues") === "json"), []);
+  const [prefs, setPrefs] = useState<BroadcastPrefs>(DEFAULT_PREFS);
+  useEffect(() => setPrefs((p) => ({ ...p, ...readPrefs() })), []);
   useEffect(() => {
-    document.documentElement.lang = settings.locale;
-  }, [settings.locale]);
-  const changeSettings = (next: Settings) => {
-    setSettings(next);
-    writeSettings(next);
+    document.documentElement.lang = prefs.locale;
+  }, [prefs.locale]);
+  const changePrefs = (next: BroadcastPrefs) => {
+    setPrefs(next);
+    writePrefs(next);
   };
-  const { mode, locale } = settings;
-  const t = useMemo(() => translator(locale), [locale]);
+  const t = useMemo(() => translator(prefs.locale), [prefs.locale]);
 
-  // The focus club is listed first in the dugout panel.
-  const teams = useMemo(() => {
-    if (!roster) return [];
-    return settings.focus === roster.away ? [roster.away, roster.home] : [roster.home, roster.away];
-  }, [roster, settings.focus]);
-  const { period, tMs } = fromPos(playhead, log.firstHalfEnd);
-  const finished = source.kind === "replay" && status === "ready" && playhead >= log.duration;
-
-  const evIdx = lastAtOrBefore(log.events, playhead);
-  const goals = useMemo(() => score(log.events, evIdx, teams), [log.events, evIdx, teams]);
-  const ticker = useMemo(() => tickerEvents(log.events, evIdx, TICKER_LENGTH), [log.events, evIdx]);
-
-  const snapIdx = lastAtOrBefore(log.snapshots, playhead);
-  const snapshot = snapIdx >= 0 ? log.snapshots[snapIdx].item : null;
-
-  // One open card at a time: the latest one the playhead has reached.
-  const cardIdx = lastAtOrBefore(log.cards, playhead);
-  const card: Card | null = cardIdx >= 0 ? log.cards[cardIdx].item : null;
-  const cardSnapIdx = cardIdx >= 0 ? lastAtOrBefore(log.snapshots, log.cards[cardIdx].pos) : -1;
-  const cardSnapshot = cardSnapIdx >= 0 ? log.snapshots[cardSnapIdx].item : null;
-  const flagged = card?.payload.evidence.find((e) => e.type === "condition");
-  const flaggedId = flagged && flagged.type === "condition" ? flagged.player_id : null;
-  const focus = roster && settings.focus in roster.teams ? settings.focus : (roster?.home ?? "");
-  const allGoals = useMemo(() => log.events.filter((e) => e.item.type === "goal"), [log.events]);
-
-  // Your call: replay votes stay in the page; live votes also go to the service.
-  const voteStore = useMemo<VoteStore>(() => (source.kind === "live" ? new ServiceVotes() : new LocalVotes()), [source.kind]);
-  const [votes, setVotes] = useState<Record<string, Vote>>({});
-  const castVote = useCallback(
-    (id: string, option: string | null) => {
-      setVotes((v) => (id in v ? v : { ...v, [id]: { option, tally: null, error: null } }));
-      if (option === null) return;
-      voteStore.cast(id, option).then(
-        (tally) => setVotes((v) => ({ ...v, [id]: { ...v[id], tally } })),
-        (err: unknown) => setVotes((v) => ({ ...v, [id]: { ...v[id], error: err instanceof Error ? err.message : String(err) } })),
-      );
-    },
-    [voteStore],
-  );
-
-  // The review opens by itself once at full time, and from its button at any point.
-  const [reviewOpen, setReviewOpen] = useState(false);
-  const shownAtFullTime = useRef(false);
+  // A broadcast runs on its own: replay starts once loaded; space pauses and resumes.
+  const started = useRef(false);
   useEffect(() => {
-    if (finished && !shownAtFullTime.current) {
-      shownAtFullTime.current = true;
-      setReviewOpen(true);
-    }
-    if (!finished) shownAtFullTime.current = false;
-  }, [finished]);
+    if (started.current || feed.status !== "ready" || !source.controls) return;
+    started.current = true;
+    source.controls.play();
+  }, [feed.status, source]);
+  useEffect(() => {
+    const controls = source.controls;
+    if (!controls) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.code !== "Space" || (e.target as HTMLElement | null)?.closest("button, select, input")) return;
+      e.preventDefault();
+      if (source.getState().playing) controls.pause();
+      else controls.play();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [source]);
+
+  const pos = useSmoothedPos(playhead, live);
+  const recorded = useRecordedTracking(source, log, pos);
+  const frame = live ? recorded.frame : source.frameAt(pos);
+
+  const { tMs } = fromPos(pos, log.firstHalfEnd);
+  const goals = scoreAt(log, pos);
+
+  const cues = useMemo(() => buildCues(log, prefs.player), [log, prefs.player]);
+  const shown = useHeldCues(cues, pos);
+  const snapshotAt = lastAtOrBefore(log.snapshots, pos);
+  const snapshot = snapshotAt >= 0 ? log.snapshots[snapshotAt].item : null;
+  const tags = playerTags(shown, prefs.player, snapshot, frame, log.roster, prefs.locale, t);
+  const latest = (kind: Cue["kind"]) => [...shown].reverse().find((c) => c.kind === kind);
+  const decision = latest("decision");
+  const goalCue = latest("goal");
+  const callCue = latest("manager_call");
+  const focusCue = latest("focus_event");
+  const statsCue = latest("stats");
+  // Full time: replay's playhead stops at the end, so the segment shows from there on.
+  const whatifCue = cues.find((c) => c.kind === "whatif" && pos >= c.in_pos);
+  const decisionCard = decision
+    ? log.cards.find((c) => c.item.payload.decision_id === decision.data.decision_id)?.item
+    : undefined;
+
+  if (cuesJson) return <CueSheetView log={log} focus={prefs.player} source={source.kind} />;
 
   return (
-    <main className="screen">
-      <header className="topbar">
-        <div className="brand">
-          <h1>The Dugout</h1>
-          <span className="tagline">{t("tagline")}</span>
-        </div>
-        <div className="topbar-actions">
-          <ModeSwitcher settings={{ ...settings, focus }} roster={roster} onChange={changeSettings} t={t} />
-          <button className="review-open" onClick={() => setReviewOpen(true)} disabled={status !== "ready"}>
-            {finished ? t("review") : t("openReview")}
-          </button>
-        </div>
-      </header>
-
-      <section className="match" aria-label={roster ? `${roster.teams[roster.home].name} v ${roster.teams[roster.away].name}` : undefined}>
-        <Scoreboard roster={roster} score={goals} period={period} tMs={tMs} finished={finished} t={t} />
-        <div className="pitch-wrap">
-          <Pitch frame={source.frameAt(playhead)} roster={roster} highlight={flaggedId} label={t("pitch")} />
-          {status !== "ready" && (
-            <div className="pitch-status" role="status">
-              {status === "error" ? t("loadError", { error: feed.error ?? "" }) : source.kind === "live" ? t("waitingLive") : t("loading")}
-            </div>
-          )}
-        </div>
-        <Controls controls={source.controls} playing={feed.playing} speed={feed.speed} finished={finished} t={t} />
-        <Ticker events={ticker} roster={roster} t={t} />
-      </section>
-
-      <aside className="dugout" aria-label={t("dugout")}>
-        <DecisionCard card={card} snapshot={cardSnapshot} roster={roster} focus={focus} mode={mode} locale={locale} t={t} />
-        <YourCall
-          card={cardIdx >= 0 ? log.cards[cardIdx] : null}
-          cards={log.cards}
-          votes={votes}
-          onVote={castVote}
-          playhead={playhead}
-          firstHalfEnd={log.firstHalfEnd}
-          roster={roster}
+    <Stage label={t("broadcastLabel")}>
+      <FieldView frame={frame} roster={log.roster} tags={tags} label={t("broadcastLabel")} />
+      {decisionCard && (
+        <LowerThird
+          key={decisionCard.payload.decision_id}
+          card={decisionCard}
+          roster={log.roster}
+          mode={prefs.mode}
+          locale={prefs.locale}
           t={t}
         />
-        <WindowChips snapshot={snapshot} roster={roster} teams={teams} t={t} />
-        <ConditionBars snapshot={snapshot} roster={roster} teams={teams} mode={mode} locale={locale} flagged={flaggedId} t={t} />
-      </aside>
-
-      <Timeline
+      )}
+      {goalCue && <GoalFlash key={goalCue.id} cue={goalCue} roster={log.roster} t={t} />}
+      {callCue && <ManagerCall key={callCue.id} cue={callCue} roster={log.roster} t={t} />}
+      {statsCue && (
+        <StatsCard key={statsCue.id} cue={statsCue} roster={log.roster} locale={prefs.locale} mode={prefs.mode} t={t} />
+      )}
+      {focusCue && prefs.player && (
+        <FocusCard key={focusCue.id} cue={focusCue} focus={prefs.player} roster={log.roster} t={t} />
+      )}
+      {whatifCue && (
+        <WhatIf
+          cue={whatifCue}
+          cards={log.cards.map((c) => c.item)}
+          roster={log.roster}
+          locale={prefs.locale}
+          mode={prefs.mode}
+          t={t}
+        />
+      )}
+      <Worm
         winprob={log.winprob}
-        goals={allGoals}
-        cards={log.cards}
-        playhead={playhead}
+        cards={log.cards.map((c) => c.pos)}
+        playhead={pos}
         duration={log.duration}
         firstHalfEnd={log.firstHalfEnd}
-        roster={roster}
-        focus={focus}
-        onSeek={source.controls?.seek ?? null}
+        roster={log.roster}
+        club={prefs.club}
+        locale={prefs.locale}
         t={t}
       />
-
-      <p className="foot">{t("demoNote")}</p>
-
-      <Review
-        open={reviewOpen}
-        onClose={() => setReviewOpen(false)}
-        cards={log.cards}
-        votes={votes}
-        playhead={playhead}
-        firstHalfEnd={log.firstHalfEnd}
-        finished={finished}
-        roster={roster}
-        locale={locale}
-        mode={mode}
+      <Scorebug roster={log.roster} score={goals} tMs={tMs} live={live} club={prefs.club} t={t} />
+      <SettingsChip
+        prefs={prefs}
+        onChange={changePrefs}
+        roster={log.roster}
+        controls={source.controls}
+        feed={feed}
+        recordedTracking={recorded.active}
+        extra={
+          <>
+            <button type="button" onClick={() => downloadCueSheet(cueSheet(log, prefs.player, source.kind))}>
+              {t("exportCues")}
+            </button>
+            {/* Keeps ?source=live and ?t= when moving between the two views. */}
+            <a href="/desk" onClick={(e) => { e.currentTarget.href = `/desk${window.location.search}`; }}>
+              {t("analystDesk")}
+            </a>
+          </>
+        }
         t={t}
       />
-    </main>
+    </Stage>
   );
+}
+
+/** ?cues=json: the cue sheet as plain JSON instead of the picture, for a graphics system. */
+function CueSheetView({ log, focus, source }: { log: MatchLog; focus: string | null; source: "replay" | "live" }) {
+  return <pre className="bc-cuesheet">{JSON.stringify(cueSheet(log, focus, source), null, 2)}</pre>;
+}
+
+function downloadCueSheet(sheet: ReturnType<typeof cueSheet>): void {
+  const blob = new Blob([JSON.stringify(sheet, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `cues-${sheet.match_id ?? "match"}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+/** The focus player always; a fading player while the cue runs. The ring is the latest
+ *  snapshot's condition estimate. */
+/** Speed (m/s) above which a tag shows the player's current speed: about 25 km/h. */
+const SPEED_SHOW_MS = 7;
+/** Speed (m/s) that triggers a tag on any player: 28.8 km/h, about the top 1% of frames. */
+const SPEED_TAG_MS = 8;
+
+/** Tags on the pitch, one per player, in this order of precedence: a fading player while the
+ *  cue runs, a sprinting player (distance from the sprint event), the focus player always
+ *  (running stats from the snapshot), any player above SPEED_TAG_MS. Speed comes from the
+ *  tracking frame as given and shows only while the player is fast. */
+function playerTags(shown: readonly Cue[], focus: string | null, snapshot: Snapshot | null, frame: PitchFrame | null,
+  roster: Roster | null, locale: Locale, t: Translate): PlayerTag[] {
+  const stats = (id: string) => snapshot?.players.find((p) => p.id === id);
+  const condition = (id: string) => stats(id)?.condition_est ?? null;
+  const speed = (id: string) => frame?.players.find((p) => p.id === id)?.v ?? null;
+  const kmh = (v: number) => t("speedKmh", { v: decimal(v * 3.6, locale, 1) });
+  const tags = new Map<string, PlayerTag>();
+  for (const cue of shown) {
+    if (cue.kind !== "fading") continue;
+    const id = String(cue.data.player_id);
+    const value = condition(id) ?? Number(cue.data.condition);
+    tags.set(id, { id, label: `${playerName(roster, id)} · ${Math.round(value * 100)}%`, detail: null, ring: value, tone: "fading" });
+  }
+  for (const cue of shown) {
+    if (cue.kind !== "sprint") continue;
+    const id = String(cue.data.player_id);
+    if (tags.has(id)) continue;
+    const v = speed(id);
+    const d = Number(cue.data.dist_m);
+    tags.set(id, {
+      id, label: `${playerName(roster, id)} · ${t("sprintTag", { d: decimal(d, locale, 0) })}`,
+      detail: v !== null && v >= SPEED_SHOW_MS ? kmh(v) : null, ring: null, tone: "sprint",
+    });
+  }
+  if (focus && !tags.has(focus)) {
+    const p = stats(focus);
+    const v = speed(focus);
+    const running = p ? t("tagStats", { hsr: p.hsr_m_10m, sprints: p.sprints_10m }) : null;
+    const detail = v !== null && v >= SPEED_SHOW_MS ? [kmh(v), running].filter(Boolean).join(" · ") : running;
+    tags.set(focus, { id: focus, label: playerName(roster, focus), detail, ring: condition(focus), tone: "focus" });
+  }
+  for (const p of frame?.players ?? []) {
+    if (p.v < SPEED_TAG_MS || tags.has(p.id)) continue;
+    tags.set(p.id, { id: p.id, label: `${playerName(roster, p.id)} · ${kmh(p.v)}`, detail: null, ring: null, tone: "sprint" });
+  }
+  return [...tags.values()];
+}
+
+const MAX_RATE = 30; // match ms per wall ms: above the fastest replay speed (20x)
+const MAX_AHEAD_MS = 3000; // never draw further than this past the last message
+
+/** Replay: the playhead as is. Live: the playhead only moves when a message arrives, so
+ *  between messages the picture runs on at the rate the last messages came in. */
+function useSmoothedPos(playhead: number, live: boolean): number {
+  const last = useRef({ pos: playhead, wall: 0, rate: 0 });
+  const [shown, setShown] = useState(playhead);
+  useEffect(() => {
+    if (!live) return;
+    const now = performance.now();
+    const prev = last.current;
+    const dt = now - prev.wall;
+    const rate = prev.wall && dt > 0 ? Math.min(MAX_RATE, Math.max(0, (playhead - prev.pos) / dt)) : prev.rate;
+    last.current = { pos: playhead, wall: now, rate: prev.wall ? rate * 0.5 + prev.rate * 0.5 : 0 };
+  }, [playhead, live]);
+  useEffect(() => {
+    if (!live) return;
+    let raf = 0;
+    const tick = () => {
+      const { pos, wall, rate } = last.current;
+      setShown(aheadPos(pos, wall, rate, performance.now(), MAX_AHEAD_MS));
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [live]);
+  return live ? shown : playhead;
+}
+
+const noSubscribe = () => () => {};
+const noState = () => null;
+
+/** Live: no tracking comes over Web PubSub, so when the live match is the recorded demo match,
+ *  draw the recorded tracking at the live clock (and say so in the settings). */
+function useRecordedTracking(source: DataSource, log: MatchLog, pos: number): { frame: PitchFrame | null; active: boolean } {
+  const recorded = useMemo(() => (source.kind === "live" ? new ReplayDataSource() : null), [source]);
+  useEffect(() => {
+    if (!recorded) return;
+    recorded.start();
+    return () => recorded.dispose();
+  }, [recorded]);
+  const state: FeedState | null = useSyncExternalStore(
+    recorded?.subscribe ?? noSubscribe, recorded?.getState ?? noState, recorded?.getState ?? noState,
+  );
+  // The live log does not know where the first half ended; map through (period, t_ms).
+  const { period, tMs } = fromPos(pos, log.firstHalfEnd);
+  const recPos = state ? toPos(period, tMs, state.log.firstHalfEnd) : 0;
+  const bucket = Math.floor(recPos / 5000);
+  useEffect(() => {
+    recorded?.controls.seek(bucket * 5000); // load the tracking chunk under the live clock first
+  }, [recorded, bucket]);
+  const liveMatch = log.snapshots[0]?.item.match_id ?? log.events[0]?.item.match_id;
+  const active = !!recorded && !!state && !!liveMatch && liveMatch === state.log.events[0]?.item.match_id;
+  return { frame: active ? recorded.frameAt(recPos) : null, active };
 }
