@@ -139,8 +139,16 @@ def classify(error: str) -> str:
         return "wrong decimal separator"
     if error.startswith("number"):
         return "number not in payload"
+    if error.startswith("player") and "not the tiring player" in error:
+        return "takes off a player who is not tiring"
     if error.startswith("player") and "come off" in error:
         return "player on, not off"
+    if error.startswith("taking") and "pick is another option" in error:
+        return "takes a player off when the pick is another option"
+    if "without an expected-points value" in error:
+        return "gap called expected points"
+    if "say the options are about even" in error:
+        return "casual: zero points"
     if error.startswith("player"):
         return "unknown player id"
     if "contradicts" in error:

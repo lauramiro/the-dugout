@@ -166,7 +166,7 @@ export function AboutPanel({ onClose, onPanel, t }: { onClose: () => void; onPan
 }
 
 // From docs/evaluation.md (rerun 2026-10-22, test set, calibrated constants) and
-// eval/results/narration.md (run 2026-10-22). Rerun those and update these together.
+// eval/results/narration.md (run 2026-10-23). Rerun those and update these together.
 const GRADED = {
   r: 0.74,
   rCi: [0.62, 0.83],
@@ -174,9 +174,9 @@ const GRADED = {
   points: 74,
   fadeSign: 100,
   fadePoints: 16,
-  narrated: 94,
+  narrated: 83,
   narratedOf: 100,
-  firstPass: 88.1,
+  firstPass: 84.2,
 };
 
 export function GradedPanel({ onClose, locale, t }: { onClose: () => void; locale: Locale; t: Translate }) {

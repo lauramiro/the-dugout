@@ -89,6 +89,12 @@ def test_error_classes_group_by_kind():
     assert classify("headline is longer than 12 words") == "over the word limit"
     assert classify("reply is not JSON with a headline and a reason") == "not valid JSON"
     assert classify("internal name 'no_change' in the text; use plain words") == "internal name"
+    assert classify("player RFC-09 is not the tiring player; only he would come off") == "takes off a player who is not tiring"
+    assert classify("taking RFC-03 off is the like-for-like change, but the model's pick is another option; "
+                    "name that option instead") == "takes a player off when the pick is another option"
+    assert classify("'expected points' without an expected-points value; the gap between options is in points "
+                    "of win probability") == "gap called expected points"
+    assert classify("'0 points': say the options are about even, without a number") == "casual: zero points"
     assert classify("something new") == "other"
 
 
