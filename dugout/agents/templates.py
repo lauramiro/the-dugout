@@ -121,10 +121,11 @@ def template_narration(payload: dict, locale: str, mode: str) -> Narration:
     option = recommended_option(payload)
 
     condition = _find_condition(payload)
-    fading, plain = text["headline"][payload["trigger"]]
+    # a trigger the templates do not name (an eval sample, a request to POST /decisions) reads as a condition card
+    fading, plain = text["headline"].get(payload["trigger"], text["headline"]["condition_drop"])
     if condition is not None and condition["value"] < CONDITION_LINE and "player" in values:
         headline = fading.format(**values)
-    elif payload["trigger"] != "condition_drop":
+    elif payload["trigger"] in ("goal_after_55", "manager_sub"):
         headline = plain
     elif "player" in values:
         headline = plain.format(**values)

@@ -104,3 +104,21 @@ def test_headline_says_fading_only_below_the_condition_line(trigger):
 def test_every_trigger_headline_passes_grounding(locale, mode, condition, trigger):
     payload = trigger_payload(trigger, condition)
     assert check_narration(template_narration(payload, locale, mode), payload, locale, mode=mode) == []
+
+
+@pytest.mark.parametrize("locale", LOCALES)
+def test_unknown_trigger_falls_back_to_the_general_headline(locale):
+    # The narration eval samples snapshots with its own trigger name, and POST /decisions takes any;
+    # a fallback card must still be written rather than raise.
+    payload = trigger_payload("eval_sample", 0.60)
+    narration = template_narration(payload, locale, "casual")
+    assert narration.headline == template_narration(trigger_payload("condition_drop", 0.60), locale, "casual").headline
+    assert check_narration(narration, payload, locale, mode="casual") == []
+
+
+@pytest.mark.parametrize("locale", LOCALES)
+def test_unknown_trigger_above_the_line_names_the_player(locale):
+    payload = trigger_payload("eval_sample", 0.75)
+    headline = template_narration(payload, locale, "casual").headline
+    assert "{" not in headline
+    assert headline == template_narration(trigger_payload("condition_drop", 0.75), locale, "casual").headline
