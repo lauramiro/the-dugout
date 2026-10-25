@@ -1,1 +1,1 @@
-The Dugout's TV picture at 60 minutes: the decision card says take Leon Varga off for a fresh player, with the win probability of each option and the model's pick, over the pitch drawn from tracking.
+The Dugout's TV picture at 60 minutes of the recorded demo match: the decision card says take Leon Varga off for a fresh player, with the win probability of each option and the model's pick, over the pitch drawn from tracking.

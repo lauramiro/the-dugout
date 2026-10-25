@@ -10,13 +10,16 @@ const led = Doto({ subsets: ["latin"], variable: "--font-led", weight: ["700", "
 
 const description = "Live decision guide: who is tiring, the bench's options and what each is worth, on a replayed synthetic match. Written by Microsoft Foundry agents and checked in code, running on Azure.";
 
+// Link previews cut long text, so the claim comes first.
+const share = "A manager's substitution, explained as it happens by Microsoft Foundry agents and checked in code, on Azure. Recorded demo.";
+
 // The share card (app/opengraph-image.png, a frame of the TV picture at the 60' card) needs an absolute URL.
 export const metadata = {
   metadataBase: new URL("https://ashy-ocean-03bdf100f.2.azurestaticapps.net"),
   title: "The Dugout",
   description,
-  openGraph: { title: "The Dugout", description, type: "website", siteName: "The Dugout" },
-  twitter: { card: "summary_large_image", title: "The Dugout", description },
+  openGraph: { title: "The Dugout", description: share, type: "website", siteName: "The Dugout" },
+  twitter: { card: "summary_large_image", title: "The Dugout", description: share },
 };
 
 export const viewport = { width: "device-width", initialScale: 1, themeColor: "#e6ebe8" };

@@ -9,5 +9,5 @@ test("the share image is 1200x630 and the link preview points at the site the RE
   assert.equal(png.readUInt32BE(16), 1200);
   assert.equal(png.readUInt32BE(20), 630);
   const site = /new URL\("([^"]+)"\)/.exec(read("../app/layout.tsx").toString())?.[1];
-  assert.ok(site && read("../../README.md").toString().includes(`**Try it:** ${site}`), site);
+  assert.ok(site && read("../../README.md").toString().includes(`**Try it:** ${site}`), String(site));
 });
