@@ -5,7 +5,7 @@ import { FieldView, type PlayerTag } from "../components/broadcast/FieldView";
 import { FocusCard, GoalFlash, ManagerCall, StatsCard, WhatIf } from "../components/broadcast/Graphics";
 import { KickoffSlate, useLiveSchedule } from "../components/broadcast/KickoffSlate";
 import {
-  AboutPanel, Chrome, GradedPanel, Slate, TitleCard, TracePanel, useTitleCard, type PanelId,
+  AboutPanel, Chrome, GradedPanel, HoodPanel, Slate, TitleCard, TracePanel, useTitleCard, type PanelId,
 } from "../components/broadcast/Landing";
 import { LowerThird } from "../components/broadcast/LowerThird";
 import { Worm } from "../components/broadcast/Worm";
@@ -331,6 +331,7 @@ export default function BroadcastPage() {
       />
       {panel === "about" && <AboutPanel onClose={closePanel} onPanel={openPanel} t={t} />}
       {panel === "graded" && <GradedPanel onClose={closePanel} locale={prefs.locale} t={t} />}
+      {panel === "hood" && <HoodPanel onClose={closePanel} onPanel={openPanel} t={t} />}
       {panel === "trace" && <TracePanel narration={traced} roster={log.roster} onClose={closePanel} t={t} />}
     </Stage>
   );

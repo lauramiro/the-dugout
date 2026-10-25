@@ -10,7 +10,7 @@ const led = Doto({ subsets: ["latin"], variable: "--font-led", weight: ["700", "
 
 export const metadata = {
   title: "The Dugout",
-  description: "Live decision guide: who is tiring, the bench's options and what each is worth, on a replayed synthetic match.",
+  description: "Live decision guide: who is tiring, the bench's options and what each is worth, on a replayed synthetic match. Written by Microsoft Foundry agents and checked in code, running on Azure.",
 };
 
 export const viewport = { width: "device-width", initialScale: 1, themeColor: "#e6ebe8" };

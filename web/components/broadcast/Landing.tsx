@@ -5,12 +5,13 @@ import { withNames } from "../../lib/derive";
 import { stepLabel } from "../../lib/trace";
 import { SPEEDS, type FeedState, type PlaybackControls, type Timed } from "../../lib/datasource";
 import { decimal, type Translate } from "../../lib/i18n";
+import { HOOD_CHAIN, HOOD_SERVICES, MCP_URL, REPO_URL } from "../../lib/hood";
 
 // What a first-time viewer needs around the picture: the name and premise, links that are
 // always on screen, chapters to jump between decisions, a slate while there is no picture,
-// and the About and How it's graded panels.
+// and the About, How it's graded and Under the hood panels.
 
-export type PanelId = "about" | "graded" | "trace";
+export type PanelId = "about" | "graded" | "hood" | "trace";
 
 const REPO = "https://github.com/lauramiro/the-dugout/blob/main";
 const TITLE_MS = 8000;
@@ -63,6 +64,7 @@ export function Chrome({ cards, duration, feed, controls, onPanel, onSeek, onSto
         <button type="button" onClick={() => onPanel("about")}>{t("about")}</button>
         <DeskLink t={t} />
         <button type="button" onClick={() => onPanel("graded")}>{t("howGraded")}</button>
+        <button type="button" onClick={() => onPanel("hood")}>{t("hoodNav")}</button>
       </nav>
       {controls && ready && (
         <div className="bc-transport">
@@ -122,7 +124,7 @@ export function Slate({ kind, error, t }: { kind: "loading" | "waiting" | "error
 }
 
 /** A modal panel over the whole window (the top layer, so the picture's size does not limit it). */
-function Panel({ title, onClose, children, t }: { title: string; onClose: () => void; children: ReactNode; t: Translate }) {
+function Panel({ title, onClose, children, t, className }: { title: string; onClose: () => void; children: ReactNode; t: Translate; className?: string }) {
   const ref = useRef<HTMLDialogElement>(null);
   useEffect(() => {
     const dialog = ref.current;
@@ -131,7 +133,7 @@ function Panel({ title, onClose, children, t }: { title: string; onClose: () => 
   return (
     <dialog
       ref={ref}
-      className="bc-dialog"
+      className={className ? `bc-dialog ${className}` : "bc-dialog"}
       aria-labelledby="bc-dialog-title"
       onClose={onClose}
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
@@ -162,6 +164,7 @@ export function AboutPanel({ onClose, onPanel, t }: { onClose: () => void; onPan
       <p className="bc-dialog-links">
         <DeskLink t={t} />
         <button type="button" onClick={() => onPanel("graded")}>{t("howGraded")}</button>
+        <button type="button" onClick={() => onPanel("hood")}>{t("hoodNav")}</button>
       </p>
     </Panel>
   );
@@ -251,6 +254,46 @@ export function GradedPanel({ onClose, locale, t }: { onClose: () => void; local
       <p className="bc-dialog-links">
         <a href={`${REPO}/docs/evaluation.md`} target="_blank" rel="noreferrer">{t("gradedMore")}</a>
         <a href={`${REPO}/eval/results/narration.md`} target="_blank" rel="noreferrer">{t("narrationMore")}</a>
+      </p>
+    </Panel>
+  );
+}
+
+/** What runs where: the architecture, one row per service, the agent chain and the MCP endpoint.
+ *  No live status: the decision service scales to zero, so a cold start would read as broken. */
+export function HoodPanel({ onClose, onPanel, t }: { onClose: () => void; onPanel: (panel: PanelId) => void; t: Translate }) {
+  return (
+    <Panel title={t("hoodTitle")} onClose={onClose} t={t} className="bc-hood-dialog">
+      <p className="bc-dialog-lead">{t("hoodLead")}</p>
+      <figure className="bc-hood-figure">
+        {/* A copy of docs/architecture.svg, with the Web PubSub tier corrected to Standard. */}
+        <div className="bc-hood-scroll">
+          <img src="/architecture.svg" alt={t("hoodDiagramAlt")} width={2775} height={405} />
+        </div>
+        <figcaption><a href="/architecture.svg" target="_blank" rel="noreferrer">{t("hoodDiagramOpen")}</a></figcaption>
+      </figure>
+      <h3 className="bc-hood-h">{t("hoodServices")}</h3>
+      <dl className="bc-hood-services">
+        {HOOD_SERVICES.map((s) => (
+          <div key={s.id}>
+            <dt>{s.name}</dt>
+            <dd>{t(`hood_${s.id}`)}</dd>
+          </div>
+        ))}
+      </dl>
+      <h3 className="bc-hood-h">{t("hoodChain")}</h3>
+      <ol className="bc-hood-chain">
+        {HOOD_CHAIN.map((s) => (
+          <li key={s.id} className={s.check ? "check" : undefined}>{t(`hood_${s.id}`)}</li>
+        ))}
+      </ol>
+      <p className="bc-dialog-note">{t("hoodChainNote")}</p>
+      <h3 className="bc-hood-h">{t("hoodMcp")}</h3>
+      <p className="bc-hood-url"><code>{MCP_URL}</code></p>
+      <p className="bc-dialog-note">{t("hoodMcpHint")}</p>
+      <p className="bc-dialog-links">
+        <a href={REPO_URL} target="_blank" rel="noreferrer">{t("hoodRepo")}</a>
+        <button type="button" onClick={() => onPanel("graded")}>{t("howGraded")}</button>
       </p>
     </Panel>
   );

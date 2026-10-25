@@ -863,7 +863,7 @@ button.bc-option.bc-voted { color: var(--bc-ink); border-color: var(--bc-accent)
 
 .bc-dialog::backdrop { background: rgba(0, 0, 0, 0.6); }
 
-.bc-dialog-body { display: grid; gap: 14px; padding: 20px 24px 24px; }
+.bc-dialog-body { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; padding: 20px 24px 24px; }
 .bc-dialog p { margin: 0; }
 
 .bc-dialog-head {
@@ -907,6 +907,28 @@ button.bc-option.bc-voted { color: var(--bc-ink); border-color: var(--bc-accent)
 .bc-graded-stats dd { margin: 0; display: grid; }
 .bc-graded-stats strong { font-size: 26px; font-weight: 800; color: var(--bc-accent); font-variant-numeric: tabular-nums; }
 .bc-graded-stats dd span { color: var(--bc-muted); font-size: 13px; }
+
+/* Under the hood: the diagram is 2775 x 405, so it scrolls sideways at a size its labels can be read, and opens full size */
+.bc-hood-figure { margin: 0; }
+.bc-hood-scroll { overflow-x: auto; border-radius: 6px; background: #fff; }
+.bc-hood-scroll img { display: block; width: 100%; min-width: 1300px; height: auto; }
+.bc-hood-figure figcaption { margin-top: 6px; font-size: 13px; }
+.bc-hood-figure figcaption a { color: var(--bc-accent); }
+.bc-hood-dialog { width: min(980px, calc(100vw - 32px)); }
+.bc-hood-h { margin: 6px 0 0; font-size: 13px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--bc-muted); }
+.bc-hood-services { margin: 0; display: grid; gap: 8px; }
+.bc-hood-services > div { display: grid; grid-template-columns: minmax(150px, 1fr) 2.4fr; gap: 4px 14px; padding: 8px 12px; border: 1px solid var(--bc-line); border-radius: 8px; }
+.bc-hood-services dt { font-weight: 700; color: var(--bc-accent); }
+.bc-hood-services dd { margin: 0; font-size: 14px; }
+.bc-hood-chain { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; align-items: stretch; gap: 8px; }
+.bc-hood-chain li { padding: 6px 12px; border: 1px solid var(--bc-line); border-radius: 8px; font-weight: 600; }
+.bc-hood-chain li.check { border-style: dashed; border-color: #45b277; font-weight: 500; }
+.bc-hood-chain li + li::before { content: "\2192"; margin-right: 8px; color: var(--bc-muted); }
+.bc-hood-url { overflow-wrap: anywhere; }
+.bc-hood-url code { font-size: 13px; padding: 2px 6px; border-radius: 4px; background: rgba(255, 255, 255, 0.08); }
+@media (max-width: 560px) {
+  .bc-hood-services > div { grid-template-columns: 1fr; }
+}
 
 .bc-graded-figure { margin: 0; display: grid; gap: 6px; }
 .bc-graded-figure img { width: 100%; height: auto; border-radius: 6px; background: #fff; }
@@ -1165,7 +1187,7 @@ button.bc-option.bc-voted { color: var(--bc-ink); border-color: var(--bc-accent)
 }
 
 /* The lower third's credit line, and how a line was written (TracePanel) */
-.bc-lower-credit { margin: 0.2em 0 0; font-size: 0.75em; color: var(--bc-muted); display: flex; flex-wrap: wrap; align-items: center; gap: 0.6em; }
+.bc-lower-credit { margin: 0.2em 0 0; font-size: max(12px, 0.75em); color: var(--bc-muted); display: flex; flex-wrap: wrap; align-items: center; gap: 0.6em; }
 .bc-lower-credit button {
   font: inherit; color: var(--bc-accent); background: none; border: 0; padding: 0;
   text-decoration: underline; text-underline-offset: 2px; cursor: pointer;
