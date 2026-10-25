@@ -1,10 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { VOTE_SECONDS, type Vote } from "../../lib/calls";
 import { formatMinute } from "../../lib/clock";
 import type { DecisionCard, Locale, Mode, Narration, Roster } from "../../lib/contracts";
 import { withNames } from "../../lib/derive";
 import { pct, points, strengthKey, triggerKey, type Translate } from "../../lib/i18n";
-import { SPEECH_LANG, speechText } from "../../lib/speech";
+import { SPEECH_LANG, narrationLocale, speechText } from "../../lib/speech";
 import { optionLabel } from "../DecisionCard";
 
 interface Props {
@@ -74,7 +74,7 @@ export function LowerThird({ card, roster, mode, locale, vote, onVote, running, 
             {onTrace && narration.trace && narration.trace.length > 0 && (
               <button type="button" onClick={onTrace}>{t("traceOpen")}</button>
             )}
-            <ReadAloud text={speechText(narration, roster)} lang={SPEECH_LANG[locale]} t={t} />
+            <ReadAloud text={speechText(narration, roster)} lang={SPEECH_LANG[narrationLocale(card, locale, mode)]} t={t} />
           </p>
         </div>
       )}
@@ -147,24 +147,36 @@ export function useVoteTimer(running: boolean, onDone: () => void): number {
   return Math.ceil(leftMs / 1000);
 }
 
-/** Reads the card's line with the browser's speech, where it has one; stops when the card closes. */
+/** Reads the card's line with the browser's speech, where it has one; stops when the card closes or its line
+ *  changes (another language or view). */
 function ReadAloud({ text, lang, t }: { text: string; lang: string; t: Translate }) {
   const [supported, setSupported] = useState(false);
   const [speaking, setSpeaking] = useState(false);
-  useEffect(() => {
-    setSupported(typeof window !== "undefined" && "speechSynthesis" in window);
-    return () => {
-      if ("speechSynthesis" in window) window.speechSynthesis.cancel();
-    };
-  }, []);
+  // The utterance in flight: cancel() ends the old one asynchronously, and only the current one may say it is done.
+  const current = useRef<SpeechSynthesisUtterance | null>(null);
+  useEffect(() => setSupported(typeof window !== "undefined" && "speechSynthesis" in window), []);
+  useEffect(() => () => {
+    if (current.current) window.speechSynthesis.cancel();
+    current.current = null;
+    setSpeaking(false);
+  }, [text, lang]);
   if (!supported) return null;
   const toggle = () => {
     const synth = window.speechSynthesis;
     synth.cancel();
-    if (speaking) return setSpeaking(false);
+    if (speaking) {
+      current.current = null;
+      return setSpeaking(false);
+    }
     const line = new SpeechSynthesisUtterance(text);
     line.lang = lang;
-    line.onend = line.onerror = () => setSpeaking(false);
+    line.onend = line.onerror = () => {
+      if (current.current === line) {
+        current.current = null;
+        setSpeaking(false);
+      }
+    };
+    current.current = line;
     setSpeaking(true);
     synth.speak(line);
   };
