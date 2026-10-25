@@ -266,3 +266,30 @@ def test_taking_off_the_tiring_player_on_a_like_for_like_card_passes():
 def test_casual_zero_points_is_reported():
     narration = Narration(headline="Go for an attacking change", reason="The model sees about 0 points of difference (strong).")
     assert any("about even" in e for e in check_narration(narration, SAMPLE_PAYLOAD, "en", mode="casual"))
+
+
+@pytest.mark.parametrize("dash", ["—", "–"])
+def test_long_dashes_are_reported(dash):
+    errors = check_grounding(f"The model prefers a like-for-like change {dash} about 4 points better (strong).", SAMPLE_PAYLOAD, "en")
+    assert any("dash" in e for e in errors)
+
+
+def test_a_toss_up_headline_that_calls_for_an_action_is_reported():
+    payload = copy.deepcopy(SAMPLE_PAYLOAD)
+    payload["recommendation"]["strength"] = "toss_up"
+    for locale, headline in (("en", "Go for an attacking change"), ("es", "A por un cambio ofensivo")):
+        narration = Narration(headline=headline, reason="The options are close (toss-up)." if locale == "en"
+                              else "Las opciones están igualadas (igualado).")
+        assert any("toss-up headline" in e for e in check_narration(narration, payload, locale))
+    calm = Narration(headline="Little to choose between the options", reason="The options are close (toss-up).")
+    assert not any("toss-up headline" in e for e in check_narration(calm, payload, "en"))
+
+
+def test_unas_before_puntos_is_reported():
+    errors = check_grounding("El modelo prefiere un cambio, unas 4 puntos mejor (fuerte).", SAMPLE_PAYLOAD, "es")
+    assert any("unos" in e for e in errors)
+
+
+def test_a_tilde_for_about_is_reported():
+    errors = check_grounding("A like-for-like change is ~4 points better (strong).", SAMPLE_PAYLOAD, "en")
+    assert any("'~'" in e for e in errors)

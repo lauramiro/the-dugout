@@ -55,6 +55,13 @@ TAKING_OFF = {
 # A casual gap of zero points: say the options are about even instead ("about 0 points better").
 ZERO_POINTS = {"en": r"(?<![\d.])0\s+points?\b", "es": r"(?<![\d,])0\s+puntos?\b"}
 
+# A toss-up headline that calls for an action: on a toss-up the headline says the options are
+# close, or it implies a change is coming when the model sees almost no difference.
+TOSS_UP_ACTIONS = {
+    "en": r"\b(?:go for|take|make|shore it up|keep the same|bring)\b",
+    "es": r"\b(?:a por|sacar a|hacer un|cerrar filas|mantener el mismo)\b",
+}
+
 # Expected points, which a text may name only beside an expected-points value: the gap between
 # options is in points of win probability, and the model sometimes calls it expected points
 # ("+5.8 points in expected points" for a 0.15 gain).

@@ -14,7 +14,7 @@ from decimal import ROUND_HALF_UP, Decimal
 
 from dugout.agents.lexicon import (
     CLOSE_PHRASES, COMING_ON, DECIMAL_SEPARATOR, EXPECTED_POINTS, FOREIGN_WORDS, LOCALES, STRENGTH_LABELS,
-    TAKING_OFF, WRONG_ARTICLE, ZERO_POINTS,
+    TAKING_OFF, TOSS_UP_ACTIONS, WRONG_ARTICLE, ZERO_POINTS,
 )
 
 MAX_HEADLINE_WORDS = 12
@@ -39,6 +39,8 @@ _TAKING_OFF = {
                   for p in patterns)
     for locale, patterns in TAKING_OFF.items()
 }
+_TOSS_UP_ACTIONS = {locale: re.compile(p, re.IGNORECASE) for locale, p in TOSS_UP_ACTIONS.items()}
+_UNAS_PUNTOS = re.compile(r"\bunas\s+\d+\s+puntos?\b", re.IGNORECASE)
 _ZERO_POINTS = {locale: re.compile(p, re.IGNORECASE) for locale, p in ZERO_POINTS.items()}
 _EXPECTED_POINTS = {locale: re.compile(p, re.IGNORECASE) for locale, p in EXPECTED_POINTS.items()}
 _INTERVAL_WORD = {"en": re.compile(r"\binterval\b", re.IGNORECASE), "es": re.compile(r"\bintervalo\b", re.IGNORECASE)}
@@ -136,6 +138,12 @@ def check_grounding(text: str, payload: dict, locale: str) -> list[str]:
         raise ValueError(f"unknown locale: {locale}")
     errors: list[str] = []
 
+    if (dash := next((d for d in ("\u2014", "\u2013") if d in text), None)):
+        errors.append(f"long dash '{dash}' in the text; use a comma, a colon or a full stop")
+    if "~" in text:
+        errors.append("'~' for about; write it in words")
+    if locale == "es" and (match := _UNAS_PUNTOS.search(text)):
+        errors.append(f"'{match.group(0)}': puntos is masculine, write unos")
     for name in dict.fromkeys(_INTERNAL_NAME.findall(text)):
         errors.append(f"internal name '{name}' in the text; use plain words")
 
@@ -208,6 +216,8 @@ def check_grounding(text: str, payload: dict, locale: str) -> list[str]:
 def check_narration(narration: Narration, payload: dict, locale: str, mode: str | None = None) -> list[str]:
     """check_grounding plus the word limits; with mode="casual", no interval and whole numbers only."""
     errors = check_grounding(narration.text, payload, locale)
+    if payload["recommendation"]["strength"] == "toss_up" and (match := _TOSS_UP_ACTIONS[locale].search(narration.headline)):
+        errors.append(f"toss-up headline calls for an action ('{match.group(0)}'); say the options are close")
     if mode == "casual":
         if _INTERVAL_WORD[locale].search(narration.text):
             errors.append("casual text does not quote the interval")

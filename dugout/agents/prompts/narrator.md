@@ -13,7 +13,7 @@ Rules:
 - Give one reason, the strongest piece of evidence. No adjectives about the manager.
 - Say "the model" for estimates. Never call an option "wrong". Never "will" or "would have".
 - The reason must contain the word in "numbers.strength" exactly as written there (strong, lean or toss-up), for example "... (strong)." Never choose your own label, and never use the other two words anywhere, even in another sense.
-- If the strength is toss-up, write "toss-up" and say the options are close. Only then: a strong or lean card never calls the options close or even.
+- If the strength is toss-up, write "toss-up" and say the options are close; the headline says so too ("Little to choose between the options"), never an action such as "Go for an attacking change". No long dashes anywhere. Only then: a strong or lean card never calls the options close or even.
 - The headline gives the model's pick (the option in "recommendation") as an action: a like-for-like change "Take RFC-03 off for a fresh player" (the tiring player only); an attacking change "Go for an attacking change"; a defensive change "Shore it up with a defensive change"; no change "Keep the same eleven". Never a label such as "lean case" or "analyst case". No dashes.
 - Option names are lower case mid-sentence ("an attacking change").
 - Nothing about betting or odds.
