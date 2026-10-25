@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import type { Locale, Mode, Roster, TeamCode } from "../../lib/contracts";
 import { SPEEDS, type FeedState, type PlaybackControls } from "../../lib/datasource";
 import { LOCALES, type Translate } from "../../lib/i18n";
@@ -51,11 +51,31 @@ interface Props {
 /** Top-right chip: closed it shows the viewer's mode and language; open, every setting. */
 export function SettingsChip({ prefs, onChange, roster, controls, feed, recordedTracking, extra, t }: Props) {
   const [open, setOpen] = useState(false);
+  const root = useRef<HTMLDivElement>(null);
+  const chip = useRef<HTMLButtonElement>(null);
+  // Open, it closes like any popover: Escape (focus back on the chip) or a press outside it.
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      setOpen(false);
+      chip.current?.focus();
+    };
+    const onPress = (e: PointerEvent) => {
+      if (!root.current?.contains(e.target as Node)) setOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    window.addEventListener("pointerdown", onPress);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      window.removeEventListener("pointerdown", onPress);
+    };
+  }, [open]);
   const set = (patch: Partial<BroadcastPrefs>) => onChange({ ...prefs, ...patch });
   const teams = roster ? [roster.home, roster.away] : [];
   return (
-    <div className={`bc-settings${open ? " open" : ""}`}>
-      <button type="button" className="bc-chip" aria-expanded={open} onClick={() => setOpen(!open)}>
+    <div ref={root} className={`bc-settings${open ? " open" : ""}`}>
+      <button ref={chip} type="button" className="bc-chip" aria-expanded={open} onClick={() => setOpen(!open)}>
         {t("broadcastSettings")} · {prefs.locale.toUpperCase()} · {prefs.mode === "casual" ? t("casual") : t("analyst")}
       </button>
       {open && (

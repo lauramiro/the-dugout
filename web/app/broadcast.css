@@ -163,6 +163,9 @@
   font-size: max(11px, 0.95cqw);
   z-index: 5;
 }
+/* the box spans the gap above the open panel: only the chip and the panel take clicks */
+.bc-settings { pointer-events: none; }
+.bc-settings > * { pointer-events: auto; }
 
 .bc-chip,
 .bc-panel button,
@@ -192,6 +195,8 @@
 .bc-panel {
   display: grid;
   gap: 0.7em;
+  /* open, it starts below the links and chapter buttons that sit over the top of the picture, so FT stays clickable */
+  margin-top: 16cqh;
   padding: 0.9em 1em;
   background: var(--bc-glass-strong);
   border: 1px solid var(--bc-line);
@@ -976,6 +981,7 @@ a.bc-hood-open:hover { filter: brightness(1.08); }
 
 /* A tall screen: the controls go under the picture instead of over it */
 @media (max-aspect-ratio: 1 / 1) {
+  .bc-panel { margin-top: 0; } /* the controls sit under the picture here */
   .bc-chrome {
     position: static;
     translate: none;
