@@ -14,6 +14,9 @@
 #            PREFIX (default dugout), LIVE_EVERY_MIN (default 30: the demo match kicks off every
 #            30 minutes from midnight UTC; 0 skips the replay job), LIVE_SPEED (default 5)
 #            WPS_SKU (default Free_F1: 20 connections, 20,000 messages a day; Standard_S1 for judging days)
+#            SERVICE_MIN_REPLICAS (default 0: the decision service scales to zero and its first request
+#            after a quiet spell waits for a cold start, 25 s measured on 2026-10-25; 1 keeps one replica
+#            warm, and the in-memory votes with it, at the cost of an always-on replica)
 #
 # Idempotent: each create is an upsert or is skipped when the resource exists.
 # Secrets are read into shell variables and passed on, never echoed or written to disk,
@@ -65,6 +68,7 @@ PREFIX="${PREFIX:-dugout}"
 LIVE_EVERY_MIN="${LIVE_EVERY_MIN:-30}"
 LIVE_SPEED="${LIVE_SPEED:-5}"
 WPS_SKU="${WPS_SKU:-Free_F1}"
+SERVICE_MIN_REPLICAS="${SERVICE_MIN_REPLICAS:-0}"
 # The job starts two minutes before each slot, so slots must be at least 5 minutes apart.
 if (( LIVE_EVERY_MIN != 0 && (LIVE_EVERY_MIN < 5 || 60 % LIVE_EVERY_MIN != 0) )); then
   echo "LIVE_EVERY_MIN must be 0 or a divisor of 60 from 5 up" >&2; exit 2
@@ -180,6 +184,8 @@ run_quiet "store Web PubSub connection string and Foundry key as secrets" \
 run az containerapp update --name "$APP" --resource-group "$RG" --set-env-vars \
   "WEBPUBSUB_CONNECTION_STRING=secretref:wps-conn" "WEBPUBSUB_HUB=$PUBSUB_HUB" \
   "STUB_CORS_ORIGINS=https://$SWA_HOST" "${FOUNDRY_ENV[@]}"
+# Applied on every run, so going back to 0 after the judging days is the same command with the default.
+run az containerapp update --name "$APP" --resource-group "$RG" --min-replicas "$SERVICE_MIN_REPLICAS" --output none
 SERVICE_FQDN="$(capture az containerapp show --name "$APP" --resource-group "$RG" --query properties.configuration.ingress.fqdn -o tsv)"
 
 need SERVICE_FQDN "$SERVICE_FQDN"

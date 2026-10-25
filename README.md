@@ -86,7 +86,7 @@ Claude Code: `claude mcp add --transport http the-dugout https://dugout-service.
 | Service | Role in The Dugout | Configuration |
 | --- | --- | --- |
 | **Azure Event Hubs** | Ingest: the match event stream, decoupled from whoever consumes it | Hub `matchevents`, Basic tier, 2 partitions, 24 h retention |
-| **Azure Container Apps** | Compute: the live pipeline runner and the decision service, two apps from one image | Runner: 1 replica, no ingress, its own start command. Service: external HTTPS ingress, scales 0 to 10 replicas. 0.5 vCPU, 1 GiB each |
+| **Azure Container Apps** | Compute: the live pipeline runner and the decision service, two apps from one image | Runner: 1 replica, no ingress, its own start command. Service: external HTTPS ingress, scales 0 to 10 replicas (`SERVICE_MIN_REPLICAS=1` in the deploy script keeps one warm, so the first request after a quiet spell does not wait for a cold start). 0.5 vCPU, 1 GiB each |
 | **Azure Container Registry** | The one image both apps run, built in Azure from the repo's `Dockerfile` by `az containerapp up` | Basic; each app pulls with its system-assigned managed identity, no registry password |
 | **Microsoft Foundry** | The model behind the narration and recap agents | `gpt-5-mini` (2025-08-07), Global Standard, minimal reasoning effort, uksouth |
 | **Microsoft Agent Framework** | The narration workflow: narrator, grounding check, localizer, grounding check, with retries | `dugout/agents/workflow.py` |
