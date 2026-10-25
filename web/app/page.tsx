@@ -179,14 +179,17 @@ export default function BroadcastPage() {
   const statsCue = latest("stats");
   // Full time: replay's playhead stops at the end, so the segment shows from there on.
   const whatifCue = cues.find((c) => c.kind === "whatif" && pos >= c.in_pos);
-  const report = whatifCue ? matchReport(log, whatifCue, log.cards.map((c) => c.item), story.active ? storyCardId : null) : null;
-  const reportLinesNow = report
-    ? reportLines(report, log.roster, prefs.locale, prefs.mode, t, log.cards.map((c) => c.item))
-    : null;
   const decisionCard = decision
     ? log.cards.find((c) => c.item.payload.decision_id === decision.data.decision_id)?.item
     : undefined;
   const fullTime = !live && feed.status === "ready" && playhead >= log.duration;
+  // The report says "Full time", so only at the replay's full time (live has no known end yet).
+  const report = whatifCue && fullTime
+    ? matchReport(log, whatifCue, log.cards.map((c) => c.item), story.active ? storyCardId : null)
+    : null;
+  const reportLinesNow = report
+    ? reportLines(report, log.roster, prefs.locale, prefs.mode, t, log.cards.map((c) => c.item))
+    : null;
   const [titleShown, hideTitle] = useTitleCard(!!decision);
   const voteId = decisionCard?.payload.decision_id;
   const onVote = useCallback((option: string | null) => {

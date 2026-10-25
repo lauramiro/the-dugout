@@ -45,8 +45,10 @@ export function whatIfLead(cue: Cue, cards: readonly DecisionCard[], leadId: str
 export function matchReport(log: MatchLog, whatif: Cue, cards: readonly DecisionCard[],
   leadId: string | null): MatchReport | null {
   if (!log.roster) return null;
+  // Live, a goal message can arrive twice: one per seq.
+  const seqs = new Set<number>();
   const goals = log.events
-    .filter(({ item }) => item.type === "goal")
+    .filter(({ item }) => item.type === "goal" && !seqs.has(item.seq) && seqs.add(item.seq))
     .map(({ item }) => ({ team: item.team, player_id: item.player_id, label: formatMinute(item.period, item.t_ms) }));
   const leadCard = cards.find((c) => c.payload.decision_id === whatIfLead(whatif, cards, leadId));
   return {
@@ -77,8 +79,9 @@ export function reportLines(report: MatchReport, roster: Roster | null, locale: 
   })];
   for (const team of [report.home, report.away]) {
     const scored = report.goals.filter((g) => g.team === team);
-    if (!scored.length) continue;
-    const list = scored.map((g) => `${playerName(roster, g.player_id)} ${g.label}`).join(", ");
+    // A dropped goal message would list fewer scorers than the score says: leave the list out then.
+    if (!scored.length || scored.length !== report.score[team]) continue;
+    const list = scored.map((g) => (g.player_id ? `${playerName(roster, g.player_id)} ${g.label}` : g.label)).join(", ");
     lines.push(t("reportGoals", { club: club(team), list }));
   }
   if (report.lead) {

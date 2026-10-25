@@ -34,6 +34,30 @@ test("report lines name the clubs and scorers and reuse the review's own line, s
   assert.notDeepEqual(spanish, lines);
 });
 
+test("a goal sent twice is listed once, and a club whose list does not add up to its score gets no list", () => {
+  const goals = log.events.filter((e) => e.item.type === "goal");
+  const twice = { ...log, events: [...log.events, goals[0]].sort((a, b) => a.pos - b.pos) };
+  assert.equal(matchReport(twice, whatif, cards, null)!.goals.length, 5);
+  const dropped = { ...log, events: log.events.filter((e) => e !== goals[0]) };
+  const report = matchReport(dropped, whatif, cards, null)!;
+  assert.equal(report.score.RFC, 3, "the score still comes from the snapshots");
+  const lines = reportLines(report, log.roster, "en", "casual", translator("en"), cards);
+  assert.ok(!lines.some((l) => l.startsWith("Goals for Riverside FC")), "two scorers under a score of 3 is left out");
+  assert.ok(lines.some((l) => l.startsWith("Goals for Castleton Athletic")));
+});
+
+test("a goal with no scorer shows the minute only", () => {
+  const goals = log.events.filter((e) => e.item.type === "goal");
+  const anon = { ...log, events: log.events.map((e) => (e === goals[0] ? { ...e, item: { ...e.item, player_id: null } } : e)) };
+  const lines = reportLines(matchReport(anon, whatif, cards, null)!, log.roster, "en", "casual", translator("en"), cards);
+  assert.ok(lines.some((l) => l.startsWith("Goals for Riverside FC: 32', Kai Thornton 81'")), lines.join("|"));
+});
+
+test("report strings use the same placeholders in both languages", () => {
+  const vars = (s: string) => [...s.matchAll(/\{(\w+)\}/g)].map((m) => m[1]).sort().join(",");
+  for (const k of Object.keys(en).filter((k) => k.startsWith("report")) as StringKey[]) assert.equal(vars(es[k]), vars(en[k]), k);
+});
+
 test("stripMinute drops the review line's own minute, which the row label already shows", () => {
   assert.equal(stripMinute("91': the manager chose no change"), "the manager chose no change");
   assert.equal(stripMinute("The card has no option"), "The card has no option");

@@ -158,7 +158,7 @@ export function WhatIf({ cue, cards, roster, locale, mode, t, next, leadId, repo
   return (
     <section className="bc-whatif" aria-label={t(shown === "report" ? "reportTitle" : "whatIf")}>
       {report ? (
-        <div className="bc-whatif-tabs" role="group" aria-label={t("fullTime")}>
+        <div className="bc-whatif-tabs" role="group" aria-label={t("reportTabs")}>
           {(["whatif", "report"] as const).map((id) => (
             <button key={id} type="button" className="bc-whatif-title" aria-pressed={shown === id} onClick={() => setTab(id)}>
               {t(id === "report" ? "reportTitle" : "whatIf")}
@@ -201,12 +201,14 @@ export function WhatIf({ cue, cards, roster, locale, mode, t, next, leadId, repo
 export function MatchReportView({ lines, onCues, t }: { lines: readonly string[]; onCues: () => void; t: Translate }) {
   const [copy, setCopy] = useState<"idle" | "done" | "failed">("idle");
   const copyText = () => {
+    // No clipboard outside a secure context (a page opened over a LAN address): say so instead of throwing.
+    if (!navigator.clipboard) return setCopy("failed");
     navigator.clipboard.writeText(lines.join("\n")).then(() => setCopy("done"), () => setCopy("failed"));
   };
   return (
     <div className="bc-report">
       <p className="bc-report-source">{t("reportSource")}</p>
-      {lines.map((line, i) => <p key={line} className={`bc-report-line${i === 0 ? " lead" : ""}`}>{line}</p>)}
+      {lines.map((line, i) => <p key={i} className={`bc-report-line${i === 0 ? " lead" : ""}`}>{line}</p>)}
       <p className="bc-whatif-next bc-report-actions">
         <button type="button" onClick={copyText}>{t("reportCopy")}</button>
         <button type="button" onClick={onCues}>{t("reportCues")}</button>
