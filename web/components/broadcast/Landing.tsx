@@ -190,7 +190,12 @@ export function TracePanel({ narration, roster, onClose, t }: {
 }) {
   return (
     <Panel title={t("traceTitle")} onClose={onClose} t={t}>
-      <p className="bc-dialog-lead">{narration ? withNames(`${narration.headline} ${narration.reason}`, roster) : ""}</p>
+      {narration && (
+        <>
+          <p className="bc-dialog-lead"><b>{withNames(narration.headline, roster)}</b></p>
+          <p className="bc-dialog-lead">{withNames(narration.reason, roster)}</p>
+        </>
+      )}
       <p className="bc-dialog-note">{t("traceLead")}</p>
       <TraceSteps narration={narration} roster={roster} t={t} />
     </Panel>

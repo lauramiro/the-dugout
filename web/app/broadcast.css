@@ -398,6 +398,7 @@
   font-weight: 400;
   color: var(--bc-muted);
 }
+.bc-option-ci > span { display: block; }
 
 .bc-lower-call {
   margin: 0;

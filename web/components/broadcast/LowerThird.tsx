@@ -99,7 +99,10 @@ export function LowerThird({ card, roster, mode, locale, vote, onVote, running, 
               <span className="bc-option-gap">
                 {o.id === "no_change" ? "" : `${points(o.delta_win, locale)} ${t("pts")}`}
                 {mode === "analyst" && o.ci90 && o.id !== "no_change" && (
-                  <span className="bc-option-ci"> {t("ci90")} {points(o.ci90[0], locale)} / {points(o.ci90[1], locale)}</span>
+                  // label and range on their own lines: the gap column is narrow and does not wrap
+                  <span className="bc-option-ci">
+                    <span>{t("ci90")}</span> <span>{points(o.ci90[0], locale)} / {points(o.ci90[1], locale)}</span>
+                  </span>
                 )}
               </span>
             </button>
