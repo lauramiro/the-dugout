@@ -1020,6 +1020,8 @@ a.bc-hood-open:hover { filter: brightness(1.08); }
   .bc-stage { z-index: 5; } /* above .bc-chrome (4), which as a flex item stacks by its z-index too */
   .bc-frame { display: flex; flex-direction: column; }
   .bc-sheet { order: 2; display: grid; gap: 10px; padding: 8px 8px 16px; }
+  /* the story: the card right under the picture, with room at the bottom for its caption bar */
+  .bc-sheet.first { order: 0; padding: 52px 8px 148px; }
   .bc-sheet .bc-lower { gap: 8px; }
   .bc-sheet .bc-options { gap: 4px; }
   .bc-sheet .bc-whatif { border-top-width: 4px; }

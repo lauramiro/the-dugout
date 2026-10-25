@@ -202,6 +202,10 @@ export default function BroadcastPage() {
 
   // A portrait phone: the decision card and What if go in a sheet under the picture (lib/sheet.ts).
   const sheetMode = usePhoneSheet();
+  const stepId = story.step?.id;
+  useEffect(() => {
+    if (sheetMode && stepId) document.querySelector(".bc-wrap")?.scrollTo({ top: 0 });
+  }, [sheetMode, stepId]);
 
   if (cuesJson) return <CueSheetView log={log} focus={prefs.player} source={source.kind} />;
 
@@ -259,6 +263,7 @@ export default function BroadcastPage() {
   return (
     <Stage
       label={t("broadcastLabel")}
+      sheetFirst={story.active}
       // Not under the story's tablet or phone screen, where the card would stay tappable on top.
       sheet={sheetMode && (lowerThird || whatIf) && !(story.active && story.step?.screen !== "tv")
         ? <>{lowerThird}{whatIf}</> : null}
