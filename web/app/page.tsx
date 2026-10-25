@@ -24,7 +24,7 @@ import { optionLabel } from "../components/DecisionCard";
 import type { Vote } from "../lib/calls";
 import { aheadPos, fromPos, lastAtOrBefore, toPos } from "../lib/clock";
 import type { Locale, Narration, Roster, Snapshot } from "../lib/contracts";
-import { buildCues, cueSheet, scoreAt, type Cue } from "../lib/cues";
+import { buildCues, cueSheet, pickCall, scoreAt, type Cue } from "../lib/cues";
 import { matchReport, reportLines } from "../lib/matchReport";
 import { usePhoneSheet } from "../lib/sheet";
 import type { DataSource, FeedState, MatchLog, PitchFrame } from "../lib/datasource";
@@ -170,7 +170,7 @@ export default function BroadcastPage() {
   const latest = (kind: Cue["kind"]) => [...shown].reverse().find((c) => c.kind === kind);
   const decision = latest("decision");
   const goalCue = latest("goal");
-  const callCue = latest("manager_call");
+  const callCue = pickCall(shown, votes);
   const focusCue = latest("focus_event");
   const statsCue = latest("stats");
   // Full time: replay's playhead stops at the end, so the segment shows from there on.

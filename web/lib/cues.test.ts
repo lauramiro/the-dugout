@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { activeCues, buildCues, cueSheet, holdCues, holdExpiresInMs, passStats, scoreAt, type Cue } from "./cues.ts";
+import { activeCues, buildCues, cueSheet, holdCues, holdExpiresInMs, passStats, pickCall, scoreAt, type Cue } from "./cues.ts";
 import type { DecisionCard, MatchEvent, Review } from "./contracts.ts";
 import type { MatchLog, Timed } from "./datasource.ts";
 
@@ -294,4 +294,12 @@ test("what-if rows label added time the way the lower third does", () => {
   const l = log([card({ id: "a", period: 1, t_ms: 2_820_000, review: review(0.031) }), card({ id: "b", t_ms: 3_600_000, review: review(0.004) })]);
   const rows = ofKind(buildCues(l, null), "whatif")[0].data.rows as { decision_id: string; label: string }[];
   assert.deepEqual(rows.map((r) => r.label), ["45+3'", "60'"]);
+});
+
+test("pickCall prefers the manager's call on a card the viewer voted on when two calls share one change", () => {
+  const call = (id: string): Cue => ({ id: `manager_call:${id}`, kind: "manager_call", in_pos: 0, out_pos: 10, data: { decision_id: id } });
+  const shown = [call("rfc-60-20"), call("rfc-72-40")];
+  assert.equal(pickCall(shown, { "rfc-60-20": { option: "sub_like_for_like" } })?.id, "manager_call:rfc-60-20");
+  assert.equal(pickCall(shown, {})?.id, "manager_call:rfc-72-40", "no vote: the latest, as before");
+  assert.equal(pickCall([], {}), undefined);
 });

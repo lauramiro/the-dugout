@@ -303,3 +303,11 @@ function whatIfCue(log: MatchLog): Cue | null {
   }
   return { id: "whatif", kind: "whatif", in_pos: log.duration, out_pos: log.duration + WHATIF_MS, data: { rows, lead } };
 }
+
+/** The manager's call to draw among the shown cues: two cards can close on one change of his (60' and 72' both
+ *  priced taking Varga off, done at 79'), so prefer the call on a card the viewer voted on, which carries the
+ *  viewer's own call beside his; otherwise the latest, as for every other kind. */
+export function pickCall(shown: readonly Cue[], votes: Readonly<Record<string, { option?: string | null }>>): Cue | undefined {
+  const calls = shown.filter((c) => c.kind === "manager_call");
+  return [...calls].reverse().find((c) => votes[String(c.data.decision_id)]?.option) ?? calls[calls.length - 1];
+}
