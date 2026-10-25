@@ -908,25 +908,29 @@ button.bc-option.bc-voted { color: var(--bc-ink); border-color: var(--bc-accent)
 .bc-graded-stats strong { font-size: 26px; font-weight: 800; color: var(--bc-accent); font-variant-numeric: tabular-nums; }
 .bc-graded-stats dd span { color: var(--bc-muted); font-size: 13px; }
 
-/* Under the hood: the diagram is 2775 x 405, so it scrolls sideways at a size its labels can be read, and opens full size */
-.bc-hood-figure { margin: 0; }
-.bc-hood-scroll { overflow-x: auto; border-radius: 6px; background: #fff; }
-.bc-hood-scroll img { display: block; width: 100%; min-width: 1300px; height: auto; }
-.bc-hood-figure figcaption { margin-top: 6px; font-size: 13px; }
-.bc-hood-figure figcaption a { color: var(--bc-accent); }
+/* Under the hood: the diagram is fitted to the panel; its labels are small, so a button opens it full size */
+.bc-hood-figure { margin: 0; display: grid; gap: 8px; }
+.bc-hood-figure img { display: block; width: 100%; height: auto; border-radius: 6px; background: #fff; }
+.bc-hood-figure figcaption { font-size: 14px; }
+a.bc-hood-open { display: inline-block; font: inherit; font-weight: 600; color: #0b110e; background: var(--bc-accent); border-radius: 999px; padding: 0.35em 1em; text-decoration: none; }
+a.bc-hood-open:hover { filter: brightness(1.08); }
+.bc-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .bc-hood-dialog { width: min(980px, calc(100vw - 32px)); }
 .bc-hood-h { margin: 6px 0 0; font-size: 13px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--bc-muted); }
 .bc-hood-services { margin: 0; display: grid; gap: 8px; }
 .bc-hood-services > div { display: grid; grid-template-columns: minmax(150px, 1fr) 2.4fr; gap: 4px 14px; padding: 8px 12px; border: 1px solid var(--bc-line); border-radius: 8px; }
 .bc-hood-services dt { font-weight: 700; color: var(--bc-accent); }
 .bc-hood-services dd { margin: 0; font-size: 14px; }
-.bc-hood-chain { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; align-items: stretch; gap: 8px; }
+.bc-hood-chain { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; align-items: stretch; gap: 8px 24px; }
 .bc-hood-chain li { padding: 6px 12px; border: 1px solid var(--bc-line); border-radius: 8px; font-weight: 600; }
-.bc-hood-chain li.check { border-style: dashed; border-color: #45b277; font-weight: 500; }
-.bc-hood-chain li + li::before { content: "\2192"; margin-right: 8px; color: var(--bc-muted); }
+.bc-hood-chain li.check { border-style: dashed; border-color: var(--bc-high); font-weight: 500; }
+.bc-hood-chain li { position: relative; }
+.bc-hood-chain li:not(:last-child)::after { content: "\2192"; position: absolute; right: -16px; top: 50%; transform: translateY(-50%); color: var(--bc-muted); }
+.bc-hood-label { font-size: 13px; color: var(--bc-muted); }
 .bc-hood-url { overflow-wrap: anywhere; }
-.bc-hood-url code { font-size: 13px; padding: 2px 6px; border-radius: 4px; background: rgba(255, 255, 255, 0.08); }
+.bc-hood-url code { user-select: all; font-size: 13px; padding: 2px 6px; border-radius: 4px; background: rgba(255, 255, 255, 0.08); }
 @media (max-width: 560px) {
+  .bc-hood-chain li::after { display: none; }
   .bc-hood-services > div { grid-template-columns: 1fr; }
 }
 

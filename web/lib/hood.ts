@@ -13,8 +13,6 @@ export const HOOD_SERVICES = [
   { id: "mcp", name: "MCP server" },
 ] as const;
 
-export type HoodServiceId = (typeof HOOD_SERVICES)[number]["id"];
-
 /** The narration workflow in order; `check` stages are plain code, not a model. */
 export const HOOD_CHAIN = [
   { id: "narrator", check: false },
@@ -25,3 +23,7 @@ export const HOOD_CHAIN = [
 
 export const MCP_URL = "https://dugout-service.wittypond-73564413.northeurope.azurecontainerapps.io/mcp";
 export const REPO_URL = "https://github.com/lauramiro/the-dugout";
+
+/** The README's connect lines (MCP server section), shown to copy. */
+export const CLAUDE_COMMAND = `claude mcp add --transport http the-dugout ${MCP_URL}`;
+export const VSCODE_CONFIG = `{ "servers": { "the-dugout": { "type": "http", "url": "${MCP_URL}" } } }`;

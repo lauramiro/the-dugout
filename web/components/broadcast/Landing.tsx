@@ -5,7 +5,7 @@ import { withNames } from "../../lib/derive";
 import { stepLabel } from "../../lib/trace";
 import { SPEEDS, type FeedState, type PlaybackControls, type Timed } from "../../lib/datasource";
 import { decimal, type Translate } from "../../lib/i18n";
-import { HOOD_CHAIN, HOOD_SERVICES, MCP_URL, REPO_URL } from "../../lib/hood";
+import { CLAUDE_COMMAND, HOOD_CHAIN, HOOD_SERVICES, MCP_URL, REPO_URL, VSCODE_CONFIG } from "../../lib/hood";
 
 // What a first-time viewer needs around the picture: the name and premise, links that are
 // always on screen, chapters to jump between decisions, a slate while there is no picture,
@@ -13,7 +13,7 @@ import { HOOD_CHAIN, HOOD_SERVICES, MCP_URL, REPO_URL } from "../../lib/hood";
 
 export type PanelId = "about" | "graded" | "hood" | "trace";
 
-const REPO = "https://github.com/lauramiro/the-dugout/blob/main";
+const REPO = `${REPO_URL}/blob/main`;
 const TITLE_MS = 8000;
 
 /** Keeps ?source=live and ?t= when moving to the desk. */
@@ -267,10 +267,12 @@ export function HoodPanel({ onClose, onPanel, t }: { onClose: () => void; onPane
       <p className="bc-dialog-lead">{t("hoodLead")}</p>
       <figure className="bc-hood-figure">
         {/* A copy of docs/architecture.svg, with the Web PubSub tier corrected to Standard. */}
-        <div className="bc-hood-scroll">
-          <img src="/architecture.svg" alt={t("hoodDiagramAlt")} width={2775} height={405} />
-        </div>
-        <figcaption><a href="/architecture.svg" target="_blank" rel="noreferrer">{t("hoodDiagramOpen")}</a></figcaption>
+        <img src="/architecture.svg" alt={t("hoodDiagramAlt")} width={2775} height={405} />
+        <figcaption>
+          <a className="bc-hood-open" href="/architecture.svg" target="_blank" rel="noreferrer">
+            {t("hoodDiagramOpen")} <span className="bc-sr">{t("newTab")}</span>
+          </a>
+        </figcaption>
       </figure>
       <h3 className="bc-hood-h">{t("hoodServices")}</h3>
       <dl className="bc-hood-services">
@@ -282,7 +284,7 @@ export function HoodPanel({ onClose, onPanel, t }: { onClose: () => void; onPane
         ))}
       </dl>
       <h3 className="bc-hood-h">{t("hoodChain")}</h3>
-      <ol className="bc-hood-chain">
+      <ol className="bc-hood-chain" role="list">
         {HOOD_CHAIN.map((s) => (
           <li key={s.id} className={s.check ? "check" : undefined}>{t(`hood_${s.id}`)}</li>
         ))}
@@ -290,9 +292,12 @@ export function HoodPanel({ onClose, onPanel, t }: { onClose: () => void; onPane
       <p className="bc-dialog-note">{t("hoodChainNote")}</p>
       <h3 className="bc-hood-h">{t("hoodMcp")}</h3>
       <p className="bc-hood-url"><code>{MCP_URL}</code></p>
-      <p className="bc-dialog-note">{t("hoodMcpHint")}</p>
+      <p className="bc-hood-label">{t("hoodMcpClaude")}</p>
+      <p className="bc-hood-url"><code>{CLAUDE_COMMAND}</code></p>
+      <p className="bc-hood-label">{t("hoodMcpVscode")}</p>
+      <p className="bc-hood-url"><code>{VSCODE_CONFIG}</code></p>
       <p className="bc-dialog-links">
-        <a href={REPO_URL} target="_blank" rel="noreferrer">{t("hoodRepo")}</a>
+        <a href={REPO_URL} target="_blank" rel="noreferrer">{t("hoodRepo")} <span className="bc-sr">{t("newTab")}</span></a>
         <button type="button" onClick={() => onPanel("graded")}>{t("howGraded")}</button>
       </p>
     </Panel>
