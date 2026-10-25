@@ -4,6 +4,7 @@ import { formatMinute } from "../../lib/clock";
 import type { DecisionCard, Locale, Mode, Narration, Roster } from "../../lib/contracts";
 import { withNames } from "../../lib/derive";
 import { pct, points, strengthKey, triggerKey, type Translate } from "../../lib/i18n";
+import { SPEECH_LANG, speechText } from "../../lib/speech";
 import { optionLabel } from "../DecisionCard";
 
 interface Props {
@@ -73,6 +74,7 @@ export function LowerThird({ card, roster, mode, locale, vote, onVote, running, 
             {onTrace && narration.trace && narration.trace.length > 0 && (
               <button type="button" onClick={onTrace}>{t("traceOpen")}</button>
             )}
+            <ReadAloud text={speechText(narration, roster)} lang={SPEECH_LANG[locale]} t={t} />
           </p>
         </div>
       )}
@@ -143,4 +145,28 @@ export function useVoteTimer(running: boolean, onDone: () => void): number {
     if (running && done) onDone();
   }, [running, done, onDone]);
   return Math.ceil(leftMs / 1000);
+}
+
+/** Reads the card's line with the browser's speech, where it has one; stops when the card closes. */
+function ReadAloud({ text, lang, t }: { text: string; lang: string; t: Translate }) {
+  const [supported, setSupported] = useState(false);
+  const [speaking, setSpeaking] = useState(false);
+  useEffect(() => {
+    setSupported(typeof window !== "undefined" && "speechSynthesis" in window);
+    return () => {
+      if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+    };
+  }, []);
+  if (!supported) return null;
+  const toggle = () => {
+    const synth = window.speechSynthesis;
+    synth.cancel();
+    if (speaking) return setSpeaking(false);
+    const line = new SpeechSynthesisUtterance(text);
+    line.lang = lang;
+    line.onend = line.onerror = () => setSpeaking(false);
+    setSpeaking(true);
+    synth.speak(line);
+  };
+  return <button type="button" aria-pressed={speaking} onClick={toggle}>{t(speaking ? "readStop" : "readAloud")}</button>;
 }
