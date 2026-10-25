@@ -1006,7 +1006,21 @@ a.bc-hood-open:hover { filter: brightness(1.08); }
 }
 
 @media (max-width: 700px) and (orientation: portrait) {
-  .bc-wrap { align-items: start; }
+  .bc-wrap { align-items: start; overflow-y: auto; }
+  /* The decision card and What if (lib/sheet.ts): under the picture, below the settings chip, at reading size.
+     Their container units now measure the frame, which is as wide as the picture. */
+  .bc-sheet { display: grid; gap: 10px; padding: 52px 8px 0; }
+  .bc-sheet .bc-lower,
+  .bc-sheet .bc-whatif {
+    position: relative;
+    inset: auto;
+    translate: none;
+    width: auto;
+    max-height: none;
+    font-size: 14px;
+    padding: 12px;
+  }
+  .bc-frame:has(.bc-sheet) .bc-chrome { padding-top: 12px; }
   /* the settings chip leaves the pitch and sits in the black below it */
   .bc-stage { overflow: visible; }
   .bc-field { overflow: hidden; }

@@ -26,6 +26,7 @@ import { aheadPos, fromPos, lastAtOrBefore, toPos } from "../lib/clock";
 import type { Locale, Narration, Roster, Snapshot } from "../lib/contracts";
 import { buildCues, cueSheet, scoreAt, type Cue } from "../lib/cues";
 import { matchReport, reportLines } from "../lib/matchReport";
+import { usePhoneSheet } from "../lib/sheet";
 import type { DataSource, FeedState, MatchLog, PitchFrame } from "../lib/datasource";
 import { playerName } from "../lib/derive";
 import { decimal, translator, type Translate } from "../lib/i18n";
@@ -199,26 +200,12 @@ export default function BroadcastPage() {
     : liveEmpty && !schedule ? "waiting"
     : feed.status === "loading" && !(live && schedule) ? "loading" : null;
 
+  // A portrait phone: the decision card and What if go in a sheet under the picture (lib/sheet.ts).
+  const sheetMode = usePhoneSheet();
+
   if (cuesJson) return <CueSheetView log={log} focus={prefs.player} source={source.kind} />;
 
-  return (
-    <Stage
-      label={t("broadcastLabel")}
-      chrome={
-        <Chrome
-          cards={log.cards}
-          duration={log.duration}
-          feed={feed}
-          controls={controls}
-          onPanel={openPanel}
-          onSeek={hideTitle}
-          onStory={steps ? startStory : undefined}
-          t={t}
-        />
-      }
-    >
-      <FieldView frame={frame} roster={log.roster} tags={tags} label={t("broadcastLabel")} />
-      {decisionCard && (
+  const lowerThird = decisionCard && (
         <LowerThird
           key={decisionCard.payload.decision_id}
           card={decisionCard}
@@ -236,18 +223,8 @@ export default function BroadcastPage() {
           }}
           t={t}
         />
-      )}
-      {goalCue && <GoalFlash key={goalCue.id} cue={goalCue} roster={log.roster} t={t} />}
-      {callCue && (
-        <ManagerCall key={callCue.id} cue={callCue} roster={log.roster} you={viewerCall(callCue, log, votes, t)} t={t} />
-      )}
-      {statsCue && (
-        <StatsCard key={statsCue.id} cue={statsCue} roster={log.roster} locale={prefs.locale} mode={prefs.mode} t={t} />
-      )}
-      {focusCue && prefs.player && (
-        <FocusCard key={focusCue.id} cue={focusCue} focus={prefs.player} roster={log.roster} t={t} />
-      )}
-      {whatifCue && story.state.status !== "done" && (
+      );
+  const whatIf = whatifCue && story.state.status !== "done" && (
         <WhatIf
           leadId={story.active ? storyCardId : null}
           cue={whatifCue}
@@ -277,7 +254,38 @@ export default function BroadcastPage() {
             </p>
           }
         />
+      );
+
+  return (
+    <Stage
+      label={t("broadcastLabel")}
+      sheet={sheetMode && (lowerThird || whatIf) ? <>{lowerThird}{whatIf}</> : null}
+      chrome={
+        <Chrome
+          cards={log.cards}
+          duration={log.duration}
+          feed={feed}
+          controls={controls}
+          onPanel={openPanel}
+          onSeek={hideTitle}
+          onStory={steps ? startStory : undefined}
+          t={t}
+        />
+      }
+    >
+      <FieldView frame={frame} roster={log.roster} tags={tags} label={t("broadcastLabel")} />
+      {!sheetMode && lowerThird}
+      {goalCue && <GoalFlash key={goalCue.id} cue={goalCue} roster={log.roster} t={t} />}
+      {callCue && (
+        <ManagerCall key={callCue.id} cue={callCue} roster={log.roster} you={viewerCall(callCue, log, votes, t)} t={t} />
       )}
+      {statsCue && (
+        <StatsCard key={statsCue.id} cue={statsCue} roster={log.roster} locale={prefs.locale} mode={prefs.mode} t={t} />
+      )}
+      {focusCue && prefs.player && (
+        <FocusCard key={focusCue.id} cue={focusCue} focus={prefs.player} roster={log.roster} t={t} />
+      )}
+      {!sheetMode && whatIf}
       <Worm
         winprob={log.winprob}
         cards={log.cards.map((c) => c.pos)}
