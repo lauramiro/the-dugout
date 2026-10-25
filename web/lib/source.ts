@@ -13,3 +13,10 @@ export function sourceChoice(search: string): SourceChoice {
   const minute = t === null || t.trim() === "" ? NaN : Number(t);
   return { kind: "replay", minute: Number.isFinite(minute) && minute >= 0 ? minute : LANDING_MINUTE };
 }
+
+/** Whether a replay page should start playing now: a page opened on its own runs like a broadcast, once
+ *  it has loaded, and only the first time (a pause after that stays a pause). `held`: something on the
+ *  page asks for a wait first, such as the landing's story intro. */
+export function playOnLoad(s: { started: boolean; ready: boolean; controls: boolean; held: boolean }): boolean {
+  return !s.started && s.ready && s.controls && !s.held;
+}

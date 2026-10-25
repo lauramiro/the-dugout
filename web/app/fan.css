@@ -122,3 +122,5 @@
 .fan-calls dt { color: var(--fan-muted); font-size: 13px; text-transform: uppercase; letter-spacing: 0.06em; }
 .fan-calls dd { margin: 0; }
 .fan-calls em { font-style: normal; color: var(--fan-high); font-weight: 700; }
+
+.fan-about { flex-basis: 100%; order: 1; margin: 0; font-size: 0.85em; opacity: 0.8; }

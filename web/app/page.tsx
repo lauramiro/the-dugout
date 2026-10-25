@@ -32,7 +32,7 @@ import { decimal, translator, type Translate } from "../lib/i18n";
 import { ReplayDataSource } from "../lib/replay";
 import { buildStory } from "../lib/story";
 import { leaveUrl } from "../lib/storyPlayer";
-import { useDataSource, useFeed } from "../lib/useFeed";
+import { useDataSource, useFeed, usePlayOnLoad } from "../lib/useFeed";
 import { useVotes } from "../lib/useVotes";
 import "./broadcast.css";
 import "./fan.css";
@@ -74,12 +74,7 @@ export default function BroadcastPage() {
 
   // A broadcast runs on its own: replay starts once loaded (after the intro, if one is offered);
   // space pauses and resumes.
-  const started = useRef(false);
-  useEffect(() => {
-    if (started.current || feed.status !== "ready" || !source.controls || introShown) return;
-    started.current = true;
-    source.controls.play();
-  }, [feed.status, source, introShown]);
+  usePlayOnLoad(source, feed, introShown);
 
   const startStory = () => {
     markStorySeen();

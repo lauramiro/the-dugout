@@ -5,7 +5,7 @@ import { FanView } from "../../components/fan/FanView";
 import type { Locale, Mode, TeamCode } from "../../lib/contracts";
 import { SPEEDS } from "../../lib/datasource";
 import { LOCALES, translator } from "../../lib/i18n";
-import { useDataSource, useFeed } from "../../lib/useFeed";
+import { useDataSource, useFeed, usePlayOnLoad } from "../../lib/useFeed";
 import { useVotes } from "../../lib/useVotes";
 import "../fan.css";
 
@@ -55,6 +55,7 @@ function writePrefs(prefs: FanPrefs): void {
 export default function FanPage() {
   const source = useDataSource();
   const feed = useFeed(source);
+  usePlayOnLoad(source, feed);
   const { log, playhead, status } = feed;
   const live = source.kind === "live";
   const { votes, castVote } = useVotes(live);
@@ -76,6 +77,7 @@ export default function FanPage() {
   const header = (
     <nav className="fan-nav" aria-label={t("fanView")}>
       <span className="fan-brand">The Dugout</span>
+      <span className="fan-about">{t("fanAbout")}</span>
       {roster && (
         <label className="fan-pick">
           <span>{t("fanClub")}</span>
