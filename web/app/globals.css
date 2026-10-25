@@ -1643,3 +1643,22 @@ a.review-open {
 /* Desk dugout panel: who has not played yet, per club (lib/bench.ts) */
 .bench-names { flex-basis: 100%; margin: 4px 0 0; font-size: 13px; color: var(--muted); }
 .bench-label { text-transform: uppercase; letter-spacing: 0.06em; font-size: 11px; font-weight: 700; }
+
+/* How this line was written, folded under a card (desk, fan); the TV panel styles its own in broadcast.css.
+   Neutral colours, so it reads on the desk's light card and the fan's dark one. */
+.trace-credit { margin: 6px 0 0; font-size: 12px; opacity: 0.75; }
+.trace-details { margin-top: 6px; font-size: 13px; }
+.trace-details summary { cursor: pointer; }
+.trace-details summary .trace-credit { margin: 0; }
+.trace-details .trace-open { text-decoration: underline; text-underline-offset: 2px; }
+.trace-details .trace-lead { margin: 8px 0; opacity: 0.75; }
+.trace-details .bc-trace { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.trace-details .bc-trace-step { padding: 8px 10px; border: 1px solid rgba(127, 127, 127, 0.35); border-left-width: 4px; border-radius: 6px; }
+.trace-details .bc-trace-step.passed { border-left-color: #3a9b67; }
+.trace-details .bc-trace-step.rejected, .trace-details .bc-trace-step.timeout, .trace-details .bc-trace-step.error { border-left-color: #d9533f; }
+.trace-details .bc-trace-step.used { border-left-color: #c98a12; }
+.trace-details .bc-trace-step p { margin: 0; }
+.trace-details .bc-trace-head { display: flex; justify-content: space-between; gap: 10px; font-size: 12px; opacity: 0.8; }
+.trace-details .bc-trace-text { margin-top: 4px; white-space: pre-line; }
+.trace-details .bc-trace-label { margin-top: 6px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; opacity: 0.75; }
+.trace-details .bc-trace-errors { margin: 4px 0 0; padding-left: 1.2em; font-size: 12px; }

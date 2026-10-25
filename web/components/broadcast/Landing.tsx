@@ -2,9 +2,9 @@ import { useCallback, useEffect, useRef, useState, type ReactNode } from "react"
 import { formatMinute, lastAtOrBefore } from "../../lib/clock";
 import type { DecisionCard, Locale, Narration, Roster } from "../../lib/contracts";
 import { withNames } from "../../lib/derive";
-import { stepLabel } from "../../lib/trace";
 import { SPEEDS, type FeedState, type PlaybackControls, type Timed } from "../../lib/datasource";
 import { decimal, type Translate } from "../../lib/i18n";
+import { TraceSteps } from "../TraceSteps";
 import { CLAUDE_COMMAND, HOOD_CHAIN, HOOD_SERVICES, MCP_URL, REPO_URL, VSCODE_CONFIG } from "../../lib/hood";
 
 // What a first-time viewer needs around the picture: the name and premise, links that are
@@ -188,35 +188,11 @@ const GRADED = {
 export function TracePanel({ narration, roster, onClose, t }: {
   narration: Narration | undefined; roster: Roster | null; onClose: () => void; t: Translate;
 }) {
-  const steps = narration?.trace ?? [];
   return (
     <Panel title={t("traceTitle")} onClose={onClose} t={t}>
       <p className="bc-dialog-lead">{narration ? withNames(`${narration.headline} ${narration.reason}`, roster) : ""}</p>
       <p className="bc-dialog-note">{t("traceLead")}</p>
-      {steps.length === 0 ? (
-        <p>{t("traceNone")}</p>
-      ) : (
-        <ol className="bc-trace">
-          {steps.map((step, i) => {
-            const label = stepLabel(step);
-            return (
-              <li key={i} className={`bc-trace-step ${step.outcome}`}>
-                <p className="bc-trace-head">
-                  <span>{t(label.who, label.whoVars)}</span>
-                  <b>{t(label.outcome)}</b>
-                </p>
-                {step.text && <p className="bc-trace-text">{withNames(step.text, roster)}</p>}
-                {step.errors.length > 0 && (
-                  <>
-                    <p className="bc-trace-label">{t("traceChecks")}</p>
-                    <ul className="bc-trace-errors">{step.errors.map((e, j) => <li key={j}>{e}</li>)}</ul>
-                  </>
-                )}
-              </li>
-            );
-          })}
-        </ol>
-      )}
+      <TraceSteps narration={narration} roster={roster} t={t} />
     </Panel>
   );
 }

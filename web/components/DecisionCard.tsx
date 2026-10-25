@@ -3,6 +3,7 @@ import { formatMinute } from "../lib/clock";
 import type { DecisionCard as Card, DecisionOption, Evidence, Locale, Mode, Roster, Snapshot, TeamCode } from "../lib/contracts";
 import { playerName, shirt, withNames } from "../lib/derive";
 import { decimal, pct, points, strengthKey, triggerKey, type StringKey, type Translate } from "../lib/i18n";
+import { TraceDetails } from "./TraceSteps";
 
 interface Props {
   card: Card | null;
@@ -102,6 +103,7 @@ export const DecisionCard = memo(function DecisionCard({ card, snapshot, roster,
         <div className="narration">
           <p className="headline">{withNames(narration.headline, roster)}</p>
           <p className="reason">{withNames(narration.reason, roster)}</p>
+          <TraceDetails narration={narration} roster={roster} t={t} />
         </div>
       )}
 

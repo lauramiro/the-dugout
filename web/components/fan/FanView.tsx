@@ -11,6 +11,7 @@ import { fanMoment, type FanContext } from "../../lib/fan";
 import { pct, points, strengthKey, triggerKey, type StringKey, type Translate } from "../../lib/i18n";
 import { useVoteTimer } from "../broadcast/LowerThird";
 import { optionLabel } from "../DecisionCard";
+import { TraceDetails } from "../TraceSteps";
 
 interface Props {
   log: MatchLog;
@@ -95,6 +96,7 @@ function Decision({ card, c, roster, locale, mode, vote, onVote, running, t }: {
       </p>
       {c.narration && <h2 className="fan-headline">{withNames(c.narration.headline, roster)}</h2>}
       {c.narration && <p className="fan-reason">{withNames(c.narration.reason, roster)}</p>}
+      {c.narration && <TraceDetails narration={c.narration} roster={roster} t={t} />}
 
       {c.player && (
         <div className="fan-block">
