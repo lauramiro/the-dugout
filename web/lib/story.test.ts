@@ -119,5 +119,6 @@ test("the story reaches the first card within 8 s and does not hold an unanswere
   assert.equal(open.wait.kind, "play");
   if (open.wait.kind === "play") assert.ok((open.wait.untilPos - open.startPos) / open.wait.speed <= 8_000);
   const vote = steps.find((s) => s.wait.kind === "vote")!;
+  assert.equal(vote.wait.kind, "vote");
   if (vote.wait.kind === "vote") assert.ok(vote.wait.ms <= 10_000);
 });
