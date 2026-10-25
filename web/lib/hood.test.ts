@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { CLAUDE_COMMAND, HOOD_CHAIN, HOOD_SERVICES, MCP_URL, VSCODE_CONFIG } from "./hood.ts";
+import { CLAUDE_COMMAND, HOOD_CHAIN, HOOD_FLOW, HOOD_SERVICES, MCP_URL, VSCODE_CONFIG, flowKeys } from "./hood.ts";
 import { translator, type StringKey } from "./i18n.ts";
 
 const read = (path: string) => readFileSync(new URL(path, import.meta.url), "utf8");
@@ -10,6 +10,8 @@ const es = translator("es");
 const hoodKeys = [
   ...HOOD_SERVICES.map((s) => `hood_${s.id}`),
   ...HOOD_CHAIN.map((s) => `hood_${s.id}`),
+  ...flowKeys(),
+  "hoodFlowRegistry",
   "hoodNav", "hoodTitle", "hoodLead", "hoodDiagramAlt", "hoodDiagramOpen", "hoodServices", "hoodChain",
   "hoodChainNote", "hoodMcp", "hoodMcpClaude", "hoodMcpVscode", "hoodRepo", "newTab",
 ] as StringKey[];
@@ -60,4 +62,18 @@ test("the published diagram says Standard, not the Free tier", () => {
   const svg = read("../public/architecture.svg");
   assert.match(svg, /Standard/);
   assert.doesNotMatch(svg, /Free/);
+});
+
+test("the drawn flow: every lane has one label between each pair of nodes, and only brand names are left untranslated", () => {
+  for (const lane of HOOD_FLOW) {
+    assert.equal(lane.edges.length, lane.nodes.length - 1, lane.id);
+    for (const node of lane.nodes) assert.ok("brand" in node || en(`hoodNode_${node.id}` as StringKey) !== `hoodNode_${node.id}`, node.id);
+  }
+  const keys = flowKeys();
+  assert.ok(keys.includes("hoodLane_live") && keys.includes("hoodEdge_socket") && keys.includes("hoodSub_runner"));
+});
+
+test("the drawn flow names every Azure service the services list names, so the two cannot drift", () => {
+  const brands = new Set(HOOD_FLOW.flatMap((l) => l.nodes.flatMap((n) => ("brand" in n ? [n.brand] : []))));
+  for (const name of ["Azure Event Hubs", "Azure Web PubSub", "Azure Static Web Apps", "Microsoft Foundry"]) assert.ok(brands.has(name), name);
 });

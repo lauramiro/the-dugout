@@ -27,3 +27,42 @@ export const REPO_URL = "https://github.com/lauramiro/the-dugout";
 /** The README's connect lines (MCP server section), shown to copy. */
 export const CLAUDE_COMMAND = `claude mcp add --transport http the-dugout ${MCP_URL}`;
 export const VSCODE_CONFIG = `{ "servers": { "the-dugout": { "type": "http", "url": "${MCP_URL}" } } }`;
+
+/** The architecture drawn in the panel itself (docs/architecture.svg is too wide to read inline): three lanes,
+ *  each a row of nodes with a label on every link. A node with `brand` shows that product name as is; the others
+ *  are named in lib/i18n.ts under `hoodNode_<id>`. Every node has a line under `hoodSub_<id>`, every link
+ *  `hoodEdge_<id>`, every lane `hoodLane_<id>`. */
+type FlowNode = { id: string; brand?: string };
+export const HOOD_FLOW: readonly { id: string; nodes: readonly FlowNode[]; edges: readonly string[] }[] = [
+  {
+    id: "live",
+    nodes: [{ id: "replayer" }, { id: "eventhubs", brand: "Azure Event Hubs" }, { id: "runner" },
+      { id: "webpubsub", brand: "Azure Web PubSub" }, { id: "browser" }],
+    edges: ["events", "consume", "publish", "socket"],
+  },
+  {
+    id: "request",
+    nodes: [{ id: "staticwebapps", brand: "Azure Static Web Apps" }, { id: "browser" }, { id: "service" },
+      { id: "foundry", brand: "Microsoft Foundry" }],
+    edges: ["page", "negotiate", "explain"],
+  },
+  {
+    id: "agents",
+    nodes: [{ id: "mcpclients" }, { id: "service" }],
+    edges: ["mcp"],
+  },
+];
+
+/** Every i18n key the drawn flow uses. */
+export function flowKeys(): string[] {
+  const keys = new Set<string>();
+  for (const lane of HOOD_FLOW) {
+    keys.add(`hoodLane_${lane.id}`);
+    for (const node of lane.nodes) {
+      if (!node.brand) keys.add(`hoodNode_${node.id}`);
+      keys.add(`hoodSub_${node.id}`);
+    }
+    for (const edge of lane.edges) keys.add(`hoodEdge_${edge}`);
+  }
+  return [...keys];
+}

@@ -1,11 +1,11 @@
-import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { Fragment, useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { formatMinute, lastAtOrBefore } from "../../lib/clock";
 import type { DecisionCard, Locale, Narration, Roster } from "../../lib/contracts";
 import { withNames } from "../../lib/derive";
 import { SPEEDS, type FeedState, type PlaybackControls, type Timed } from "../../lib/datasource";
-import { decimal, type Translate } from "../../lib/i18n";
+import { decimal, type StringKey, type Translate } from "../../lib/i18n";
 import { TraceSteps } from "../TraceSteps";
-import { CLAUDE_COMMAND, HOOD_CHAIN, HOOD_SERVICES, MCP_URL, REPO_URL, VSCODE_CONFIG } from "../../lib/hood";
+import { CLAUDE_COMMAND, HOOD_CHAIN, HOOD_FLOW, HOOD_SERVICES, MCP_URL, REPO_URL, VSCODE_CONFIG } from "../../lib/hood";
 
 // What a first-time viewer needs around the picture: the name and premise, links that are
 // always on screen, chapters to jump between decisions, a slate while there is no picture,
@@ -242,8 +242,26 @@ export function HoodPanel({ onClose, onPanel, t }: { onClose: () => void; onPane
     <Panel title={t("hoodTitle")} onClose={onClose} t={t} className="bc-hood-dialog">
       <p className="bc-dialog-lead">{t("hoodLead")}</p>
       <figure className="bc-hood-figure">
-        {/* A copy of docs/architecture.svg, with the Web PubSub tier corrected to Standard. */}
-        <img src="/architecture.svg" alt={t("hoodDiagramAlt")} width={2775} height={405} />
+        {/* Drawn here so it reads at any width; the full diagram (docs/architecture.svg) opens below. */}
+        <div className="bc-flow" role="img" aria-label={t("hoodDiagramAlt")}>
+          {HOOD_FLOW.map((lane) => (
+            <div key={lane.id} className="bc-flow-lane">
+              <p className="bc-flow-title">{t(`hoodLane_${lane.id}` as StringKey)}</p>
+              <ol className="bc-flow-row" aria-hidden="true">
+                {lane.nodes.map((node, i) => (
+                  <Fragment key={`${lane.id}-${node.id}`}>
+                    {i > 0 && <li className="bc-flow-edge">{t(`hoodEdge_${lane.edges[i - 1]}` as StringKey)}</li>}
+                    <li className={`bc-flow-node${node.brand ? " brand" : ""}`}>
+                      <b>{node.brand ?? t(`hoodNode_${node.id}` as StringKey)}</b>
+                      <span>{t(`hoodSub_${node.id}` as StringKey)}</span>
+                    </li>
+                  </Fragment>
+                ))}
+              </ol>
+            </div>
+          ))}
+          <p className="bc-flow-note">{t("hoodFlowRegistry")}</p>
+        </div>
         <figcaption>
           <a className="bc-hood-open" href="/architecture.svg" target="_blank" rel="noreferrer">
             {t("hoodDiagramOpen")} <span className="bc-sr">{t("newTab")}</span>
