@@ -1009,7 +1009,17 @@ a.bc-hood-open:hover { filter: brightness(1.08); }
   .bc-wrap { align-items: start; overflow-y: auto; }
   /* The decision card and What if (lib/sheet.ts): under the picture, below the settings chip, at reading size.
      Their container units now measure the frame, which is as wide as the picture. */
-  .bc-sheet { display: grid; gap: 10px; padding: 52px 8px 0; }
+  /* The picture stays above the sheet, so the settings panel opens over a card. The controls come before the
+     sheet, so a card opening on the clock does not move the button about to be tapped. */
+  .bc-stage { z-index: 5; } /* above .bc-chrome (4), which as a flex item stacks by its z-index too */
+  .bc-frame { display: flex; flex-direction: column; }
+  .bc-sheet { order: 2; display: grid; gap: 10px; padding: 8px 8px 16px; }
+  .bc-sheet .bc-lower { gap: 8px; }
+  .bc-sheet .bc-options { gap: 4px; }
+  .bc-sheet .bc-whatif { border-top-width: 4px; }
+  .bc-sheet .bc-whatif-title { margin-bottom: 10px; }
+  .bc-sheet .bc-whatif-rows { gap: 8px; }
+  .bc-sheet .bc-whatif-next { margin-top: 12px; padding-top: 12px; }
   .bc-sheet .bc-lower,
   .bc-sheet .bc-whatif {
     position: relative;
@@ -1020,7 +1030,6 @@ a.bc-hood-open:hover { filter: brightness(1.08); }
     font-size: 14px;
     padding: 12px;
   }
-  .bc-frame:has(.bc-sheet) .bc-chrome { padding-top: 12px; }
   /* the settings chip leaves the pitch and sits in the black below it */
   .bc-stage { overflow: visible; }
   .bc-field { overflow: hidden; }

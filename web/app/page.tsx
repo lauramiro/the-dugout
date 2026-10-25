@@ -259,7 +259,9 @@ export default function BroadcastPage() {
   return (
     <Stage
       label={t("broadcastLabel")}
-      sheet={sheetMode && (lowerThird || whatIf) ? <>{lowerThird}{whatIf}</> : null}
+      // Not under the story's tablet or phone screen, where the card would stay tappable on top.
+      sheet={sheetMode && (lowerThird || whatIf) && !(story.active && story.step?.screen !== "tv")
+        ? <>{lowerThird}{whatIf}</> : null}
       chrome={
         <Chrome
           cards={log.cards}
