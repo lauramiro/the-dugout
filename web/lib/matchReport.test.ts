@@ -67,7 +67,7 @@ test("stripMinute drops the review line's own minute, which the row label alread
 });
 
 test("every report string exists in both languages, translated, with no long dashes", () => {
-  const keys = Object.keys(en).filter((k) => k.startsWith("report")) as StringKey[];
+  const keys = Object.keys(en).filter((k) => k.startsWith("report") || k === "whatIfNote") as StringKey[];
   assert.ok(keys.length >= 4);
   for (const k of keys) {
     assert.ok(es[k], k);
@@ -81,4 +81,19 @@ test("What if drops a later card that prices the same call against the same chan
   assert.ok(ids.includes("rfc-60-20"));
   assert.ok(!ids.includes("rfc-72-40"), "72': Varga off against the 79' change again, the 60' row already says it");
   assert.ok(ids.includes("rfc-85-10"), "a different call stays");
+});
+
+test("the repeat filter keeps different calls, other clubs and no-change cards", () => {
+  const base = cards.find((c) => c.payload.decision_id === "rfc-60-20")!;
+  const at = (id: string, over: (c: typeof base) => typeof base) => over({ ...base, payload: { ...base.payload, decision_id: id } });
+  const other = at("rfc-x-other-call", (c) => ({ ...c, review: { ...c.review!, model: { ...c.review!.model, id: "attacking" } } }));
+  const otherClub = at("cas-x-same", (c) => ({ ...c, payload: { ...c.payload, team: "CAS" } }));
+  const still = { period: 2 as const, t_ms: 5_000_000, subs: [], option_id: "no_change" };
+  const nc1 = at("rfc-x-nc1", (c) => ({ ...c, payload: { ...c.payload, manager_action: still } }));
+  const nc2 = at("rfc-x-nc2", (c) => ({ ...c, payload: { ...c.payload, manager_action: still } }));
+  const repeat = at("rfc-x-repeat", (c) => c);
+  const all = [base, other, otherClub, nc1, nc2, repeat];
+  const cue = { ...whatif, data: { rows: all.map((c) => ({ decision_id: c.payload.decision_id, minute: 60, label: "60'", gap_win: 0.01 })), lead: null } };
+  assert.deepEqual(whatIfRows(cue, all).map((r) => r.decision_id),
+    ["rfc-60-20", "rfc-x-other-call", "cas-x-same", "rfc-x-nc1", "rfc-x-nc2"]);
 });

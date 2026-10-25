@@ -29,14 +29,15 @@ export interface MatchReport {
  *  price against the model's: leave it out rather than count that change twice. */
 export function whatIfRows(cue: Cue, cards: readonly DecisionCard[]): WhatIfRow[] {
   const card = (id: string) => cards.find((c) => c.payload.decision_id === id);
-  // A later card of the same club that prices the same call against the same change of the manager's says
-  // what an earlier row already said: keep the first.
+  // A later card of the same club that prices the same call against the same substitution of the manager's
+  // repeats an earlier row's call (its gap can differ; the call is what the row shows): keep the first.
+  // No-change cards are never merged: staying put is not one event two cards share.
   const said = new Set<string>();
   return ((cue.data.rows as WhatIfRow[]) ?? []).filter((row) => {
     const c = card(row.decision_id);
     if (c?.payload.trigger === "manager_sub") return false;
     const action = c?.payload.manager_action;
-    if (!c?.review || !action) return true;
+    if (!c?.review || !action || action.subs.length === 0) return true;
     const key = JSON.stringify([c.payload.team, c.review.model.id, action.period, action.t_ms, action.subs]);
     if (said.has(key)) return false;
     said.add(key);
