@@ -174,12 +174,6 @@ export const DecisionCard = memo(function DecisionCard({ card, snapshot, roster,
               <dd>{t("ratesValue", { for: decimal(rates.for90, locale, 2), against: decimal(rates.against90, locale, 2) })}</dd>
             </>
           )}
-          {narration && (
-            <>
-              <dt>{t("narrationSource")}</dt>
-              <dd>{t(narration.source === "model" ? "source_model" : "source_template")}</dd>
-            </>
-          )}
         </dl>
       )}
     </section>

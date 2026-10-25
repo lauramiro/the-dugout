@@ -176,7 +176,7 @@ export function DeskView(props: DeskViewProps) {
       </section>
 
       <aside className="dugout" tabIndex={0} aria-label={t("dugout")}>
-        <DecisionCard card={card} snapshot={cardSnapshot} roster={roster} focus={focus} mode={mode} locale={locale} t={t} />
+        <DecisionCard key={card?.payload.decision_id} card={card} snapshot={cardSnapshot} roster={roster} focus={focus} mode={mode} locale={locale} t={t} />
         <YourCall
           card={cardIdx >= 0 ? log.cards[cardIdx] : null}
           cards={log.cards}

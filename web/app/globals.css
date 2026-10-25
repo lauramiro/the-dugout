@@ -1662,3 +1662,7 @@ a.review-open {
 .trace-details .bc-trace-text { margin-top: 4px; white-space: pre-line; }
 .trace-details .bc-trace-label { margin-top: 6px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; opacity: 0.75; }
 .trace-details .bc-trace-errors { margin: 4px 0 0; padding-left: 1.2em; font-size: 12px; }
+.trace-details .bc-trace-head, .trace-details .bc-trace-head b, .trace-details .bc-trace-label, .trace-details .bc-trace-errors { color: inherit; }
+.trace-details .bc-trace-text { margin-top: 4px !important; } /* broadcast.css sets these with !important on the TV page */
+.trace-details .bc-trace-label { margin-top: 6px !important; }
+.trace-details summary:focus-visible { outline: 2px solid var(--focus, currentColor); outline-offset: 2px; }

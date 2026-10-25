@@ -105,7 +105,7 @@ export default function BroadcastPage() {
     const controls = source.controls;
     if (!controls) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.code !== "Space" || (e.target as HTMLElement | null)?.closest("button, select, input")) return;
+      if (e.code !== "Space" || (e.target as HTMLElement | null)?.closest("button, select, input, summary")) return;
       e.preventDefault();
       const run = storyRef.current;
       if (run.active) run.send({ type: run.state.status === "paused" ? "resume" : "pause", now: performance.now() });
