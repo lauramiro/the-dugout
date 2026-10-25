@@ -39,11 +39,39 @@ def load_prompt(name: str) -> str:
 
 
 @dataclass(frozen=True, slots=True)
+class TraceStep:
+    """One step of a card's narration, for showing the work: a model stage and what the code
+    check made of its reply, or the template that replaced the model's line."""
+
+    stage: str  # "narrator", "localizer" or "template"
+    attempt: int
+    outcome: str  # "passed", "rejected", "timeout", "error"; "used" for the template
+    text: str = ""
+    errors: tuple[str, ...] = ()
+    locale: str = ""
+    mode: str = ""
+
+
+@dataclass(frozen=True, slots=True)
 class Card:
     headline: str
     reason: str
     source: str  # "model" or "template"
     fallback: str | None = None  # "timeout", "error" or "ungrounded" when source is "template"
+    # The workflow's steps; the plain pipeline leaves it empty. Not part of a card's identity.
+    trace: tuple[TraceStep, ...] = field(default=(), compare=False)
+
+
+def card_fields(card: Card) -> dict:
+    """A card as plain JSON values (lists, not tuples), for messages, responses and replay files."""
+    return {
+        "headline": card.headline, "reason": card.reason, "source": card.source, "fallback": card.fallback,
+        "trace": [
+            {"stage": s.stage, "attempt": s.attempt, "outcome": s.outcome, "text": s.text,
+             "errors": list(s.errors), "locale": s.locale, "mode": s.mode}
+            for s in card.trace
+        ],
+    }
 
 
 @dataclass(frozen=True, slots=True)

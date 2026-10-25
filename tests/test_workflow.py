@@ -134,3 +134,19 @@ def test_async_entry_point_works_inside_a_running_loop():
         return await NarrationWorkflow(StubClient()).arun(SAMPLE_PAYLOAD, "en", "casual")
 
     assert asyncio.run(go()).source == "model"
+
+
+def test_trace_records_each_step_with_the_check_errors():
+    card, _ = run([NARRATOR_BAD, NARRATOR_OK, LOCALIZER_ES_OK])
+    steps = [(s.stage, s.attempt, s.outcome) for s in card.trace]
+    assert steps == [("narrator", 0, "rejected"), ("narrator", 1, "passed"), ("localizer", 0, "passed")]
+    assert any("4.9" in e for e in card.trace[0].errors)
+    assert card.trace[2].text == "RFC-03 se está agotando (60%). Cambiar ahora: +3,9 pts de probabilidad de victoria (fuerte)."
+    assert (card.trace[2].locale, card.trace[2].mode) == ("es", "analyst")
+
+
+def test_trace_ends_with_the_template_when_the_line_falls_back():
+    card, _ = run([NARRATOR_OK, ModelTimeout()])
+    assert [(s.stage, s.outcome) for s in card.trace] == [("narrator", "passed"), ("localizer", "timeout"), ("template", "used")]
+    card, _ = run([NARRATOR_BAD, NARRATOR_BAD])
+    assert [(s.stage, s.outcome) for s in card.trace] == [("narrator", "rejected"), ("narrator", "rejected"), ("template", "used")]

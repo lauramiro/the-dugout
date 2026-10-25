@@ -8,13 +8,12 @@ from __future__ import annotations
 
 import os
 from collections import defaultdict
-from dataclasses import asdict
 from threading import Lock
 from typing import Callable, Protocol
 
 from dugout.agents.foundry import ENV_ENDPOINT, client_from_env
 from dugout.agents.lexicon import LOCALES
-from dugout.agents.pipeline import NarrationPipeline, StubClient
+from dugout.agents.pipeline import NarrationPipeline, StubClient, card_fields
 from dugout.agents.workflow import NarrationWorkflow
 from dugout.engine.payload import decide
 from dugout.service.store import MemoryStore, Store
@@ -62,7 +61,7 @@ class CardService:
             if cached is None:
                 narration = self._pipeline.run(payload, locale, mode)
                 cached = {"decision_id": decision_id, "locale": locale, "mode": mode,
-                          "payload": payload, **asdict(narration)}
+                          "payload": payload, **card_fields(narration)}
                 self.store.put_card(key, cached)
         return cached
 

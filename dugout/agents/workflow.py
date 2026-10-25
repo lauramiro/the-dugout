@@ -20,6 +20,7 @@ from dugout.agents.pipeline import (
     MAX_ATTEMPTS,
     Card,
     ModelClient,
+    TraceStep,
     ModelError,
     ModelTimeout,
     build_request,
@@ -48,6 +49,7 @@ class Turn:
     attempt: int = 0
     previous: str | None = None
     errors: list[str] | None = None
+    trace: tuple[TraceStep, ...] = ()
 
     @property
     def stage_target(self) -> tuple[str, str]:
@@ -60,9 +62,15 @@ class Reply:
     text: str
 
 
-def _template(turn: Turn, reason: str) -> Card:
+def _step(turn: Turn, outcome: str, text: str = "", errors: tuple[str, ...] = ()) -> TraceStep:
+    locale, mode = turn.stage_target
+    return TraceStep(turn.stage, turn.attempt, outcome, text, errors, locale, mode)
+
+
+def _template(turn: Turn, reason: str, trace: tuple[TraceStep, ...]) -> Card:
     narration = template_narration(turn.payload, turn.locale, turn.mode)
-    return Card(narration.headline, narration.reason, "template", reason)
+    used = TraceStep("template", 0, "used", f"{narration.headline} {narration.reason}", (), turn.locale, turn.mode)
+    return Card(narration.headline, narration.reason, "template", reason, trace + (used,))
 
 
 class ModelStep(Executor):
@@ -89,9 +97,9 @@ class ModelStep(Executor):
                 timeout_s=self._timeout_s,
             )
         except (ModelTimeout, TimeoutError):
-            await ctx.yield_output(_template(turn, "timeout"))
+            await ctx.yield_output(_template(turn, "timeout", turn.trace + (_step(turn, "timeout"),)))
         except ModelError:
-            await ctx.yield_output(_template(turn, "error"))
+            await ctx.yield_output(_template(turn, "error", turn.trace + (_step(turn, "error"),)))
         else:
             await ctx.send_message(Reply(turn, text))
 
@@ -110,19 +118,21 @@ class GroundingStep(Executor):
             [parsed] if isinstance(parsed, str)
             else check_narration(parsed, turn.payload, *turn.stage_target)
         )
+        text = reply.text if isinstance(parsed, str) else f"{parsed.headline} {parsed.reason}"
+        trace = turn.trace + (_step(turn, "rejected" if errors else "passed", text, tuple(errors)),)
         if not errors:
             if turn.stage == NARRATOR:
                 await ctx.send_message(
-                    Turn(LOCALIZER, turn.payload, turn.locale, turn.mode, draft=parsed)
+                    Turn(LOCALIZER, turn.payload, turn.locale, turn.mode, draft=parsed, trace=trace)
                 )
             else:
-                await ctx.yield_output(Card(parsed.headline, parsed.reason, "model"))
+                await ctx.yield_output(Card(parsed.headline, parsed.reason, "model", None, trace))
         elif turn.attempt + 1 < MAX_ATTEMPTS:
             await ctx.send_message(
-                replace(turn, attempt=turn.attempt + 1, previous=reply.text, errors=errors)
+                replace(turn, attempt=turn.attempt + 1, previous=reply.text, errors=errors, trace=trace)
             )
         else:
-            await ctx.yield_output(_template(turn, "ungrounded"))
+            await ctx.yield_output(_template(turn, "ungrounded", trace))
 
 
 def _goes_to(stage: str):
