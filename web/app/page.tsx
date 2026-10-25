@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { FieldView, type PlayerTag } from "../components/broadcast/FieldView";
-import { FocusCard, GoalFlash, ManagerCall, StatsCard, WhatIf } from "../components/broadcast/Graphics";
+import { FocusCard, GoalFlash, ManagerCall, MatchReportView, StatsCard, WhatIf } from "../components/broadcast/Graphics";
 import { KickoffSlate, useLiveSchedule } from "../components/broadcast/KickoffSlate";
 import {
   AboutPanel, Chrome, GradedPanel, HoodPanel, Slate, TitleCard, TracePanel, useTitleCard, type PanelId,
@@ -25,6 +25,7 @@ import type { Vote } from "../lib/calls";
 import { aheadPos, fromPos, lastAtOrBefore, toPos } from "../lib/clock";
 import type { Locale, Narration, Roster, Snapshot } from "../lib/contracts";
 import { buildCues, cueSheet, scoreAt, type Cue } from "../lib/cues";
+import { matchReport, reportLines } from "../lib/matchReport";
 import type { DataSource, FeedState, MatchLog, PitchFrame } from "../lib/datasource";
 import { playerName } from "../lib/derive";
 import { decimal, translator, type Translate } from "../lib/i18n";
@@ -178,6 +179,10 @@ export default function BroadcastPage() {
   const statsCue = latest("stats");
   // Full time: replay's playhead stops at the end, so the segment shows from there on.
   const whatifCue = cues.find((c) => c.kind === "whatif" && pos >= c.in_pos);
+  const report = whatifCue ? matchReport(log, whatifCue, log.cards.map((c) => c.item), story.active ? storyCardId : null) : null;
+  const reportLinesNow = report
+    ? reportLines(report, log.roster, prefs.locale, prefs.mode, t, log.cards.map((c) => c.item))
+    : null;
   const decisionCard = decision
     ? log.cards.find((c) => c.item.payload.decision_id === decision.data.decision_id)?.item
     : undefined;
@@ -249,6 +254,13 @@ export default function BroadcastPage() {
           leadId={story.active ? storyCardId : null}
           cue={whatifCue}
           cards={log.cards.map((c) => c.item)}
+          report={reportLinesNow && (
+            <MatchReportView
+              lines={reportLinesNow}
+              onCues={() => downloadCueSheet(cueSheet(log, prefs.player, source.kind))}
+              t={t}
+            />
+          )}
           roster={log.roster}
           locale={prefs.locale}
           mode={prefs.mode}

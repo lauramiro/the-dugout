@@ -1,8 +1,9 @@
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import type { Cue } from "../../lib/cues";
 import type { DecisionCard, Locale, Mode, Roster, TeamCode } from "../../lib/contracts";
 import { playerName, withNames } from "../../lib/derive";
 import { decimal, pct, points, type StringKey, type Translate } from "../../lib/i18n";
+import { stripMinute, whatIfLead, whatIfRows } from "../../lib/matchReport";
 import { managerCall, modelCall } from "../YourCall";
 
 // The short-lived graphics: goal flash, manager's call, focus card and the full-time
@@ -135,60 +136,84 @@ export function StatsCard({ cue, roster, locale, mode, t }: {
 
 const WHATIF_ROWS = 5;
 
-interface Row {
-  decision_id: string;
-  minute: number;
-  label: string;
-  gap_win: number | null;
-}
-
-/** Full time: each decision the review priced, the largest gap first and large. */
-export function WhatIf({ cue, cards, roster, locale, mode, t, next, leadId }: {
+/** Full time: each decision the review priced, the largest gap first and large; with `report`, a second
+ *  tab holds the match report. */
+export function WhatIf({ cue, cards, roster, locale, mode, t, next, leadId, report }: {
   cue: Cue; cards: readonly DecisionCard[]; roster: Roster | null; locale: Locale; mode: Mode; t: Translate;
   /** Next steps under the rows. */
   next?: ReactNode;
   /** The decision to lead with instead of the largest gap (the story's own card). */
   leadId?: string | null;
+  /** The match report, shown on its own tab. */
+  report?: ReactNode;
 }) {
-  // A manager_sub card was raised by the manager's own change, so it has no call of his to
-  // price against the model's: leave it out rather than count that change twice.
-  const trigger = (id: string) => cards.find((c) => c.payload.decision_id === id)?.payload.trigger;
-  const rows = ((cue.data.rows as Row[]) ?? []).filter((row) => trigger(row.decision_id) !== "manager_sub");
-  const cueLead = leadId ?? (cue.data.lead as string | null);
-  const lead = rows.some((row) => row.decision_id === cueLead)
-    ? cueLead
-    : rows.reduce<Row | null>((best, row) => (row.gap_win !== null && row.gap_win > (best?.gap_win ?? -Infinity) ? row : best), null)
-        ?.decision_id ?? null;
+  const [tab, setTab] = useState<"whatif" | "report">("whatif");
+  const rows = whatIfRows(cue, cards);
+  const lead = whatIfLead(cue, cards, leadId ?? null);
   // The lead first, then the next largest gaps; a TV graphic has room for five lines.
   const ordered = [...rows]
     .sort((a, b) => Number(b.decision_id === lead) - Number(a.decision_id === lead) || (b.gap_win ?? -1) - (a.gap_win ?? -1))
     .slice(0, WHATIF_ROWS);
+  const shown = report ? tab : "whatif";
   return (
-    <section className="bc-whatif" aria-label={t("whatIf")}>
-      <h2 className="bc-whatif-title">{t("whatIf")}</h2>
-      <ol className="bc-whatif-rows">
-        {ordered.map((row) => {
-          const card = cards.find((c) => c.payload.decision_id === row.decision_id);
-          if (!card) return null;
-          const model = modelCall(card, roster, t);
-          const manager = managerCall(card, roster, t);
-          const recap = card.review?.recap[locale]?.[mode] ?? card.review?.recap.en?.[mode];
-          return (
-            <li key={row.decision_id} className={`bc-whatif-row${row.decision_id === lead ? " lead" : ""}`}>
-              <span className="bc-whatif-minute">{row.label}</span>
-              <span className="bc-whatif-calls">
-                <span><em>{t("model")}</em> {model.label}</span>
-                <span><em>{t("manager")}</em> {manager ? manager.label : t("notYet")}</span>
-              </span>
-              <span className="bc-whatif-gap">
-                {row.gap_win === null ? "" : `${points(row.gap_win, locale)} ${t("pts")}`}
-              </span>
-              {row.decision_id === lead && recap && <p className="bc-whatif-recap">{withNames(recap, roster)}</p>}
-            </li>
-          );
-        })}
-      </ol>
+    <section className="bc-whatif" aria-label={t(shown === "report" ? "reportTitle" : "whatIf")}>
+      {report ? (
+        <div className="bc-whatif-tabs" role="group" aria-label={t("fullTime")}>
+          {(["whatif", "report"] as const).map((id) => (
+            <button key={id} type="button" className="bc-whatif-title" aria-pressed={shown === id} onClick={() => setTab(id)}>
+              {t(id === "report" ? "reportTitle" : "whatIf")}
+            </button>
+          ))}
+        </div>
+      ) : (
+        <h2 className="bc-whatif-title">{t("whatIf")}</h2>
+      )}
+      {shown === "report" ? report : (
+        <ol className="bc-whatif-rows">
+          {ordered.map((row) => {
+            const card = cards.find((c) => c.payload.decision_id === row.decision_id);
+            if (!card) return null;
+            const model = modelCall(card, roster, t);
+            const manager = managerCall(card, roster, t);
+            const recap = card.review?.recap[locale]?.[mode] ?? card.review?.recap.en?.[mode];
+            return (
+              <li key={row.decision_id} className={`bc-whatif-row${row.decision_id === lead ? " lead" : ""}`}>
+                <span className="bc-whatif-minute">{row.label}</span>
+                <span className="bc-whatif-calls">
+                  <span><em>{t("model")}</em> {model.label}</span>
+                  <span><em>{t("manager")}</em> {manager ? manager.label : t("notYet")}</span>
+                </span>
+                <span className="bc-whatif-gap">
+                  {row.gap_win === null ? "" : `${points(row.gap_win, locale)} ${t("pts")}`}
+                </span>
+                {row.decision_id === lead && recap && <p className="bc-whatif-recap">{withNames(stripMinute(recap, true), roster)}</p>}
+              </li>
+            );
+          })}
+        </ol>
+      )}
       {next}
     </section>
+  );
+}
+
+/** The match report's lines, a copy for the studio and the cue sheet for the gallery. */
+export function MatchReportView({ lines, onCues, t }: { lines: readonly string[]; onCues: () => void; t: Translate }) {
+  const [copy, setCopy] = useState<"idle" | "done" | "failed">("idle");
+  const copyText = () => {
+    navigator.clipboard.writeText(lines.join("\n")).then(() => setCopy("done"), () => setCopy("failed"));
+  };
+  return (
+    <div className="bc-report">
+      <p className="bc-report-source">{t("reportSource")}</p>
+      {lines.map((line, i) => <p key={line} className={`bc-report-line${i === 0 ? " lead" : ""}`}>{line}</p>)}
+      <p className="bc-whatif-next bc-report-actions">
+        <button type="button" onClick={copyText}>{t("reportCopy")}</button>
+        <button type="button" onClick={onCues}>{t("reportCues")}</button>
+        <span role="status" className="bc-report-status">
+          {copy === "done" ? t("reportCopied") : copy === "failed" ? t("reportCopyFailed") : ""}
+        </span>
+      </p>
+    </div>
   );
 }

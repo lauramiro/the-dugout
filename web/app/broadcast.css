@@ -569,6 +569,24 @@
   text-transform: uppercase;
 }
 
+.bc-whatif-tabs { display: flex; gap: 1.2em; margin: 0 0 1.2cqh; }
+.bc-whatif-tabs .bc-whatif-title {
+  margin: 0;
+  padding: 0;
+  color: var(--bc-muted);
+  background: none;
+  border: 0;
+  border-bottom: 0.3cqh solid transparent;
+  cursor: pointer;
+}
+.bc-whatif-tabs .bc-whatif-title[aria-pressed="true"] { color: var(--bc-ink); border-bottom-color: var(--bc-accent); }
+.bc-whatif-tabs .bc-whatif-title:focus-visible { outline: 2px solid var(--bc-accent); outline-offset: 2px; }
+.bc-report { display: grid; gap: 0.9cqh; }
+.bc-report-source { margin: 0; color: var(--bc-muted); font-size: 0.8em; text-transform: uppercase; letter-spacing: 0.06em; }
+.bc-report-line { margin: 0; line-height: 1.35; }
+.bc-report-line.lead { font-weight: 800; font-size: 1.2em; }
+.bc-report-status { align-self: center; color: var(--bc-muted); }
+
 .bc-whatif-rows { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.8cqh; }
 
 .bc-whatif-row {

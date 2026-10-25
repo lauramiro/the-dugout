@@ -3,7 +3,7 @@
 
 import type { Locale, Strength, Trigger } from "./contracts";
 
-const en = {
+export const en = {
   tagline: "Live decision guide",
   replay: "Replay",
   live: "Live",
@@ -148,6 +148,15 @@ const en = {
   comesOn: "Comes on",
   whatIf: "What if",
   exportCues: "Export cue sheet",
+  reportTitle: "Match report",
+  reportSource: "Built from the match data and the review's checked line",
+  reportResult: "Full time: {home} {homeGoals}, {away} {awayGoals}.",
+  reportGoals: "Goals for {club}: {list}.",
+  reportDecision: "The decision of the match, at {minute}: {line}",
+  reportCopy: "Copy for the studio",
+  reportCopied: "Copied",
+  reportCopyFailed: "Could not copy",
+  reportCues: "Cue sheet for the gallery (JSON)",
   analystDesk: "Analyst desk",
   broadcastView: "Broadcast view",
   tagStats: "Last 10 min: {hsr} m fast running · sprints: {sprints}",
@@ -180,7 +189,7 @@ const en = {
   aboutHow1: "A state engine reads the event and tracking feed and estimates each player's condition from his minutes, runs and running against his own first 20 minutes.",
   aboutHow2: "When a player fades, after a goal from 55', or at a substitution, a decision engine plays the rest of the match 20,000 times per option and prices each one as a win probability.",
   aboutHow3: "Foundry agents write the card's lines in English and Spanish. A grounding check in code rejects any line whose numbers, names or wording do not match the card; a template replaces it.",
-  aboutScreen: "On screen: the lower third is the decision and your vote, the line along the bottom is win probability, the manager's call shows what he did and whether it matched, and What if sums up the match at full time.",
+  aboutScreen: "On screen: the lower third is the decision and your vote, the line along the bottom is win probability, the manager's call shows what he did and whether it matched, and What if sums up the match at full time, beside a match report and the cue sheet a studio would take.",
   aboutData: "Recorded demo: fictional clubs, a simulated match, model estimates. Not Premier League data.",
   gradedLead: "The simulator knows the true answer. At each decision point it is forked 500 times with the change and 500 without, played to full time, and the true gap in win probability is compared with the engine's.",
   gradedR: "Correlation, engine against true gap",
@@ -281,7 +290,7 @@ const en = {
 export type StringKey = keyof typeof en;
 type Dict = Record<StringKey, string>;
 
-const es: Dict = {
+export const es: Dict = {
   tagline: "Guía de decisiones en directo",
   replay: "Repetición",
   live: "En directo",
@@ -426,6 +435,15 @@ const es: Dict = {
   comesOn: "Entra al campo",
   whatIf: "¿Y si...?",
   exportCues: "Exportar guion de grafismos",
+  reportTitle: "Crónica del partido",
+  reportSource: "Hecha con los datos del partido y la línea ya comprobada de la revisión",
+  reportResult: "Final del partido: {home} {homeGoals}, {away} {awayGoals}.",
+  reportGoals: "Goles de {club}: {list}.",
+  reportDecision: "La decisión del partido, en el {minute}: {line}",
+  reportCopy: "Copiar para el estudio",
+  reportCopied: "Copiado",
+  reportCopyFailed: "No se pudo copiar",
+  reportCues: "Guion de grafismos para realización (JSON)",
   analystDesk: "Mesa de análisis",
   broadcastView: "Vista de retransmisión",
   tagStats: "Últimos 10 min: {hsr} m a alta velocidad · sprints: {sprints}",
@@ -457,7 +475,7 @@ const es: Dict = {
   aboutHow1: "Un motor de estado lee los eventos y el seguimiento y estima el estado físico de cada jugador a partir de sus minutos, sus carreras y su ritmo frente a sus propios primeros 20 minutos.",
   aboutHow2: "Cuando un jugador se apaga, tras un gol desde el 55' o con un cambio, un motor de decisión juega el resto del partido 20.000 veces por opción y valora cada una como probabilidad de victoria.",
   aboutHow3: "Agentes de Foundry escriben los textos de la tarjeta en inglés y en español. Una comprobación en código rechaza cualquier texto cuyas cifras, nombres o palabras no coincidan con la tarjeta, y lo sustituye una plantilla.",
-  aboutScreen: "En pantalla: el rótulo inferior es la decisión y tu voto, la línea de abajo es la probabilidad de victoria, la decisión del entrenador muestra lo que hizo y si coincidió, y ¿Y si...? resume el partido al final.",
+  aboutScreen: "En pantalla: el rótulo inferior es la decisión y tu voto, la línea de abajo es la probabilidad de victoria, la decisión del entrenador muestra lo que hizo y si coincidió, y ¿Y si...? resume el partido al final, junto a una crónica y el guion de grafismos que usaría un estudio.",
   aboutData: "Demo grabada: clubes ficticios, un partido simulado, estimaciones del modelo. No son datos de la Premier League.",
   gradedLead: "El simulador conoce la respuesta real. En cada punto de decisión se bifurca 500 veces con el cambio y 500 sin él, se juega hasta el final y la diferencia real en probabilidad de victoria se compara con la del motor.",
   gradedR: "Correlación entre la diferencia del motor y la real",
