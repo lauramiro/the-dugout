@@ -31,10 +31,10 @@ export interface StoryOptions {
 }
 
 /** TV opens this long before the card. */
-export const STORY_LEAD_MS = 80_000;
+export const STORY_LEAD_MS = 30_000; // 6 s at 5x: the match is moving, then the card
 export const DECISION_HOLD_MS = 7_000;
 export const TABLET_HOLD_MS = 12_000;
-export const VOTE_MS = 15_000;
+export const VOTE_MS = 10_000;
 export const FULL_TIME_HOLD_MS = 12_000;
 const GOAL_LEAD_MS = 8_000;
 const GOAL_TAIL_MS = 6_000;

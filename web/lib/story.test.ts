@@ -108,7 +108,16 @@ test("buildStory: the equaliser and the manager's change play at 1x, slow enough
   }
 });
 
-test("buildStory: a card in the first two minutes opens the story at kick-off, not before it", () => {
-  const steps = buildStory(logWith([card("rfc-1-00", 1, 60_000)]), { club: "RFC", phone: true })!;
+test("buildStory: a card inside the lead opens the story at kick-off, not before it", () => {
+  const steps = buildStory(logWith([card("rfc-0-20", 1, 20_000)]), { club: "RFC", phone: true })!;
   assert.equal(steps[0].startPos, 0);
+});
+
+test("the story reaches the first card within 8 s and does not hold an unanswered vote for long", () => {
+  const steps = buildStory(demoLog(), { club: "RFC", phone: true })!;
+  const open = steps[0];
+  assert.equal(open.wait.kind, "play");
+  if (open.wait.kind === "play") assert.ok((open.wait.untilPos - open.startPos) / open.wait.speed <= 8_000);
+  const vote = steps.find((s) => s.wait.kind === "vote")!;
+  if (vote.wait.kind === "vote") assert.ok(vote.wait.ms <= 10_000);
 });
