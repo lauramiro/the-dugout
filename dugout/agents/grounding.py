@@ -210,6 +210,12 @@ def check_grounding(text: str, payload: dict, locale: str) -> list[str]:
             errors.append(
                 f"strength label '{label}' contradicts the recommendation ('{labels[strength]}')"
             )
+    # "The model sees a toss-up (toss-up)": the label belongs in the brackets once, not twice.
+    label = re.escape(labels[strength])
+    if re.search(rf"\b{label}\b[^()]{{0,3}}\(\s*{label}\s*\)", text, re.IGNORECASE):
+        errors.append(f"strength label '{labels[strength]}' twice; say it once, in the brackets")
+    if locale == "es" and (match := re.search(r"\bopciones\s+igualado\b", text, re.IGNORECASE)):
+        errors.append(f"'{match.group(0)}' does not agree; write 'las opciones están muy parejas (igualado)'")
     return errors
 
 

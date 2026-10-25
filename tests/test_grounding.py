@@ -293,3 +293,22 @@ def test_unas_before_puntos_is_reported():
 def test_a_tilde_for_about_is_reported():
     errors = check_grounding("A like-for-like change is ~4 points better (strong).", SAMPLE_PAYLOAD, "en")
     assert any("'~'" in e for e in errors)
+
+
+@pytest.mark.parametrize("locale,text", [
+    ("en", "The model sees a toss-up (toss-up)."),
+    ("es", "El modelo dice igualado (igualado)."),
+])
+def test_a_strength_word_said_twice_is_reported(locale, text):
+    payload = copy.deepcopy(SAMPLE_PAYLOAD)
+    payload["recommendation"]["strength"] = "toss_up"
+    assert any("twice" in e for e in check_grounding(text, payload, locale))
+    once = "The options are close (toss-up)." if locale == "en" else "Las opciones están muy parejas (igualado)."
+    assert not any("twice" in e for e in check_grounding(once, payload, locale))
+
+
+def test_opciones_igualado_is_reported():
+    payload = copy.deepcopy(SAMPLE_PAYLOAD)
+    payload["recommendation"]["strength"] = "toss_up"
+    errors = check_grounding("El modelo ve las opciones igualado.", payload, "es")
+    assert any("opciones igualado" in e for e in errors)
