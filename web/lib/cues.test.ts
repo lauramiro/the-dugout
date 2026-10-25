@@ -176,6 +176,16 @@ test("holdCues forgets a cue when the playhead goes back before it", () => {
   assert.equal(seen.has("g"), false);
 });
 
+test("holdCues drops a held cue when the playhead jumps far past it", () => {
+  const cue: Cue = { id: "d", kind: "decision", in_pos: 100, out_pos: 30_000, data: {} };
+  const seen = new Map<string, number>();
+  holdCues([cue], 1_000, seen, 1000, 4000, 120_000);
+  assert.deepEqual(holdCues([cue], 100_000, seen, 2000, 4000, 120_000).map((c) => c.id), ["d"],
+    "fast play: still inside the hold");
+  assert.deepEqual(holdCues([cue], 2_000_000, seen, 2500, 4000, 120_000), [],
+    "a seek to full time does not leave the card on screen");
+});
+
 test("a card raised by the manager's own substitution gets no manager-call cue", () => {
   const action = { period: 2 as const, t_ms: 4_740_000, subs: [{ off: "RFC-03", on: "RFC-15" }], option_id: null };
   const raised = card({ id: "rfc-79-00", t_ms: 4_740_000, trigger: "manager_sub", manager_action: action });

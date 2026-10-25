@@ -81,7 +81,7 @@ export function scoreAt(log: MatchLog, pos: number): Record<TeamCode, number> {
  * wall ms) is the caller's memory between frames; going back before a cue forgets it.
  */
 export function holdCues(cues: readonly Cue[], pos: number, firstSeen: Map<string, number>, now: number,
-  minWallMs: number): Cue[] {
+  minWallMs: number, maxLagMs = Infinity): Cue[] {
   const out: Cue[] = [];
   for (const c of cues) {
     if (pos < c.in_pos) {
@@ -91,7 +91,9 @@ export function holdCues(cues: readonly Cue[], pos: number, firstSeen: Map<strin
     const active = pos < c.out_pos;
     if (active && !firstSeen.has(c.id)) firstSeen.set(c.id, now);
     const seen = firstSeen.get(c.id);
-    if (active || (seen !== undefined && now - seen < minWallMs)) out.push(c);
+    // A seek far past the cue ends the hold: the hold is for fast play, not for a jump to another minute.
+    const held = seen !== undefined && now - seen < minWallMs && pos - c.out_pos <= maxLagMs;
+    if (active || held) out.push(c);
   }
   return out;
 }
