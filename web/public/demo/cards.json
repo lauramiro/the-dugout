@@ -91,24 +91,24 @@
     "en": {
      "casual": {
       "headline": "Take RFC-03 off for a fresh player",
-      "reason": "The model favours a like-for-like change; about 6 points better, condition 69 (strong).",
+      "reason": "The model favours a like-for-like change; about 6 points better (strong).",
       "source": "model"
      },
      "analyst": {
       "headline": "Take RFC-03 off for a fresh player",
-      "reason": "The model favours a like-for-like change: +5.8 points, 90% interval +5.5 to +6.1; condition 69 (strong).",
+      "reason": "The model favours a like-for-like change: +5.8 points, 90% interval +5.5 to +6.1 (strong).",
       "source": "model"
      }
     },
     "es": {
      "casual": {
       "headline": "Sacar a RFC-03 por un jugador fresco",
-      "reason": "El modelo prefiere un cambio en la misma posición, cerca de 6 puntos mejor; condición 69 (fuerte).",
+      "reason": "El modelo prefiere un cambio en la misma posición, unos 6 puntos mejor (fuerte).",
       "source": "model"
      },
      "analyst": {
       "headline": "Sacar a RFC-03 por un jugador fresco",
-      "reason": "El modelo favorece un cambio en la misma posición: +5,8 puntos, intervalo del 90%: +5,5 a +6,1; condición 69 (fuerte).",
+      "reason": "El modelo favorece un cambio en la misma posición: +5,8 puntos, intervalo del 90%: +5,5 a +6,1 (fuerte).",
       "source": "model"
      }
     }
@@ -235,26 +235,26 @@
    "narration": {
     "en": {
      "casual": {
-      "headline": "After the change: the next move under review.",
-      "reason": "The options are close: the model sees almost no difference (toss-up).",
-      "source": "template"
+      "headline": "Little to choose between the options",
+      "reason": "CAS-02 is tiring; the model favours an attacking change by about 1 point (toss-up).",
+      "source": "model"
      },
      "analyst": {
-      "headline": "After the change: the next move under review.",
-      "reason": "The options are close: changing now moves win probability by +0.5 pts, 90% interval +0.4 to +0.7 (toss-up).",
-      "source": "template"
+      "headline": "Little to choose between the options",
+      "reason": "CAS-02 is tiring; the model favours an attacking change by +0.5 points, 90% interval +0.4 to +0.7 (toss-up).",
+      "source": "model"
      }
     },
     "es": {
      "casual": {
-      "headline": "Tras el cambio: el siguiente movimiento en estudio.",
-      "reason": "Las opciones están muy parejas: el modelo no ve apenas diferencia (igualado).",
-      "source": "template"
+      "headline": "Poco que elegir entre las opciones",
+      "reason": "CAS-02 se cansa; el modelo favorece un cambio ofensivo por cerca de 1 punto (igualado).",
+      "source": "model"
      },
      "analyst": {
-      "headline": "Tras el cambio: el siguiente movimiento en estudio.",
-      "reason": "Las opciones están muy parejas: cambiar ahora mueve la probabilidad de victoria +0,5 pts, intervalo del 90%: +0,4 a +0,7 (igualado).",
-      "source": "template"
+      "headline": "Poco que elegir entre las opciones",
+      "reason": "CAS-02 se cansa; el modelo favorece un cambio ofensivo +0,5 puntos, intervalo del 90%: +0,4 a +0,7 (igualado).",
+      "source": "model"
      }
     }
    },
@@ -380,24 +380,24 @@
     "en": {
      "casual": {
       "headline": "Take RFC-03 off for a fresh player",
-      "reason": "The model favours a like-for-like change; about 2 points better. RFC-03 condition 68, left flank threat 62% (lean).",
+      "reason": "The model favors a like-for-like change, about 2 points better (lean). RFC-03 is tiring; left flank threat 62%.",
       "source": "model"
      },
      "analyst": {
       "headline": "Take RFC-03 off for a fresh player",
-      "reason": "The model favors a like-for-like change: +2.1 points, 90% interval +2.0 to +2.3; RFC-03 condition 68, left flank threat 62.1% (lean).",
+      "reason": "The model favours a like-for-like change: +2.1 points, 90% interval +2.0 to +2.3 (lean). RFC-03 condition 68.",
       "source": "model"
      }
     },
     "es": {
      "casual": {
       "headline": "Sacar a RFC-03 por un jugador fresco",
-      "reason": "El modelo prefiere un cambio en la misma posición; ventaja de 2 puntos, RFC-03 condición 68, amenaza izquierda 62% (leve).",
+      "reason": "El modelo prefiere un cambio en la misma posición, 2 puntos mejor (leve). RFC-03 se cansa, amenaza por la izquierda 62%.",
       "source": "model"
      },
      "analyst": {
       "headline": "Sacar a RFC-03 por un jugador fresco",
-      "reason": "El modelo prefiere un cambio en la misma posición: +2,1 puntos, intervalo del 90%: +2,0 a +2,3; condición RFC-03 68 (leve).",
+      "reason": "El modelo prefiere un cambio en la misma posición: +2,1 puntos, intervalo del 90%: +2,0 a +2,3 (leve).",
       "source": "model"
      }
     }
@@ -520,24 +520,24 @@
     "en": {
      "casual": {
       "headline": "Take CAS-02 off for a fresh player",
-      "reason": "Model prefers a like-for-like change; about 2 points better and CAS-02’s condition is 72 (lean).",
+      "reason": "Model prefers a like-for-like change by about 2 points; CAS-02 is tiring (72) and the model rates it lean.",
       "source": "model"
      },
      "analyst": {
       "headline": "Take CAS-02 off for a fresh player",
-      "reason": "The model favours a like-for-like change: +1.9 points, 90% interval +1.7 to +2.0; player condition 72 (lean).",
+      "reason": "The model favours a like-for-like substitution: +1.9 points, 90% interval +1.7 to +2.0 (lean).",
       "source": "model"
      }
     },
     "es": {
      "casual": {
       "headline": "Sacar a CAS-02 por un jugador fresco",
-      "reason": "El modelo favorece un cambio en la misma posición; ventaja de cerca de 2 puntos, condición 72 (leve).",
+      "reason": "El modelo favorece un cambio en la misma posición (leve). La opción está cerca por unos 2 puntos a favor.",
       "source": "model"
      },
      "analyst": {
       "headline": "Sacar a CAS-02 por un jugador fresco",
-      "reason": "El modelo prefiere un cambio en la misma posición: +1,9 puntos, intervalo del 90%: +1,7 a +2,0; condición 72 (leve).",
+      "reason": "El modelo favorece un cambio en la misma posición: +1,9 puntos, intervalo del 90%: +1,7 a +2,0 (leve).",
       "source": "model"
      }
     }
@@ -663,26 +663,26 @@
    "narration": {
     "en": {
      "casual": {
-      "headline": "After the change: the next move under review.",
-      "reason": "The model rates changing now about 2 points better (lean).",
-      "source": "template"
+      "headline": "Go for an attacking change",
+      "reason": "Model favours an attacking change by about 2 points; RFC-11 is tiring (lean).",
+      "source": "model"
      },
      "analyst": {
       "headline": "Go for an attacking change",
-      "reason": "The model prefers an attacking change: +1.8 points, 90% interval +1.6 to +2.0; RFC-11 condition 73 (lean).",
+      "reason": "The model favours an attacking change: +1.8 points, 90% interval +1.6 to +2.0; RFC-11 is tiring (lean).",
       "source": "model"
      }
     },
     "es": {
      "casual": {
-      "headline": "Tras el cambio: el siguiente movimiento en estudio.",
-      "reason": "El modelo valora cambiar ahora cerca de 2 puntos mejor (leve).",
-      "source": "template"
+      "headline": "A por un cambio ofensivo",
+      "reason": "El modelo favorece un cambio ofensivo; RFC-11 se cansa y la opción está cerca (leve).",
+      "source": "model"
      },
      "analyst": {
-      "headline": "Tras el cambio: el siguiente movimiento en estudio.",
-      "reason": "Cambiar ahora: +1,8 pts de probabilidad de victoria, intervalo del 90%: +1,6 a +2,0 (leve).",
-      "source": "template"
+      "headline": "A por un cambio ofensivo",
+      "reason": "El modelo: +1,8 puntos, intervalo del 90%: +1,6 a +2,0; RFC-11 se cansa (leve).",
+      "source": "model"
      }
     }
    },
@@ -812,21 +812,21 @@
       "source": "template"
      },
      "analyst": {
-      "headline": "After the goal: a change under review.",
-      "reason": "The options are close: changing now moves win probability by +0.4 pts, 90% interval +0.3 to +0.5 (toss-up).",
-      "source": "template"
+      "headline": "Little to choose between the options",
+      "reason": "CAS-02 is tiring; the model shows +0.4 points, 90% interval +0.3 to +0.5, toss-up (69).",
+      "source": "model"
      }
     },
     "es": {
      "casual": {
-      "headline": "Tras el gol: un cambio en estudio.",
-      "reason": "Las opciones están muy parejas: el modelo no ve apenas diferencia (igualado).",
-      "source": "template"
+      "headline": "Poco que elegir entre las opciones",
+      "reason": "CAS-02 se cansa; el modelo muestra opciones muy parecidas, igualado (69 condición).",
+      "source": "model"
      },
      "analyst": {
-      "headline": "Tras el gol: un cambio en estudio.",
-      "reason": "Las opciones están muy parejas: cambiar ahora mueve la probabilidad de victoria +0,4 pts, intervalo del 90%: +0,3 a +0,5 (igualado).",
-      "source": "template"
+      "headline": "Poco que elegir entre las opciones",
+      "reason": "CAS-02 se cansa; el modelo: +0,4 puntos, intervalo del 90%: +0,3 a +0,5 (igualado).",
+      "source": "model"
      }
     }
    },
@@ -943,24 +943,24 @@
     "en": {
      "casual": {
       "headline": "Take RFC-11 off for a fresh player",
-      "reason": "The model favours a like-for-like change; gap about 2 points, RFC-11 condition 70 (lean).",
+      "reason": "RFC-11 is tiring (condition 70). The model favors a like-for-like substitution (lean). About 2 points better.",
       "source": "model"
      },
      "analyst": {
       "headline": "Take RFC-11 off for a fresh player",
-      "reason": "The model favours a like-for-like substitution: +2.3 points, 90% interval +2.1 to +2.5. RFC-11 condition 70 (lean).",
+      "reason": "RFC-11 is tiring; the model favors a like-for-like substitution (lean): +2.3 points, 90% interval +2.1 to +2.5.",
       "source": "model"
      }
     },
     "es": {
      "casual": {
       "headline": "Sacar a RFC-11 por un jugador fresco",
-      "reason": "El modelo prefiere un cambio en la misma posición; la diferencia es de cerca de 2 puntos, RFC-11 condición 70 (leve).",
+      "reason": "RFC-11 se cansa (leve). El modelo prefiere un cambio en la misma posición por cerca de 2 puntos mejor.",
       "source": "model"
      },
      "analyst": {
       "headline": "Sacar a RFC-11 por un jugador fresco",
-      "reason": "El modelo favorece un cambio en la misma posición: +2,3 puntos, intervalo del 90%: +2,1 a +2,5; RFC-11 condición 70 (leve).",
+      "reason": "RFC-11 se cansa; el modelo prefiere un cambio en la misma posición (leve): +2,3 puntos, intervalo del 90%: +2,1 a +2,5",
       "source": "model"
      }
     }
@@ -1091,9 +1091,9 @@
       "source": "template"
      },
      "analyst": {
-      "headline": "Go for an attacking change",
-      "reason": "The model favours an attacking change: +0.2 points, 90% interval +0.1 to +0.2; CAS-02 is tiring (toss-up).",
-      "source": "model"
+      "headline": "After the change, CAS-02 is fading (68%).",
+      "reason": "The options are close: changing now moves win probability by +0.2 pts, 90% interval +0.1 to +0.2 (toss-up).",
+      "source": "template"
      }
     },
     "es": {
@@ -1103,9 +1103,9 @@
       "source": "template"
      },
      "analyst": {
-      "headline": "A por un cambio ofensivo",
-      "reason": "El modelo favorece un cambio ofensivo: +0,2 puntos, intervalo del 90%: +0,1 a +0,2 (igualado).",
-      "source": "model"
+      "headline": "Tras el cambio, CAS-02 se está agotando (68%).",
+      "reason": "Las opciones están muy parejas: cambiar ahora mueve la probabilidad de victoria +0,2 pts, intervalo del 90%: +0,1 a +0,2 (igualado).",
+      "source": "template"
      }
     }
    },
@@ -1226,24 +1226,24 @@
     "en": {
      "casual": {
       "headline": "Take RFC-11 off for a fresh player",
-      "reason": "The model favours a like-for-like change (lean). It’s about 3 points better than no change.",
+      "reason": "Model prefers a like-for-like change by about 3 points; RFC-11 is tiring (lean).",
       "source": "model"
      },
      "analyst": {
       "headline": "Take RFC-11 off for a fresh player",
-      "reason": "The model favours a like-for-like change: +2.9 points, 90% interval +2.7 to +3.0 (lean).",
+      "reason": "The model prefers a like-for-like change: +2.9 points, 90% interval +2.7 to +3.0 (lean).",
       "source": "model"
      }
     },
     "es": {
      "casual": {
       "headline": "Sacar a RFC-11 por un jugador fresco",
-      "reason": "El modelo prefiere un cambio en la misma posición (leve). Diferencia de 3 puntos a favor.",
+      "reason": "El modelo prefiere un cambio en la misma posición; la diferencia es de 3 puntos (leve).",
       "source": "model"
      },
      "analyst": {
       "headline": "Sacar a RFC-11 por un jugador fresco",
-      "reason": "El modelo favorece un cambio en la misma posición: +2,9 puntos, intervalo del 90%: +2,7 a +3,0 (leve).",
+      "reason": "El modelo prefiere un cambio en la misma posición: +2,9 puntos, intervalo del 90%: +2,7 a +3,0 (leve).",
       "source": "model"
      }
     }
