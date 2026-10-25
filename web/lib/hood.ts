@@ -28,7 +28,7 @@ export const REPO_URL = "https://github.com/lauramiro/the-dugout";
 export const CLAUDE_COMMAND = `claude mcp add --transport http the-dugout ${MCP_URL}`;
 export const VSCODE_CONFIG = `{ "servers": { "the-dugout": { "type": "http", "url": "${MCP_URL}" } } }`;
 
-/** The architecture drawn in the panel itself (docs/architecture.svg is too wide to read inline): three lanes,
+/** The architecture drawn in the panel itself (docs/architecture.svg is too wide to read inline): four lanes,
  *  each a row of nodes with a label on every link. A node with `brand` shows that product name as is; the others
  *  are named in lib/i18n.ts under `hoodNode_<id>`. Every node has a line under `hoodSub_<id>`, every link
  *  `hoodEdge_<id>`, every lane `hoodLane_<id>`. */
@@ -41,15 +41,19 @@ export const HOOD_FLOW: readonly { id: string; nodes: readonly FlowNode[]; edges
     edges: ["events", "consume", "publish", "socket"],
   },
   {
+    id: "narration",
+    nodes: [{ id: "runner" }, { id: "foundry", brand: "Microsoft Foundry" }],
+    edges: ["workflow"],
+  },
+  {
     id: "request",
-    nodes: [{ id: "staticwebapps", brand: "Azure Static Web Apps" }, { id: "browser" }, { id: "service" },
-      { id: "foundry", brand: "Microsoft Foundry" }],
-    edges: ["page", "negotiate", "explain"],
+    nodes: [{ id: "staticwebapps", brand: "Azure Static Web Apps" }, { id: "browser" }, { id: "service" }],
+    edges: ["page", "negotiate"],
   },
   {
     id: "agents",
-    nodes: [{ id: "mcpclients" }, { id: "service" }],
-    edges: ["mcp"],
+    nodes: [{ id: "mcpclients" }, { id: "service" }, { id: "foundry", brand: "Microsoft Foundry" }],
+    edges: ["mcp", "explain"],
   },
 ];
 

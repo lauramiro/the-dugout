@@ -243,22 +243,27 @@ export function HoodPanel({ onClose, onPanel, t }: { onClose: () => void; onPane
       <p className="bc-dialog-lead">{t("hoodLead")}</p>
       <figure className="bc-hood-figure">
         {/* Drawn here so it reads at any width; the full diagram (docs/architecture.svg) opens below. */}
-        <div className="bc-flow" role="img" aria-label={t("hoodDiagramAlt")}>
+        <div className="bc-flow">
           {HOOD_FLOW.map((lane) => (
-            <div key={lane.id} className="bc-flow-lane">
-              <p className="bc-flow-title">{t(`hoodLane_${lane.id}` as StringKey)}</p>
-              <ol className="bc-flow-row" aria-hidden="true">
-                {lane.nodes.map((node, i) => (
-                  <Fragment key={`${lane.id}-${node.id}`}>
-                    {i > 0 && <li className="bc-flow-edge">{t(`hoodEdge_${lane.edges[i - 1]}` as StringKey)}</li>}
-                    <li className={`bc-flow-node${node.brand ? " brand" : ""}`}>
-                      <b>{node.brand ?? t(`hoodNode_${node.id}` as StringKey)}</b>
-                      <span>{t(`hoodSub_${node.id}` as StringKey)}</span>
-                    </li>
-                  </Fragment>
-                ))}
+            <section key={lane.id} className="bc-flow-lane" aria-labelledby={`flow-${lane.id}`}>
+              <h4 id={`flow-${lane.id}`} className="bc-flow-title">{t(`hoodLane_${lane.id}` as StringKey)}</h4>
+              <ol className="bc-flow-row">
+                {lane.nodes.map((node, i) => {
+                  const edge = i > 0 ? t(`hoodEdge_${lane.edges[i - 1]}` as StringKey) : null;
+                  return (
+                    <Fragment key={`${lane.id}-${node.id}`}>
+                      {/* The arrow and its label are drawn for the eye; a screen reader gets the label on the node. */}
+                      {edge && <li className="bc-flow-edge" aria-hidden="true">{edge}</li>}
+                      <li className={`bc-flow-node${node.brand ? " brand" : ""}`}>
+                        {edge && <span className="bc-sr">{edge}: </span>}
+                        <b>{node.brand ?? t(`hoodNode_${node.id}` as StringKey)}</b>
+                        <span>{t(`hoodSub_${node.id}` as StringKey)}</span>
+                      </li>
+                    </Fragment>
+                  );
+                })}
               </ol>
-            </div>
+            </section>
           ))}
           <p className="bc-flow-note">{t("hoodFlowRegistry")}</p>
         </div>

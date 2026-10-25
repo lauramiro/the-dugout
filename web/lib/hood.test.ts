@@ -12,7 +12,7 @@ const hoodKeys = [
   ...HOOD_CHAIN.map((s) => `hood_${s.id}`),
   ...flowKeys(),
   "hoodFlowRegistry",
-  "hoodNav", "hoodTitle", "hoodLead", "hoodDiagramAlt", "hoodDiagramOpen", "hoodServices", "hoodChain",
+  "hoodNav", "hoodTitle", "hoodLead", "hoodDiagramOpen", "hoodServices", "hoodChain",
   "hoodChainNote", "hoodMcp", "hoodMcpClaude", "hoodMcpVscode", "hoodRepo", "newTab",
 ] as StringKey[];
 
@@ -76,4 +76,14 @@ test("the drawn flow: every lane has one label between each pair of nodes, and o
 test("the drawn flow names every Azure service the services list names, so the two cannot drift", () => {
   const brands = new Set(HOOD_FLOW.flatMap((l) => l.nodes.flatMap((n) => ("brand" in n ? [n.brand] : []))));
   for (const name of ["Azure Event Hubs", "Azure Web PubSub", "Azure Static Web Apps", "Microsoft Foundry"]) assert.ok(brands.has(name), name);
+});
+
+test("the drawn flow's lanes say what the README says: only agents reach Foundry through the service", () => {
+  const lanes = Object.fromEntries(HOOD_FLOW.map((l) => [l.id, l.nodes.map((n) => n.id).join(" > ")]));
+  assert.deepEqual(lanes, {
+    live: "replayer > eventhubs > runner > webpubsub > browser",
+    narration: "runner > foundry",
+    request: "staticwebapps > browser > service",
+    agents: "mcpclients > service > foundry",
+  });
 });
