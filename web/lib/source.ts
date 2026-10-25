@@ -20,3 +20,9 @@ export function sourceChoice(search: string): SourceChoice {
 export function playOnLoad(s: { started: boolean; ready: boolean; controls: boolean; held: boolean }): boolean {
   return !s.started && s.ready && s.controls && !s.held;
 }
+
+/** Whether a page's query opens a minute of its own (?t=), as leaving the story does: such a page waits
+ *  for the viewer instead of playing on, so a card that just opened can be read and called. */
+export function linkedMinute(search: string): boolean {
+  return new URLSearchParams(search).has("t");
+}

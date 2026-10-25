@@ -5,7 +5,7 @@ import { FanView } from "../../components/fan/FanView";
 import type { Locale, Mode, TeamCode } from "../../lib/contracts";
 import { SPEEDS } from "../../lib/datasource";
 import { LOCALES, translator } from "../../lib/i18n";
-import { useDataSource, useFeed, usePlayOnLoad } from "../../lib/useFeed";
+import { useDataSource, useFeed, useLinkedMinute, usePlayOnLoad } from "../../lib/useFeed";
 import { useVotes } from "../../lib/useVotes";
 import "../fan.css";
 
@@ -55,7 +55,8 @@ function writePrefs(prefs: FanPrefs): void {
 export default function FanPage() {
   const source = useDataSource();
   const feed = useFeed(source);
-  usePlayOnLoad(source, feed);
+  // Opened on its own it plays like a broadcast; a link to a minute (leaving the story) waits for the viewer.
+  usePlayOnLoad(source, feed, useLinkedMinute() !== false);
   const { log, playhead, status } = feed;
   const live = source.kind === "live";
   const { votes, castVote } = useVotes(live);

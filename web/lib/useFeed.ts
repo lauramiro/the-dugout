@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useSyncExternalStore } from "react";
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import type { DataSource, FeedState } from "./datasource";
 import { LiveDataSource } from "./live";
 import { ReplayDataSource } from "./replay";
-import { playOnLoad, sourceChoice } from "./source";
+import { linkedMinute, playOnLoad, sourceChoice } from "./source";
 
 const noSubscribe = () => () => {};
 const clientSearch = () => window.location.search;
@@ -38,4 +38,11 @@ export function usePlayOnLoad(source: DataSource, feed: FeedState, held = false)
     started.current = true;
     source.controls?.play();
   }, [feed.status, source, held]);
+}
+
+/** linkedMinute for this page; null until read in the browser (the static HTML has no query). */
+export function useLinkedMinute(): boolean | null {
+  const [linked, setLinked] = useState<boolean | null>(null);
+  useEffect(() => setLinked(linkedMinute(window.location.search)), []);
+  return linked;
 }
