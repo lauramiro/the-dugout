@@ -1012,7 +1012,7 @@ a.bc-hood-open:hover { filter: brightness(1.08); }
   .bc-call { max-width: min(30cqw, 45%); }
 }
 
-@media (max-width: 700px) and (orientation: portrait) {
+@media (max-width: 1024px) and (orientation: portrait) {
   .bc-wrap { align-items: start; overflow-y: auto; }
   /* The decision card and What if (lib/sheet.ts): under the picture, below the settings chip, at reading size.
      Their container units now measure the frame, which is as wide as the picture. */

@@ -1,9 +1,9 @@
-// A portrait phone shows the 16:9 picture about 220 px tall: the decision card and full time's What if
+// A portrait phone or tablet shows the 16:9 picture about 220 to 430 px tall: the decision card and full time's What if
 // do not fit on it, so there they sit in a sheet under the picture (app/broadcast.css, same query).
 
 import { useSyncExternalStore } from "react";
 
-export const PHONE_SHEET_QUERY = "(max-width: 700px) and (orientation: portrait)";
+export const PHONE_SHEET_QUERY = "(max-width: 1024px) and (orientation: portrait)";
 
 function subscribe(onChange: () => void): () => void {
   const query = window.matchMedia(PHONE_SHEET_QUERY);

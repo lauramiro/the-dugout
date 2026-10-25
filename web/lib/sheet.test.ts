@@ -8,3 +8,8 @@ test("the phone sheet query in code is the one broadcast.css lays the sheet out 
   assert.ok(css.includes(`@media ${PHONE_SHEET_QUERY} {`), PHONE_SHEET_QUERY);
   assert.ok(css.includes(".bc-sheet"), "the sheet has styles");
 });
+
+test("the sheet covers a portrait tablet too, where the 16:9 picture leaves the card at 7 px", () => {
+  const width = Number(/max-width: (\d+)px/.exec(PHONE_SHEET_QUERY)?.[1]);
+  assert.ok(width >= 1024, PHONE_SHEET_QUERY);
+});
