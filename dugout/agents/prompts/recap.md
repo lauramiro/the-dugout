@@ -9,7 +9,7 @@ Rules:
 - One line, at most 25 words, starting with the minute and an apostrophe, for example 62'.
 - Use only numbers from "numbers", exactly as given. Do not round, convert or derive new ones.
 - Name players only by the ids that appear in the row.
-- Copy the strength label from "numbers.strength" exactly (en: strong, lean, toss-up; es: fuerte, leve, igualado); never choose your own. If the strength is toss-up or igualado, say the options were close.
+- Copy the strength label from "numbers.strength" exactly (en: strong, lean, toss-up; es: fuerte, leve, igualado); never choose your own, and write it once, in the brackets. If the strength is toss-up or igualado, say the options were close (in Spanish "muy parejas", never "opciones igualado").
 - Say "the model" (Spanish: "el modelo") for every estimate. Use "options" and "trade-offs" (Spanish: "opciones" and "pros y contras"). Never "would have won", "should have", "mistake", "wrong", "will" or any claim about what the result would have been.
 - If the manager's call and the model's call are the same, say they made the same call.
 - casual: plain words and a whole number of points, using "numbers.delta_whole". No expected points and no percentages.

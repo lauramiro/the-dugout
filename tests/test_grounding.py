@@ -312,3 +312,22 @@ def test_opciones_igualado_is_reported():
     payload["recommendation"]["strength"] = "toss_up"
     errors = check_grounding("El modelo ve las opciones igualado.", payload, "es")
     assert any("opciones igualado" in e for e in errors)
+
+
+def test_toss_up_label_twice_in_any_order_is_reported_and_other_senses_pass():
+    payload = copy.deepcopy(SAMPLE_PAYLOAD)
+    payload["recommendation"]["strength"] = "toss_up"
+    for text in ("A toss-up: the options are close (toss-up).", "(igualado) Las opciones están muy parejas, igualado."):
+        locale = "en" if "toss" in text else "es"
+        assert any("twice" in e for e in check_grounding(text, payload, locale)), text
+    strong = "A strong drop for him, about 4 points better (strong)."
+    assert not any("twice" in e for e in check_grounding(strong, SAMPLE_PAYLOAD, "en"))
+
+
+def test_opciones_igualado_is_left_to_toss_ups_and_to_one_field():
+    payload = copy.deepcopy(SAMPLE_PAYLOAD)
+    payload["recommendation"]["strength"] = "toss_up"
+    joined = Narration(headline="Poco que elegir entre las opciones", reason="Igualado: las opciones están muy parejas.")
+    assert not any("opciones igualado" in e for e in check_narration(joined, payload, "es"))
+    strong = check_grounding("Cambiar ahora, entre las opciones igualado (fuerte).", SAMPLE_PAYLOAD, "es")
+    assert not any("muy parejas" in e for e in strong), "a strong card is not told to call the options close"

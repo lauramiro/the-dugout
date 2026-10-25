@@ -210,11 +210,16 @@ def check_grounding(text: str, payload: dict, locale: str) -> list[str]:
             errors.append(
                 f"strength label '{label}' contradicts the recommendation ('{labels[strength]}')"
             )
-    # "The model sees a toss-up (toss-up)": the label belongs in the brackets once, not twice.
-    label = re.escape(labels[strength])
-    if re.search(rf"\b{label}\b[^()]{{0,3}}\(\s*{label}\s*\)", text, re.IGNORECASE):
-        errors.append(f"strength label '{labels[strength]}' twice; say it once, in the brackets")
-    if locale == "es" and (match := re.search(r"\bopciones\s+igualado\b", text, re.IGNORECASE)):
+    # "The model sees a toss-up (toss-up)": the label belongs in the brackets once, not twice. "toss-up" and
+    # "igualado" have no other sense here, so any second use counts; "strong" or "lean" may also be plain words
+    # ("a strong drop"), so only the label right before its own brackets counts.
+    label = labels[strength]
+    twice = (len(_word_boundary(label).findall(text)) > 1 if strength == "toss_up"
+             else re.search(rf"\b{re.escape(label)}\b[^()]{{0,3}}\(\s*{re.escape(label)}\s*\)", text, re.IGNORECASE))
+    if twice:
+        errors.append(f"'{label}' appears twice; write it once, as '({label})' at the end, not also in the sentence")
+    # Lower case only: a reason that opens with "Igualado:" after a headline ending in "opciones" is fine.
+    if locale == "es" and strength == "toss_up" and (match := re.search(r"\bopciones\s+igualado\b", text)):
         errors.append(f"'{match.group(0)}' does not agree; write 'las opciones están muy parejas (igualado)'")
     return errors
 
