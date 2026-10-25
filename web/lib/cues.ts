@@ -98,6 +98,20 @@ export function holdCues(cues: readonly Cue[], pos: number, firstSeen: Map<strin
   return out;
 }
 
+/** Wall time until the first held cue (ended in match time, kept by `holdCues`) expires, or null if none is held.
+ *  A paused page renders nothing on its own, so the caller re-renders then. */
+export function holdExpiresInMs(shown: readonly Cue[], pos: number, firstSeen: Map<string, number>, now: number,
+  minWallMs: number): number | null {
+  let soonest: number | null = null;
+  for (const c of shown) {
+    const seen = firstSeen.get(c.id);
+    if (pos < c.out_pos || seen === undefined) continue;
+    const left = Math.max(0, minWallMs - (now - seen));
+    if (soonest === null || left < soonest) soonest = left;
+  }
+  return soonest;
+}
+
 export function cueSheet(log: MatchLog, focus: string | null, source: "replay" | "live") {
   return { match_id: log.events[0]?.item.match_id ?? null, source, cues: buildCues(log, focus) };
 }

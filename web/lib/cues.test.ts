@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { activeCues, buildCues, cueSheet, holdCues, passStats, scoreAt, type Cue } from "./cues.ts";
+import { activeCues, buildCues, cueSheet, holdCues, holdExpiresInMs, passStats, scoreAt, type Cue } from "./cues.ts";
 import type { DecisionCard, MatchEvent, Review } from "./contracts.ts";
 import type { MatchLog, Timed } from "./datasource.ts";
 
@@ -184,6 +184,22 @@ test("holdCues drops a held cue when the playhead jumps far past it", () => {
     "fast play: still inside the hold");
   assert.deepEqual(holdCues([cue], 2_000_000, seen, 2500, 4000, 120_000), [],
     "a seek to full time does not leave the card on screen");
+});
+
+test("holdCues keeps a cue lagging just under the limit and drops one just over", () => {
+  const cue: Cue = { id: "d", kind: "decision", in_pos: 0, out_pos: 10_000, data: {} };
+  const seen = new Map<string, number>([["d", 1000]]);
+  assert.equal(holdCues([cue], 10_000 + 80_000, seen, 2000, 4000, 120_000).length, 1);
+  assert.equal(holdCues([cue], 10_000 + 121_000, seen, 2000, 4000, 120_000).length, 0);
+});
+
+test("holdExpiresInMs is the wall time until the first held cue goes, so a paused page can re-render then", () => {
+  const ended: Cue = { id: "g", kind: "goal", in_pos: 0, out_pos: 100, data: {} };
+  const later: Cue = { id: "s", kind: "stats", in_pos: 0, out_pos: 150, data: {} };
+  const active: Cue = { id: "d", kind: "decision", in_pos: 0, out_pos: 10_000, data: {} };
+  const seen = new Map<string, number>([["g", 1000], ["s", 2500], ["d", 1000]]);
+  assert.equal(holdExpiresInMs([ended, later, active], 200, seen, 3000, 4000), 2000);
+  assert.equal(holdExpiresInMs([active], 200, seen, 3000, 4000), null, "nothing held, nothing to wait for");
 });
 
 test("a card raised by the manager's own substitution gets no manager-call cue", () => {
