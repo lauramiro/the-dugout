@@ -204,7 +204,8 @@ export default function BroadcastPage() {
   const sheetMode = usePhoneSheet();
   const stepId = story.step?.id;
   useEffect(() => {
-    if (sheetMode && stepId) document.querySelector(".bc-wrap")?.scrollTo({ top: 0 });
+    // also when the story ends (no step), where the sheet moves back under the controls
+    if (sheetMode) document.querySelector(".bc-wrap")?.scrollTo({ top: 0 });
   }, [sheetMode, stepId]);
 
   if (cuesJson) return <CueSheetView log={log} focus={prefs.player} source={source.kind} />;
