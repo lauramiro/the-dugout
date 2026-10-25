@@ -57,7 +57,8 @@ export function SettingsChip({ prefs, onChange, roster, controls, feed, recorded
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key !== "Escape") return;
+      // A dialog open on top takes its own Escape; leave Settings as it is.
+      if (e.key !== "Escape" || e.defaultPrevented || document.querySelector("dialog[open]")) return;
       setOpen(false);
       chip.current?.focus();
     };

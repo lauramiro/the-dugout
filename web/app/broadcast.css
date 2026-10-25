@@ -201,7 +201,7 @@
   background: var(--bc-glass-strong);
   border: 1px solid var(--bc-line);
   border-radius: 0.6em;
-  max-height: 80cqh;
+  max-height: 62cqh /* 80cqh less the margin above it */;
   overflow: auto;
 }
 
