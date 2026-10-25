@@ -1048,9 +1048,16 @@ a.bc-hood-open:hover { filter: brightness(1.08); }
   .bc-chrome { padding-top: 44px; }
   .bc-panel { max-height: 55vh; }
   .bc-lower { width: calc(100% - 3.2cqw); }
+  /* a phone has no room for these over the picture; a portrait tablet does, at a readable floor */
   .bc-call,
   .bc-focus,
-  .bc-stats { display: none; }
+  .bc-stats { font-size: max(11px, 1cqw); }
+  .bc-kickoff { font-size: max(12px, 1.3cqw); }
+  @media (max-width: 700px) {
+    .bc-call,
+    .bc-focus,
+    .bc-stats { display: none; }
+  }
 }
 
 /* Live: next kick-off of the scheduled demo replay (components/broadcast/KickoffSlate.tsx). */
