@@ -210,6 +210,9 @@ export default function BroadcastPage() {
 
   if (cuesJson) return <CueSheetView log={log} focus={prefs.player} source={source.kind} />;
 
+  const managerCall = callCue && (
+    <ManagerCall key={callCue.id} cue={callCue} roster={log.roster} you={viewerCall(callCue, log, votes, t)} t={t} />
+  );
   const lowerThird = decisionCard && (
         <LowerThird
           key={decisionCard.payload.decision_id}
@@ -266,8 +269,8 @@ export default function BroadcastPage() {
       label={t("broadcastLabel")}
       sheetFirst={story.active}
       // Not under the story's tablet or phone screen, where the card would stay tappable on top.
-      sheet={sheetMode && (lowerThird || whatIf) && !(story.active && story.step?.screen !== "tv")
-        ? <>{lowerThird}{whatIf}</> : null}
+      sheet={sheetMode && (lowerThird || managerCall || whatIf) && !(story.active && story.step?.screen !== "tv")
+        ? <>{lowerThird}{managerCall}{whatIf}</> : null}
       chrome={
         <Chrome
           cards={log.cards}
@@ -284,9 +287,7 @@ export default function BroadcastPage() {
       <FieldView frame={frame} roster={log.roster} tags={tags} label={t("broadcastLabel")} />
       {!sheetMode && lowerThird}
       {goalCue && <GoalFlash key={goalCue.id} cue={goalCue} roster={log.roster} t={t} />}
-      {callCue && (
-        <ManagerCall key={callCue.id} cue={callCue} roster={log.roster} you={viewerCall(callCue, log, votes, t)} t={t} />
-      )}
+      {!sheetMode && managerCall}
       {statsCue && (
         <StatsCard key={statsCue.id} cue={statsCue} roster={log.roster} locale={prefs.locale} mode={prefs.mode} t={t} />
       )}

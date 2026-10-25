@@ -1025,12 +1025,14 @@ a.bc-hood-open:hover { filter: brightness(1.08); }
   .bc-sheet.first { order: 0; padding: 52px 8px 148px; }
   @media (max-width: 400px) { .bc-sheet.first { padding-bottom: 200px; } } /* the caption bar wraps to more lines */
   .bc-sheet .bc-lower { gap: 8px; }
+  .bc-sheet .bc-call { max-width: none; border-right-width: 4px; }
   .bc-sheet .bc-options { gap: 4px; }
   .bc-sheet .bc-whatif { border-top-width: 4px; }
   .bc-sheet .bc-whatif-title { margin-bottom: 10px; }
   .bc-sheet .bc-whatif-rows { gap: 8px; }
   .bc-sheet .bc-whatif-next { margin-top: 12px; padding-top: 12px; }
   .bc-sheet .bc-lower,
+  .bc-sheet .bc-call,
   .bc-sheet .bc-whatif {
     position: relative;
     inset: auto;
@@ -1054,7 +1056,7 @@ a.bc-hood-open:hover { filter: brightness(1.08); }
   .bc-stats { font-size: max(11px, 1cqw); }
   .bc-kickoff { font-size: max(12px, 1.3cqw); }
   @media (max-width: 700px) {
-    .bc-call,
+    .bc-stage .bc-call,
     .bc-focus,
     .bc-stats { display: none; }
   }
