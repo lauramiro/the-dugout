@@ -15,8 +15,9 @@
 #            30 minutes from midnight UTC; 0 skips the replay job), LIVE_SPEED (default 5)
 #            WPS_SKU (default Free_F1: 20 connections, 20,000 messages a day; Standard_S1 for judging days)
 #            SERVICE_MIN_REPLICAS (default 0: the decision service scales to zero and its first request
-#            after a quiet spell waits for a cold start, 25 s measured on 2026-10-25; 1 keeps one replica
-#            warm, and the in-memory votes with it, at the cost of an always-on replica)
+#            after a quiet spell waits for a cold start, about 25 s measured on 2026-10-25; 1 keeps one
+#            replica warm, so votes held in its memory last until the next deploy or restart, at the cost
+#            of an always-on replica)
 #
 # Idempotent: each create is an upsert or is skipped when the resource exists.
 # Secrets are read into shell variables and passed on, never echoed or written to disk,
@@ -69,6 +70,7 @@ LIVE_EVERY_MIN="${LIVE_EVERY_MIN:-30}"
 LIVE_SPEED="${LIVE_SPEED:-5}"
 WPS_SKU="${WPS_SKU:-Free_F1}"
 SERVICE_MIN_REPLICAS="${SERVICE_MIN_REPLICAS:-0}"
+[[ "$SERVICE_MIN_REPLICAS" =~ ^[0-9]+$ ]] && (( SERVICE_MIN_REPLICAS <= 10 )) || { echo "SERVICE_MIN_REPLICAS must be an integer from 0 to 10" >&2; exit 2; }
 # The job starts two minutes before each slot, so slots must be at least 5 minutes apart.
 if (( LIVE_EVERY_MIN != 0 && (LIVE_EVERY_MIN < 5 || 60 % LIVE_EVERY_MIN != 0) )); then
   echo "LIVE_EVERY_MIN must be 0 or a divisor of 60 from 5 up" >&2; exit 2
