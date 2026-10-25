@@ -5,7 +5,7 @@ import { FieldView, type PlayerTag } from "../components/broadcast/FieldView";
 import { FocusCard, GoalFlash, ManagerCall, StatsCard, WhatIf } from "../components/broadcast/Graphics";
 import { KickoffSlate, useLiveSchedule } from "../components/broadcast/KickoffSlate";
 import {
-  AboutPanel, Chrome, GradedPanel, Slate, TitleCard, useTitleCard, type PanelId,
+  AboutPanel, Chrome, GradedPanel, Slate, TitleCard, TracePanel, useTitleCard, type PanelId,
 } from "../components/broadcast/Landing";
 import { LowerThird } from "../components/broadcast/LowerThird";
 import { Worm } from "../components/broadcast/Worm";
@@ -23,7 +23,7 @@ import { useStory } from "../components/story/useStory";
 import { optionLabel } from "../components/DecisionCard";
 import type { Vote } from "../lib/calls";
 import { aheadPos, fromPos, lastAtOrBefore, toPos } from "../lib/clock";
-import type { Locale, Roster, Snapshot } from "../lib/contracts";
+import type { Locale, Narration, Roster, Snapshot } from "../lib/contracts";
 import { buildCues, cueSheet, scoreAt, type Cue } from "../lib/cues";
 import type { DataSource, FeedState, MatchLog, PitchFrame } from "../lib/datasource";
 import { playerName } from "../lib/derive";
@@ -136,6 +136,7 @@ export default function BroadcastPage() {
 
   // About and How it's graded pause the replay while they are open.
   const [panel, setPanel] = useState<PanelId | null>(null);
+  const [traced, setTraced] = useState<Narration | undefined>(undefined);
   const resume = useRef(false);
   const resumeStory = useRef(false);
   const openPanel = (next: PanelId) => {
@@ -225,6 +226,11 @@ export default function BroadcastPage() {
           onVote={onVote}
           running={live || feed.playing}
           keys={!(story.active && story.step?.screen !== "tv")}
+          onTrace={() => {
+            const n = decisionCard.narration;
+            setTraced(n[prefs.locale]?.[prefs.mode] ?? n.en?.[prefs.mode] ?? n.en?.casual);
+            openPanel("trace");
+          }}
           t={t}
         />
       )}
@@ -325,6 +331,7 @@ export default function BroadcastPage() {
       />
       {panel === "about" && <AboutPanel onClose={closePanel} onPanel={openPanel} t={t} />}
       {panel === "graded" && <GradedPanel onClose={closePanel} locale={prefs.locale} t={t} />}
+      {panel === "trace" && <TracePanel narration={traced} roster={log.roster} onClose={closePanel} t={t} />}
     </Stage>
   );
 }

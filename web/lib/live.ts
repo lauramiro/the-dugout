@@ -158,7 +158,7 @@ export class LiveDataSource implements DataSource {
       if (full) {
         narration[full.locale] = {
           ...narration[full.locale],
-          [full.mode]: { headline: full.headline, reason: full.reason, source: full.source },
+          [full.mode]: { headline: full.headline, reason: full.reason, source: full.source, trace: full.trace },
         };
       }
       // Cards carry no period: a card keeps the one it got first, inferred from the halves so far.

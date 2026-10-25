@@ -91,25 +91,105 @@
     "en": {
      "casual": {
       "headline": "Take RFC-03 off for a fresh player",
-      "reason": "The model favours a like-for-like change; about 6 points better (strong).",
-      "source": "model"
+      "reason": "RFC-03 is tiring. The model prefers a like-for-like change, about 6 points better (strong).",
+      "source": "model",
+      "trace": [
+       {
+        "stage": "narrator",
+        "attempt": 0,
+        "outcome": "passed",
+        "text": "Take RFC-03 off for a fresh player\nRFC-03 is tiring and the model favours a like-for-like substitution: win probability 82.1%, gap +5.8 points (90% interval +5.5 to +6.1) (strong).",
+        "errors": [],
+        "locale": "en",
+        "mode": "analyst"
+       },
+       {
+        "stage": "localizer",
+        "attempt": 0,
+        "outcome": "passed",
+        "text": "Take RFC-03 off for a fresh player\nRFC-03 is tiring. The model prefers a like-for-like change, about 6 points better (strong).",
+        "errors": [],
+        "locale": "en",
+        "mode": "casual"
+       }
+      ]
      },
      "analyst": {
       "headline": "Take RFC-03 off for a fresh player",
-      "reason": "The model favours a like-for-like change: +5.8 points, 90% interval +5.5 to +6.1 (strong).",
-      "source": "model"
+      "reason": "RFC-03 is tiring; the model prefers a like-for-like change: +5.8 points, 90% interval +5.5 to +6.1 (strong).",
+      "source": "model",
+      "trace": [
+       {
+        "stage": "narrator",
+        "attempt": 0,
+        "outcome": "passed",
+        "text": "Take RFC-03 off for a fresh player\nRFC-03 is tiring and the model favours a like-for-like substitution: win probability 82.1%, gap +5.8 points (90% interval +5.5 to +6.1) (strong).",
+        "errors": [],
+        "locale": "en",
+        "mode": "analyst"
+       },
+       {
+        "stage": "localizer",
+        "attempt": 0,
+        "outcome": "passed",
+        "text": "Take RFC-03 off for a fresh player\nRFC-03 is tiring; the model prefers a like-for-like change: +5.8 points, 90% interval +5.5 to +6.1 (strong).",
+        "errors": [],
+        "locale": "en",
+        "mode": "analyst"
+       }
+      ]
      }
     },
     "es": {
      "casual": {
       "headline": "Sacar a RFC-03 por un jugador fresco",
-      "reason": "El modelo prefiere un cambio en la misma posición, unos 6 puntos mejor (fuerte).",
-      "source": "model"
+      "reason": "RFC-03 se cansa; el modelo favorece un cambio en la misma posición, cerca de 6 puntos mejor (fuerte).",
+      "source": "model",
+      "trace": [
+       {
+        "stage": "narrator",
+        "attempt": 0,
+        "outcome": "passed",
+        "text": "Take RFC-03 off for a fresh player\nRFC-03 is tiring and the model favours a like-for-like substitution: win probability 82.1%, gap +5.8 points (90% interval +5.5 to +6.1) (strong).",
+        "errors": [],
+        "locale": "en",
+        "mode": "analyst"
+       },
+       {
+        "stage": "localizer",
+        "attempt": 0,
+        "outcome": "passed",
+        "text": "Sacar a RFC-03 por un jugador fresco\nRFC-03 se cansa; el modelo favorece un cambio en la misma posición, cerca de 6 puntos mejor (fuerte).",
+        "errors": [],
+        "locale": "es",
+        "mode": "casual"
+       }
+      ]
      },
      "analyst": {
       "headline": "Sacar a RFC-03 por un jugador fresco",
-      "reason": "El modelo favorece un cambio en la misma posición: +5,8 puntos, intervalo del 90%: +5,5 a +6,1 (fuerte).",
-      "source": "model"
+      "reason": "RFC-03 se cansa y el modelo prefiere un cambio en la misma posición: +5,8 puntos, intervalo del 90%: +5,5 a +6,1 (fuerte).",
+      "source": "model",
+      "trace": [
+       {
+        "stage": "narrator",
+        "attempt": 0,
+        "outcome": "passed",
+        "text": "Take RFC-03 off for a fresh player\nRFC-03 is tiring and the model favours a like-for-like substitution: win probability 82.1%, gap +5.8 points (90% interval +5.5 to +6.1) (strong).",
+        "errors": [],
+        "locale": "en",
+        "mode": "analyst"
+       },
+       {
+        "stage": "localizer",
+        "attempt": 0,
+        "outcome": "passed",
+        "text": "Sacar a RFC-03 por un jugador fresco\nRFC-03 se cansa y el modelo prefiere un cambio en la misma posición: +5,8 puntos, intervalo del 90%: +5,5 a +6,1 (fuerte).",
+        "errors": [],
+        "locale": "es",
+        "mode": "analyst"
+       }
+      ]
      }
     }
    },
@@ -236,25 +316,149 @@
     "en": {
      "casual": {
       "headline": "Little to choose between the options",
-      "reason": "CAS-02 is tiring; the model favours an attacking change by about 1 point (toss-up).",
-      "source": "model"
+      "reason": "The model sees a toss-up (toss-up). An attacking change is about 1 point better; CAS-02 is tiring.",
+      "source": "model",
+      "trace": [
+       {
+        "stage": "narrator",
+        "attempt": 0,
+        "outcome": "rejected",
+        "text": "Go for an attacking change\nThe model sees a toss-up: attacking change lifts win probability to win 3.8% from win 3.2% (+0.5 points), CAS-02 is tiring.",
+        "errors": [
+         "toss-up headline calls for an action ('Go for'); say the options are close"
+        ],
+        "locale": "en",
+        "mode": "analyst"
+       },
+       {
+        "stage": "narrator",
+        "attempt": 1,
+        "outcome": "passed",
+        "text": "Little to choose between the options\nThe model sees a toss-up; attacking change raises win probability to win 3.8% from win 3.2% (+0.5 points), CAS-02 is tiring.",
+        "errors": [],
+        "locale": "en",
+        "mode": "analyst"
+       },
+       {
+        "stage": "localizer",
+        "attempt": 0,
+        "outcome": "passed",
+        "text": "Little to choose between the options\nThe model sees a toss-up (toss-up). An attacking change is about 1 point better; CAS-02 is tiring.",
+        "errors": [],
+        "locale": "en",
+        "mode": "casual"
+       }
+      ]
      },
      "analyst": {
       "headline": "Little to choose between the options",
-      "reason": "CAS-02 is tiring; the model favours an attacking change by +0.5 points, 90% interval +0.4 to +0.7 (toss-up).",
-      "source": "model"
+      "reason": "The model sees a toss-up; an attacking change is +0.5 points, 90% interval +0.4 to +0.7, CAS-02 is tiring (toss-up).",
+      "source": "model",
+      "trace": [
+       {
+        "stage": "narrator",
+        "attempt": 0,
+        "outcome": "rejected",
+        "text": "Go for an attacking change\nThe model sees a toss-up: attacking change lifts win probability to win 3.8% from win 3.2% (+0.5 points), CAS-02 is tiring.",
+        "errors": [
+         "toss-up headline calls for an action ('Go for'); say the options are close"
+        ],
+        "locale": "en",
+        "mode": "analyst"
+       },
+       {
+        "stage": "narrator",
+        "attempt": 1,
+        "outcome": "passed",
+        "text": "Little to choose between the options\nThe model sees a toss-up; attacking change raises win probability to win 3.8% from win 3.2% (+0.5 points), CAS-02 is tiring.",
+        "errors": [],
+        "locale": "en",
+        "mode": "analyst"
+       },
+       {
+        "stage": "localizer",
+        "attempt": 0,
+        "outcome": "passed",
+        "text": "Little to choose between the options\nThe model sees a toss-up; an attacking change is +0.5 points, 90% interval +0.4 to +0.7, CAS-02 is tiring (toss-up).",
+        "errors": [],
+        "locale": "en",
+        "mode": "analyst"
+       }
+      ]
      }
     },
     "es": {
      "casual": {
       "headline": "Poco que elegir entre las opciones",
-      "reason": "CAS-02 se cansa; el modelo favorece un cambio ofensivo por cerca de 1 punto (igualado).",
-      "source": "model"
+      "reason": "El modelo dice igualado (igualado). Un cambio ofensivo da cerca de 1 punto mejor; CAS-02 se cansa.",
+      "source": "model",
+      "trace": [
+       {
+        "stage": "narrator",
+        "attempt": 0,
+        "outcome": "rejected",
+        "text": "Go for an attacking change\nThe model sees a toss-up: attacking change lifts win probability to win 3.8% from win 3.2% (+0.5 points), CAS-02 is tiring.",
+        "errors": [
+         "toss-up headline calls for an action ('Go for'); say the options are close"
+        ],
+        "locale": "en",
+        "mode": "analyst"
+       },
+       {
+        "stage": "narrator",
+        "attempt": 1,
+        "outcome": "passed",
+        "text": "Little to choose between the options\nThe model sees a toss-up; attacking change raises win probability to win 3.8% from win 3.2% (+0.5 points), CAS-02 is tiring.",
+        "errors": [],
+        "locale": "en",
+        "mode": "analyst"
+       },
+       {
+        "stage": "localizer",
+        "attempt": 0,
+        "outcome": "passed",
+        "text": "Poco que elegir entre las opciones\nEl modelo dice igualado (igualado). Un cambio ofensivo da cerca de 1 punto mejor; CAS-02 se cansa.",
+        "errors": [],
+        "locale": "es",
+        "mode": "casual"
+       }
+      ]
      },
      "analyst": {
       "headline": "Poco que elegir entre las opciones",
-      "reason": "CAS-02 se cansa; el modelo favorece un cambio ofensivo +0,5 puntos, intervalo del 90%: +0,4 a +0,7 (igualado).",
-      "source": "model"
+      "reason": "El modelo: +0,5 puntos, intervalo del 90%: +0,4 a +0,7; CAS-02 se cansa (igualado).",
+      "source": "model",
+      "trace": [
+       {
+        "stage": "narrator",
+        "attempt": 0,
+        "outcome": "rejected",
+        "text": "Go for an attacking change\nThe model sees a toss-up: attacking change lifts win probability to win 3.8% from win 3.2% (+0.5 points), CAS-02 is tiring.",
+        "errors": [
+         "toss-up headline calls for an action ('Go for'); say the options are close"
+        ],
+        "locale": "en",
+        "mode": "analyst"
+       },
+       {
+        "stage": "narrator",
+        "attempt": 1,
+        "outcome": "passed",
+        "text": "Little to choose between the options\nThe model sees a toss-up; attacking change raises win probability to win 3.8% from win 3.2% (+0.5 points), CAS-02 is tiring.",
+        "errors": [],
+        "locale": "en",
+        "mode": "analyst"
+       },
+       {
+        "stage": "localizer",
+        "attempt": 0,
+        "outcome": "passed",
+        "text": "Poco que elegir entre las opciones\nEl modelo: +0,5 puntos, intervalo del 90%: +0,4 a +0,7; CAS-02 se cansa (igualado).",
+        "errors": [],
+        "locale": "es",
+        "mode": "analyst"
+       }
+      ]
      }
     }
    },
@@ -380,25 +584,105 @@
     "en": {
      "casual": {
       "headline": "Take RFC-03 off for a fresh player",
-      "reason": "The model favors a like-for-like change, about 2 points better (lean). RFC-03 is tiring; left flank threat 62%.",
-      "source": "model"
+      "reason": "RFC-03 is tiring (68); the model favors a like-for-like substitution, about 2 points better (lean).",
+      "source": "model",
+      "trace": [
+       {
+        "stage": "narrator",
+        "attempt": 0,
+        "outcome": "passed",
+        "text": "Take RFC-03 off for a fresh player\nRFC-03 is tiring with condition 68; the model favors a like-for-like substitution: win probability 29.6% (+2.1 points, lean).",
+        "errors": [],
+        "locale": "en",
+        "mode": "analyst"
+       },
+       {
+        "stage": "localizer",
+        "attempt": 0,
+        "outcome": "passed",
+        "text": "Take RFC-03 off for a fresh player\nRFC-03 is tiring (68); the model favors a like-for-like substitution, about 2 points better (lean).",
+        "errors": [],
+        "locale": "en",
+        "mode": "casual"
+       }
+      ]
      },
      "analyst": {
       "headline": "Take RFC-03 off for a fresh player",
-      "reason": "The model favours a like-for-like change: +2.1 points, 90% interval +2.0 to +2.3 (lean). RFC-03 condition 68.",
-      "source": "model"
+      "reason": "RFC-03 is tiring (condition 68). The model favors a like-for-like substitution: +2.1 points, 90% interval +2.0 to +2.3 (lean).",
+      "source": "model",
+      "trace": [
+       {
+        "stage": "narrator",
+        "attempt": 0,
+        "outcome": "passed",
+        "text": "Take RFC-03 off for a fresh player\nRFC-03 is tiring with condition 68; the model favors a like-for-like substitution: win probability 29.6% (+2.1 points, lean).",
+        "errors": [],
+        "locale": "en",
+        "mode": "analyst"
+       },
+       {
+        "stage": "localizer",
+        "attempt": 0,
+        "outcome": "passed",
+        "text": "Take RFC-03 off for a fresh player\nRFC-03 is tiring (condition 68). The model favors a like-for-like substitution: +2.1 points, 90% interval +2.0 to +2.3 (lean).",
+        "errors": [],
+        "locale": "en",
+        "mode": "analyst"
+       }
+      ]
      }
     },
     "es": {
      "casual": {
       "headline": "Sacar a RFC-03 por un jugador fresco",
-      "reason": "El modelo prefiere un cambio en la misma posición, 2 puntos mejor (leve). RFC-03 se cansa, amenaza por la izquierda 62%.",
-      "source": "model"
+      "reason": "RFC-03 se cansa con condición 68; el modelo prefiere un cambio en la misma posición, cerca de 2 puntos mejor (leve).",
+      "source": "model",
+      "trace": [
+       {
+        "stage": "narrator",
+        "attempt": 0,
+        "outcome": "passed",
+        "text": "Take RFC-03 off for a fresh player\nRFC-03 is tiring with condition 68; the model favors a like-for-like substitution: win probability 29.6% (+2.1 points, lean).",
+        "errors": [],
+        "locale": "en",
+        "mode": "analyst"
+       },
+       {
+        "stage": "localizer",
+        "attempt": 0,
+        "outcome": "passed",
+        "text": "Sacar a RFC-03 por un jugador fresco\nRFC-03 se cansa con condición 68; el modelo prefiere un cambio en la misma posición, cerca de 2 puntos mejor (leve).",
+        "errors": [],
+        "locale": "es",
+        "mode": "casual"
+       }
+      ]
      },
      "analyst": {
       "headline": "Sacar a RFC-03 por un jugador fresco",
-      "reason": "El modelo prefiere un cambio en la misma posición: +2,1 puntos, intervalo del 90%: +2,0 a +2,3 (leve).",
-      "source": "model"
+      "reason": "RFC-03 se cansa (68). El modelo prefiere un cambio en la misma posición: +2,1 puntos, intervalo del 90%: +2,0 a +2,3 (leve).",
+      "source": "model",
+      "trace": [
+       {
+        "stage": "narrator",
+        "attempt": 0,
+        "outcome": "passed",
+        "text": "Take RFC-03 off for a fresh player\nRFC-03 is tiring with condition 68; the model favors a like-for-like substitution: win probability 29.6% (+2.1 points, lean).",
+        "errors": [],
+        "locale": "en",
+        "mode": "analyst"
+       },
+       {
+        "stage": "localizer",
+        "attempt": 0,
+        "outcome": "passed",
+        "text": "Sacar a RFC-03 por un jugador fresco\nRFC-03 se cansa (68). El modelo prefiere un cambio en la misma posición: +2,1 puntos, intervalo del 90%: +2,0 a +2,3 (leve).",
+        "errors": [],
+        "locale": "es",
+        "mode": "analyst"
+       }
+      ]
      }
     }
    },
@@ -520,25 +804,116 @@
     "en": {
      "casual": {
       "headline": "Take CAS-02 off for a fresh player",
-      "reason": "Model prefers a like-for-like change by about 2 points; CAS-02 is tiring (72) and the model rates it lean.",
-      "source": "model"
+      "reason": "Model prefers a like-for-like change; about 2 points better (lean).",
+      "source": "model",
+      "trace": [
+       {
+        "stage": "narrator",
+        "attempt": 0,
+        "outcome": "passed",
+        "text": "Take CAS-02 off for a fresh player\nThe model favors a like-for-like change; win probability rises to 25.7% (+1.9 points) with a 90% interval +1.7 to +2.0 (lean).",
+        "errors": [],
+        "locale": "en",
+        "mode": "analyst"
+       },
+       {
+        "stage": "localizer",
+        "attempt": 0,
+        "outcome": "passed",
+        "text": "Take CAS-02 off for a fresh player\nModel prefers a like-for-like change; about 2 points better (lean).",
+        "errors": [],
+        "locale": "en",
+        "mode": "casual"
+       }
+      ]
      },
      "analyst": {
       "headline": "Take CAS-02 off for a fresh player",
-      "reason": "The model favours a like-for-like substitution: +1.9 points, 90% interval +1.7 to +2.0 (lean).",
-      "source": "model"
+      "reason": "The model prefers a like-for-like change: +1.9 points, 90% interval +1.7 to +2.0 (lean).",
+      "source": "model",
+      "trace": [
+       {
+        "stage": "narrator",
+        "attempt": 0,
+        "outcome": "passed",
+        "text": "Take CAS-02 off for a fresh player\nThe model favors a like-for-like change; win probability rises to 25.7% (+1.9 points) with a 90% interval +1.7 to +2.0 (lean).",
+        "errors": [],
+        "locale": "en",
+        "mode": "analyst"
+       },
+       {
+        "stage": "localizer",
+        "attempt": 0,
+        "outcome": "passed",
+        "text": "Take CAS-02 off for a fresh player\nThe model prefers a like-for-like change: +1.9 points, 90% interval +1.7 to +2.0 (lean).",
+        "errors": [],
+        "locale": "en",
+        "mode": "analyst"
+       }
+      ]
      }
     },
     "es": {
      "casual": {
       "headline": "Sacar a CAS-02 por un jugador fresco",
-      "reason": "El modelo favorece un cambio en la misma posición (leve). La opción está cerca por unos 2 puntos a favor.",
-      "source": "model"
+      "reason": "El modelo prefiere un cambio en la misma posición; mejora cerca de 2 puntos (leve).",
+      "source": "model",
+      "trace": [
+       {
+        "stage": "narrator",
+        "attempt": 0,
+        "outcome": "passed",
+        "text": "Take CAS-02 off for a fresh player\nThe model favors a like-for-like change; win probability rises to 25.7% (+1.9 points) with a 90% interval +1.7 to +2.0 (lean).",
+        "errors": [],
+        "locale": "en",
+        "mode": "analyst"
+       },
+       {
+        "stage": "localizer",
+        "attempt": 0,
+        "outcome": "rejected",
+        "text": "Sacar a CAS-02 por un jugador fresco\nEl modelo prefiere un cambio en la misma posición; la opción está cerca, mejora ~2 puntos (leve).",
+        "errors": [
+         "'~' for about; write it in words"
+        ],
+        "locale": "es",
+        "mode": "casual"
+       },
+       {
+        "stage": "localizer",
+        "attempt": 1,
+        "outcome": "passed",
+        "text": "Sacar a CAS-02 por un jugador fresco\nEl modelo prefiere un cambio en la misma posición; mejora cerca de 2 puntos (leve).",
+        "errors": [],
+        "locale": "es",
+        "mode": "casual"
+       }
+      ]
      },
      "analyst": {
       "headline": "Sacar a CAS-02 por un jugador fresco",
-      "reason": "El modelo favorece un cambio en la misma posición: +1,9 puntos, intervalo del 90%: +1,7 a +2,0 (leve).",
-      "source": "model"
+      "reason": "El modelo prefiere un cambio en la misma posición: +1,9 puntos, intervalo del 90%: +1,7 a +2,0 (leve).",
+      "source": "model",
+      "trace": [
+       {
+        "stage": "narrator",
+        "attempt": 0,
+        "outcome": "passed",
+        "text": "Take CAS-02 off for a fresh player\nThe model favors a like-for-like change; win probability rises to 25.7% (+1.9 points) with a 90% interval +1.7 to +2.0 (lean).",
+        "errors": [],
+        "locale": "en",
+        "mode": "analyst"
+       },
+       {
+        "stage": "localizer",
+        "attempt": 0,
+        "outcome": "passed",
+        "text": "Sacar a CAS-02 por un jugador fresco\nEl modelo prefiere un cambio en la misma posición: +1,9 puntos, intervalo del 90%: +1,7 a +2,0 (leve).",
+        "errors": [],
+        "locale": "es",
+        "mode": "analyst"
+       }
+      ]
      }
     }
    },
@@ -664,25 +1039,105 @@
     "en": {
      "casual": {
       "headline": "Go for an attacking change",
-      "reason": "Model favours an attacking change by about 2 points; RFC-11 is tiring (lean).",
-      "source": "model"
+      "reason": "RFC-11 is tiring; model prefers an attacking change by about 2 points (lean).",
+      "source": "model",
+      "trace": [
+       {
+        "stage": "narrator",
+        "attempt": 0,
+        "outcome": "passed",
+        "text": "Go for an attacking change\nThe model favors an attacking change: win probability 23.2% is +1.8 points with a 90% interval +1.6 to +2.0 (lean).",
+        "errors": [],
+        "locale": "en",
+        "mode": "analyst"
+       },
+       {
+        "stage": "localizer",
+        "attempt": 0,
+        "outcome": "passed",
+        "text": "Go for an attacking change\nRFC-11 is tiring; model prefers an attacking change by about 2 points (lean).",
+        "errors": [],
+        "locale": "en",
+        "mode": "casual"
+       }
+      ]
      },
      "analyst": {
       "headline": "Go for an attacking change",
-      "reason": "The model favours an attacking change: +1.8 points, 90% interval +1.6 to +2.0; RFC-11 is tiring (lean).",
-      "source": "model"
+      "reason": "The model prefers an attacking change: +1.8 points, 90% interval +1.6 to +2.0 (lean).",
+      "source": "model",
+      "trace": [
+       {
+        "stage": "narrator",
+        "attempt": 0,
+        "outcome": "passed",
+        "text": "Go for an attacking change\nThe model favors an attacking change: win probability 23.2% is +1.8 points with a 90% interval +1.6 to +2.0 (lean).",
+        "errors": [],
+        "locale": "en",
+        "mode": "analyst"
+       },
+       {
+        "stage": "localizer",
+        "attempt": 0,
+        "outcome": "passed",
+        "text": "Go for an attacking change\nThe model prefers an attacking change: +1.8 points, 90% interval +1.6 to +2.0 (lean).",
+        "errors": [],
+        "locale": "en",
+        "mode": "analyst"
+       }
+      ]
      }
     },
     "es": {
      "casual": {
       "headline": "A por un cambio ofensivo",
-      "reason": "El modelo favorece un cambio ofensivo; RFC-11 se cansa y la opción está cerca (leve).",
-      "source": "model"
+      "reason": "El modelo prefiere un cambio ofensivo: RFC-11 se cansa y es cerca de 2 puntos mejor (leve).",
+      "source": "model",
+      "trace": [
+       {
+        "stage": "narrator",
+        "attempt": 0,
+        "outcome": "passed",
+        "text": "Go for an attacking change\nThe model favors an attacking change: win probability 23.2% is +1.8 points with a 90% interval +1.6 to +2.0 (lean).",
+        "errors": [],
+        "locale": "en",
+        "mode": "analyst"
+       },
+       {
+        "stage": "localizer",
+        "attempt": 0,
+        "outcome": "passed",
+        "text": "A por un cambio ofensivo\nEl modelo prefiere un cambio ofensivo: RFC-11 se cansa y es cerca de 2 puntos mejor (leve).",
+        "errors": [],
+        "locale": "es",
+        "mode": "casual"
+       }
+      ]
      },
      "analyst": {
       "headline": "A por un cambio ofensivo",
-      "reason": "El modelo: +1,8 puntos, intervalo del 90%: +1,6 a +2,0; RFC-11 se cansa (leve).",
-      "source": "model"
+      "reason": "El modelo prefiere un cambio ofensivo: +1,8 puntos, intervalo del 90%: +1,6 a +2,0 (leve).",
+      "source": "model",
+      "trace": [
+       {
+        "stage": "narrator",
+        "attempt": 0,
+        "outcome": "passed",
+        "text": "Go for an attacking change\nThe model favors an attacking change: win probability 23.2% is +1.8 points with a 90% interval +1.6 to +2.0 (lean).",
+        "errors": [],
+        "locale": "en",
+        "mode": "analyst"
+       },
+       {
+        "stage": "localizer",
+        "attempt": 0,
+        "outcome": "passed",
+        "text": "A por un cambio ofensivo\nEl modelo prefiere un cambio ofensivo: +1,8 puntos, intervalo del 90%: +1,6 a +2,0 (leve).",
+        "errors": [],
+        "locale": "es",
+        "mode": "analyst"
+       }
+      ]
      }
     }
    },
@@ -807,26 +1262,183 @@
    "narration": {
     "en": {
      "casual": {
-      "headline": "After the goal: a change under review.",
-      "reason": "The options are close: the model sees almost no difference (toss-up).",
-      "source": "template"
+      "headline": "Little to choose between the options",
+      "reason": "Options are close (toss-up); the model favours an attacking change. CAS-02 is tiring.",
+      "source": "model",
+      "trace": [
+       {
+        "stage": "narrator",
+        "attempt": 0,
+        "outcome": "rejected",
+        "text": "Go for an attacking change\nOptions are close (toss-up); the model favours an attacking change by delta +0.4 with 90% interval +0.3 to +0.5.",
+        "errors": [
+         "toss-up headline calls for an action ('Go for'); say the options are close"
+        ],
+        "locale": "en",
+        "mode": "analyst"
+       },
+       {
+        "stage": "narrator",
+        "attempt": 1,
+        "outcome": "passed",
+        "text": "Little to choose between the options\nOptions are close (toss-up); the model favours an attacking change by +0.4 points (90% interval +0.3 to +0.5).",
+        "errors": [],
+        "locale": "en",
+        "mode": "analyst"
+       },
+       {
+        "stage": "localizer",
+        "attempt": 0,
+        "outcome": "rejected",
+        "text": "Little to choose between the options\nOptions are close (toss-up). The model slightly favours an attacking change by about 0 points.",
+        "errors": [
+         "'0 points': say the options are about even, without a number"
+        ],
+        "locale": "en",
+        "mode": "casual"
+       },
+       {
+        "stage": "localizer",
+        "attempt": 1,
+        "outcome": "passed",
+        "text": "Little to choose between the options\nOptions are close (toss-up); the model favours an attacking change. CAS-02 is tiring.",
+        "errors": [],
+        "locale": "en",
+        "mode": "casual"
+       }
+      ]
      },
      "analyst": {
       "headline": "Little to choose between the options",
-      "reason": "CAS-02 is tiring; the model shows +0.4 points, 90% interval +0.3 to +0.5, toss-up (69).",
-      "source": "model"
+      "reason": "Options are close (toss-up); the model favours an attacking change: +0.4 points, 90% interval +0.3 to +0.5.",
+      "source": "model",
+      "trace": [
+       {
+        "stage": "narrator",
+        "attempt": 0,
+        "outcome": "rejected",
+        "text": "Go for an attacking change\nOptions are close (toss-up); the model favours an attacking change by delta +0.4 with 90% interval +0.3 to +0.5.",
+        "errors": [
+         "toss-up headline calls for an action ('Go for'); say the options are close"
+        ],
+        "locale": "en",
+        "mode": "analyst"
+       },
+       {
+        "stage": "narrator",
+        "attempt": 1,
+        "outcome": "passed",
+        "text": "Little to choose between the options\nOptions are close (toss-up); the model favours an attacking change by +0.4 points (90% interval +0.3 to +0.5).",
+        "errors": [],
+        "locale": "en",
+        "mode": "analyst"
+       },
+       {
+        "stage": "localizer",
+        "attempt": 0,
+        "outcome": "passed",
+        "text": "Little to choose between the options\nOptions are close (toss-up); the model favours an attacking change: +0.4 points, 90% interval +0.3 to +0.5.",
+        "errors": [],
+        "locale": "en",
+        "mode": "analyst"
+       }
+      ]
      }
     },
     "es": {
      "casual": {
-      "headline": "Poco que elegir entre las opciones",
-      "reason": "CAS-02 se cansa; el modelo muestra opciones muy parecidas, igualado (69 condición).",
-      "source": "model"
+      "headline": "Tras el gol: un cambio en estudio.",
+      "reason": "Las opciones están muy parejas: el modelo no ve apenas diferencia (igualado).",
+      "source": "template",
+      "trace": [
+       {
+        "stage": "narrator",
+        "attempt": 0,
+        "outcome": "rejected",
+        "text": "Go for an attacking change\nOptions are close (toss-up); the model favours an attacking change by delta +0.4 with 90% interval +0.3 to +0.5.",
+        "errors": [
+         "toss-up headline calls for an action ('Go for'); say the options are close"
+        ],
+        "locale": "en",
+        "mode": "analyst"
+       },
+       {
+        "stage": "narrator",
+        "attempt": 1,
+        "outcome": "passed",
+        "text": "Little to choose between the options\nOptions are close (toss-up); the model favours an attacking change by +0.4 points (90% interval +0.3 to +0.5).",
+        "errors": [],
+        "locale": "en",
+        "mode": "analyst"
+       },
+       {
+        "stage": "localizer",
+        "attempt": 0,
+        "outcome": "rejected",
+        "text": "Poco que elegir entre las opciones\nOpciones cercanas (igualado). El modelo prefiere un cambio ofensivo por cerca de 0 puntos.",
+        "errors": [
+         "'0 puntos': say the options are about even, without a number"
+        ],
+        "locale": "es",
+        "mode": "casual"
+       },
+       {
+        "stage": "localizer",
+        "attempt": 1,
+        "outcome": "rejected",
+        "text": "Poco que elegir entre las opciones\nOpciones cercanas (igualado). El modelo prefiere un cambio ofensivo; RFC-02 se cansa.",
+        "errors": [
+         "player RFC-02 is not in the payload"
+        ],
+        "locale": "es",
+        "mode": "casual"
+       },
+       {
+        "stage": "template",
+        "attempt": 0,
+        "outcome": "used",
+        "text": "Tras el gol: un cambio en estudio.\nLas opciones están muy parejas: el modelo no ve apenas diferencia (igualado).",
+        "errors": [],
+        "locale": "es",
+        "mode": "casual"
+       }
+      ]
      },
      "analyst": {
       "headline": "Poco que elegir entre las opciones",
-      "reason": "CAS-02 se cansa; el modelo: +0,4 puntos, intervalo del 90%: +0,3 a +0,5 (igualado).",
-      "source": "model"
+      "reason": "Opciones cercanas (igualado); el modelo favorece un cambio ofensivo +0,4 puntos, intervalo del 90%: +0,3 a +0,5.",
+      "source": "model",
+      "trace": [
+       {
+        "stage": "narrator",
+        "attempt": 0,
+        "outcome": "rejected",
+        "text": "Go for an attacking change\nOptions are close (toss-up); the model favours an attacking change by delta +0.4 with 90% interval +0.3 to +0.5.",
+        "errors": [
+         "toss-up headline calls for an action ('Go for'); say the options are close"
+        ],
+        "locale": "en",
+        "mode": "analyst"
+       },
+       {
+        "stage": "narrator",
+        "attempt": 1,
+        "outcome": "passed",
+        "text": "Little to choose between the options\nOptions are close (toss-up); the model favours an attacking change by +0.4 points (90% interval +0.3 to +0.5).",
+        "errors": [],
+        "locale": "en",
+        "mode": "analyst"
+       },
+       {
+        "stage": "localizer",
+        "attempt": 0,
+        "outcome": "passed",
+        "text": "Poco que elegir entre las opciones\nOpciones cercanas (igualado); el modelo favorece un cambio ofensivo +0,4 puntos, intervalo del 90%: +0,3 a +0,5.",
+        "errors": [],
+        "locale": "es",
+        "mode": "analyst"
+       }
+      ]
      }
     }
    },
@@ -943,25 +1555,105 @@
     "en": {
      "casual": {
       "headline": "Take RFC-11 off for a fresh player",
-      "reason": "RFC-11 is tiring (condition 70). The model favors a like-for-like substitution (lean). About 2 points better.",
-      "source": "model"
+      "reason": "RFC-11 is tiring; the model prefers a like-for-like change (lean), about 2 points better.",
+      "source": "model",
+      "trace": [
+       {
+        "stage": "narrator",
+        "attempt": 0,
+        "outcome": "passed",
+        "text": "Take RFC-11 off for a fresh player\nRFC-11 is tiring; the model prefers a like-for-like substitution (lean) with win probability +2.3 points, 90% interval +2.1 to +2.5.",
+        "errors": [],
+        "locale": "en",
+        "mode": "analyst"
+       },
+       {
+        "stage": "localizer",
+        "attempt": 0,
+        "outcome": "passed",
+        "text": "Take RFC-11 off for a fresh player\nRFC-11 is tiring; the model prefers a like-for-like change (lean), about 2 points better.",
+        "errors": [],
+        "locale": "en",
+        "mode": "casual"
+       }
+      ]
      },
      "analyst": {
       "headline": "Take RFC-11 off for a fresh player",
-      "reason": "RFC-11 is tiring; the model favors a like-for-like substitution (lean): +2.3 points, 90% interval +2.1 to +2.5.",
-      "source": "model"
+      "reason": "RFC-11 is tiring; the model prefers a like-for-like change (lean): +2.3 points, 90% interval +2.1 to +2.5.",
+      "source": "model",
+      "trace": [
+       {
+        "stage": "narrator",
+        "attempt": 0,
+        "outcome": "passed",
+        "text": "Take RFC-11 off for a fresh player\nRFC-11 is tiring; the model prefers a like-for-like substitution (lean) with win probability +2.3 points, 90% interval +2.1 to +2.5.",
+        "errors": [],
+        "locale": "en",
+        "mode": "analyst"
+       },
+       {
+        "stage": "localizer",
+        "attempt": 0,
+        "outcome": "passed",
+        "text": "Take RFC-11 off for a fresh player\nRFC-11 is tiring; the model prefers a like-for-like change (lean): +2.3 points, 90% interval +2.1 to +2.5.",
+        "errors": [],
+        "locale": "en",
+        "mode": "analyst"
+       }
+      ]
      }
     },
     "es": {
      "casual": {
       "headline": "Sacar a RFC-11 por un jugador fresco",
-      "reason": "RFC-11 se cansa (leve). El modelo prefiere un cambio en la misma posición por cerca de 2 puntos mejor.",
-      "source": "model"
+      "reason": "RFC-11 se cansa; el modelo prefiere un cambio en la misma posición (leve), cerca de 2 puntos mejor.",
+      "source": "model",
+      "trace": [
+       {
+        "stage": "narrator",
+        "attempt": 0,
+        "outcome": "passed",
+        "text": "Take RFC-11 off for a fresh player\nRFC-11 is tiring; the model prefers a like-for-like substitution (lean) with win probability +2.3 points, 90% interval +2.1 to +2.5.",
+        "errors": [],
+        "locale": "en",
+        "mode": "analyst"
+       },
+       {
+        "stage": "localizer",
+        "attempt": 0,
+        "outcome": "passed",
+        "text": "Sacar a RFC-11 por un jugador fresco\nRFC-11 se cansa; el modelo prefiere un cambio en la misma posición (leve), cerca de 2 puntos mejor.",
+        "errors": [],
+        "locale": "es",
+        "mode": "casual"
+       }
+      ]
      },
      "analyst": {
       "headline": "Sacar a RFC-11 por un jugador fresco",
       "reason": "RFC-11 se cansa; el modelo prefiere un cambio en la misma posición (leve): +2,3 puntos, intervalo del 90%: +2,1 a +2,5",
-      "source": "model"
+      "source": "model",
+      "trace": [
+       {
+        "stage": "narrator",
+        "attempt": 0,
+        "outcome": "passed",
+        "text": "Take RFC-11 off for a fresh player\nRFC-11 is tiring; the model prefers a like-for-like substitution (lean) with win probability +2.3 points, 90% interval +2.1 to +2.5.",
+        "errors": [],
+        "locale": "en",
+        "mode": "analyst"
+       },
+       {
+        "stage": "localizer",
+        "attempt": 0,
+        "outcome": "passed",
+        "text": "Sacar a RFC-11 por un jugador fresco\nRFC-11 se cansa; el modelo prefiere un cambio en la misma posición (leve): +2,3 puntos, intervalo del 90%: +2,1 a +2,5",
+        "errors": [],
+        "locale": "es",
+        "mode": "analyst"
+       }
+      ]
      }
     }
    },
@@ -1086,26 +1778,161 @@
    "narration": {
     "en": {
      "casual": {
-      "headline": "After the change, CAS-02 is fading (68%).",
-      "reason": "The options are close: the model sees almost no difference (toss-up).",
-      "source": "template"
+      "headline": "Little to choose between the options",
+      "reason": "The model finds options close (toss-up); an attacking change edges it, CAS-02 is tiring (condition 68).",
+      "source": "model",
+      "trace": [
+       {
+        "stage": "narrator",
+        "attempt": 0,
+        "outcome": "rejected",
+        "text": "Go for an attacking change\nThe model finds options close (toss-up); attacking change increases win probability by +0.2 points, CAS-02 is tiring (condition 68).",
+        "errors": [
+         "toss-up headline calls for an action ('Go for'); say the options are close"
+        ],
+        "locale": "en",
+        "mode": "analyst"
+       },
+       {
+        "stage": "narrator",
+        "attempt": 1,
+        "outcome": "passed",
+        "text": "Little to choose between the options\nThe model finds options close (toss-up); attacking change increases win probability by +0.2 points, CAS-02 is tiring (condition 68).",
+        "errors": [],
+        "locale": "en",
+        "mode": "analyst"
+       },
+       {
+        "stage": "localizer",
+        "attempt": 0,
+        "outcome": "rejected",
+        "text": "Little to choose between the options\nThe model finds options close (toss-up). An attacking change is about 0 points better; CAS-02 is tiring (condition 68).",
+        "errors": [
+         "'0 points': say the options are about even, without a number"
+        ],
+        "locale": "en",
+        "mode": "casual"
+       },
+       {
+        "stage": "localizer",
+        "attempt": 1,
+        "outcome": "passed",
+        "text": "Little to choose between the options\nThe model finds options close (toss-up); an attacking change edges it, CAS-02 is tiring (condition 68).",
+        "errors": [],
+        "locale": "en",
+        "mode": "casual"
+       }
+      ]
      },
      "analyst": {
-      "headline": "After the change, CAS-02 is fading (68%).",
-      "reason": "The options are close: changing now moves win probability by +0.2 pts, 90% interval +0.1 to +0.2 (toss-up).",
-      "source": "template"
+      "headline": "Little to choose between the options",
+      "reason": "The model finds options close (toss-up). Attacking change: +0.2 points, 90% interval +0.1 to +0.2; CAS-02 is tiring.",
+      "source": "model",
+      "trace": [
+       {
+        "stage": "narrator",
+        "attempt": 0,
+        "outcome": "rejected",
+        "text": "Go for an attacking change\nThe model finds options close (toss-up); attacking change increases win probability by +0.2 points, CAS-02 is tiring (condition 68).",
+        "errors": [
+         "toss-up headline calls for an action ('Go for'); say the options are close"
+        ],
+        "locale": "en",
+        "mode": "analyst"
+       },
+       {
+        "stage": "narrator",
+        "attempt": 1,
+        "outcome": "passed",
+        "text": "Little to choose between the options\nThe model finds options close (toss-up); attacking change increases win probability by +0.2 points, CAS-02 is tiring (condition 68).",
+        "errors": [],
+        "locale": "en",
+        "mode": "analyst"
+       },
+       {
+        "stage": "localizer",
+        "attempt": 0,
+        "outcome": "passed",
+        "text": "Little to choose between the options\nThe model finds options close (toss-up). Attacking change: +0.2 points, 90% interval +0.1 to +0.2; CAS-02 is tiring.",
+        "errors": [],
+        "locale": "en",
+        "mode": "analyst"
+       }
+      ]
      }
     },
     "es": {
      "casual": {
-      "headline": "Tras el cambio, CAS-02 se está agotando (68%).",
-      "reason": "Las opciones están muy parejas: el modelo no ve apenas diferencia (igualado).",
-      "source": "template"
+      "headline": "Poco que elegir entre las opciones",
+      "reason": "El modelo ve las opciones igualado (igualado); un cambio ofensivo ligeramente mejor, CAS-02 se cansa.",
+      "source": "model",
+      "trace": [
+       {
+        "stage": "narrator",
+        "attempt": 0,
+        "outcome": "rejected",
+        "text": "Go for an attacking change\nThe model finds options close (toss-up); attacking change increases win probability by +0.2 points, CAS-02 is tiring (condition 68).",
+        "errors": [
+         "toss-up headline calls for an action ('Go for'); say the options are close"
+        ],
+        "locale": "en",
+        "mode": "analyst"
+       },
+       {
+        "stage": "narrator",
+        "attempt": 1,
+        "outcome": "passed",
+        "text": "Little to choose between the options\nThe model finds options close (toss-up); attacking change increases win probability by +0.2 points, CAS-02 is tiring (condition 68).",
+        "errors": [],
+        "locale": "en",
+        "mode": "analyst"
+       },
+       {
+        "stage": "localizer",
+        "attempt": 0,
+        "outcome": "passed",
+        "text": "Poco que elegir entre las opciones\nEl modelo ve las opciones igualado (igualado); un cambio ofensivo ligeramente mejor, CAS-02 se cansa.",
+        "errors": [],
+        "locale": "es",
+        "mode": "casual"
+       }
+      ]
      },
      "analyst": {
-      "headline": "Tras el cambio, CAS-02 se está agotando (68%).",
-      "reason": "Las opciones están muy parejas: cambiar ahora mueve la probabilidad de victoria +0,2 pts, intervalo del 90%: +0,1 a +0,2 (igualado).",
-      "source": "template"
+      "headline": "Poco que elegir entre las opciones",
+      "reason": "El modelo dice opciones igualado. Un cambio ofensivo: +0,2 puntos, intervalo del 90%: +0,1 a +0,2; CAS-02 se cansa (igualado).",
+      "source": "model",
+      "trace": [
+       {
+        "stage": "narrator",
+        "attempt": 0,
+        "outcome": "rejected",
+        "text": "Go for an attacking change\nThe model finds options close (toss-up); attacking change increases win probability by +0.2 points, CAS-02 is tiring (condition 68).",
+        "errors": [
+         "toss-up headline calls for an action ('Go for'); say the options are close"
+        ],
+        "locale": "en",
+        "mode": "analyst"
+       },
+       {
+        "stage": "narrator",
+        "attempt": 1,
+        "outcome": "passed",
+        "text": "Little to choose between the options\nThe model finds options close (toss-up); attacking change increases win probability by +0.2 points, CAS-02 is tiring (condition 68).",
+        "errors": [],
+        "locale": "en",
+        "mode": "analyst"
+       },
+       {
+        "stage": "localizer",
+        "attempt": 0,
+        "outcome": "passed",
+        "text": "Poco que elegir entre las opciones\nEl modelo dice opciones igualado. Un cambio ofensivo: +0,2 puntos, intervalo del 90%: +0,1 a +0,2; CAS-02 se cansa (igualado).",
+        "errors": [],
+        "locale": "es",
+        "mode": "analyst"
+       }
+      ]
      }
     }
    },
@@ -1226,25 +2053,105 @@
     "en": {
      "casual": {
       "headline": "Take RFC-11 off for a fresh player",
-      "reason": "Model prefers a like-for-like change by about 3 points; RFC-11 is tiring (lean).",
-      "source": "model"
+      "reason": "Model prefers a like-for-like change by about 3 points; RFC-11 is tiring (70) (lean).",
+      "source": "model",
+      "trace": [
+       {
+        "stage": "narrator",
+        "attempt": 0,
+        "outcome": "passed",
+        "text": "Take RFC-11 off for a fresh player\nThe model favors a like-for-like change: win probability 88.4% vs no change 85.6% (+2.9 points), RFC-11 is tiring (70) (lean).",
+        "errors": [],
+        "locale": "en",
+        "mode": "analyst"
+       },
+       {
+        "stage": "localizer",
+        "attempt": 0,
+        "outcome": "passed",
+        "text": "Take RFC-11 off for a fresh player\nModel prefers a like-for-like change by about 3 points; RFC-11 is tiring (70) (lean).",
+        "errors": [],
+        "locale": "en",
+        "mode": "casual"
+       }
+      ]
      },
      "analyst": {
       "headline": "Take RFC-11 off for a fresh player",
       "reason": "The model prefers a like-for-like change: +2.9 points, 90% interval +2.7 to +3.0 (lean).",
-      "source": "model"
+      "source": "model",
+      "trace": [
+       {
+        "stage": "narrator",
+        "attempt": 0,
+        "outcome": "passed",
+        "text": "Take RFC-11 off for a fresh player\nThe model favors a like-for-like change: win probability 88.4% vs no change 85.6% (+2.9 points), RFC-11 is tiring (70) (lean).",
+        "errors": [],
+        "locale": "en",
+        "mode": "analyst"
+       },
+       {
+        "stage": "localizer",
+        "attempt": 0,
+        "outcome": "passed",
+        "text": "Take RFC-11 off for a fresh player\nThe model prefers a like-for-like change: +2.9 points, 90% interval +2.7 to +3.0 (lean).",
+        "errors": [],
+        "locale": "en",
+        "mode": "analyst"
+       }
+      ]
      }
     },
     "es": {
      "casual": {
       "headline": "Sacar a RFC-11 por un jugador fresco",
-      "reason": "El modelo prefiere un cambio en la misma posición; la diferencia es de 3 puntos (leve).",
-      "source": "model"
+      "reason": "El modelo favorece un cambio en la misma posición por 3 puntos; RFC-11 se cansa (leve).",
+      "source": "model",
+      "trace": [
+       {
+        "stage": "narrator",
+        "attempt": 0,
+        "outcome": "passed",
+        "text": "Take RFC-11 off for a fresh player\nThe model favors a like-for-like change: win probability 88.4% vs no change 85.6% (+2.9 points), RFC-11 is tiring (70) (lean).",
+        "errors": [],
+        "locale": "en",
+        "mode": "analyst"
+       },
+       {
+        "stage": "localizer",
+        "attempt": 0,
+        "outcome": "passed",
+        "text": "Sacar a RFC-11 por un jugador fresco\nEl modelo favorece un cambio en la misma posición por 3 puntos; RFC-11 se cansa (leve).",
+        "errors": [],
+        "locale": "es",
+        "mode": "casual"
+       }
+      ]
      },
      "analyst": {
       "headline": "Sacar a RFC-11 por un jugador fresco",
       "reason": "El modelo prefiere un cambio en la misma posición: +2,9 puntos, intervalo del 90%: +2,7 a +3,0 (leve).",
-      "source": "model"
+      "source": "model",
+      "trace": [
+       {
+        "stage": "narrator",
+        "attempt": 0,
+        "outcome": "passed",
+        "text": "Take RFC-11 off for a fresh player\nThe model favors a like-for-like change: win probability 88.4% vs no change 85.6% (+2.9 points), RFC-11 is tiring (70) (lean).",
+        "errors": [],
+        "locale": "en",
+        "mode": "analyst"
+       },
+       {
+        "stage": "localizer",
+        "attempt": 0,
+        "outcome": "passed",
+        "text": "Sacar a RFC-11 por un jugador fresco\nEl modelo prefiere un cambio en la misma posición: +2,9 puntos, intervalo del 90%: +2,7 a +3,0 (leve).",
+        "errors": [],
+        "locale": "es",
+        "mode": "analyst"
+       }
+      ]
      }
     }
    },
@@ -1364,26 +2271,169 @@
    "narration": {
     "en": {
      "casual": {
-      "headline": "After the goal, CAS-02 is fading (66%).",
-      "reason": "The options are close: the model sees almost no difference (toss-up).",
-      "source": "template"
+      "headline": "Little to choose between the options",
+      "reason": "CAS-02 is tiring (condition 66); the model rates this a toss-up (toss-up). Options are about even.",
+      "source": "model",
+      "trace": [
+       {
+        "stage": "narrator",
+        "attempt": 0,
+        "outcome": "rejected",
+        "text": "Go for an attacking change\nCAS-02 is tiring (condition 66) and the model finds options close, a toss-up with win_attacking 0.2 and draw_attacking 6.5.",
+        "errors": [
+         "internal name 'win_attacking' in the text; use plain words",
+         "internal name 'draw_attacking' in the text; use plain words",
+         "toss-up headline calls for an action ('Go for'); say the options are close"
+        ],
+        "locale": "en",
+        "mode": "analyst"
+       },
+       {
+        "stage": "narrator",
+        "attempt": 1,
+        "outcome": "passed",
+        "text": "Little to choose between the options\nCAS-02 is tiring (condition 66); the model rates this a toss-up and options are close, draw 6.5% for an attacking change.",
+        "errors": [],
+        "locale": "en",
+        "mode": "analyst"
+       },
+       {
+        "stage": "localizer",
+        "attempt": 0,
+        "outcome": "passed",
+        "text": "Little to choose between the options\nCAS-02 is tiring (condition 66); the model rates this a toss-up (toss-up). Options are about even.",
+        "errors": [],
+        "locale": "en",
+        "mode": "casual"
+       }
+      ]
      },
      "analyst": {
-      "headline": "After the goal, CAS-02 is fading (66%).",
-      "reason": "The options are close: changing now moves win probability by +0.0 pts, 90% interval +0.0 to +0.1 (toss-up).",
-      "source": "template"
+      "headline": "Little to choose between the options",
+      "reason": "CAS-02 is tiring (condition 66); the model says toss-up (toss-up). +0.0 points, 90% interval +0.0 to +0.1.",
+      "source": "model",
+      "trace": [
+       {
+        "stage": "narrator",
+        "attempt": 0,
+        "outcome": "rejected",
+        "text": "Go for an attacking change\nCAS-02 is tiring (condition 66) and the model finds options close, a toss-up with win_attacking 0.2 and draw_attacking 6.5.",
+        "errors": [
+         "internal name 'win_attacking' in the text; use plain words",
+         "internal name 'draw_attacking' in the text; use plain words",
+         "toss-up headline calls for an action ('Go for'); say the options are close"
+        ],
+        "locale": "en",
+        "mode": "analyst"
+       },
+       {
+        "stage": "narrator",
+        "attempt": 1,
+        "outcome": "passed",
+        "text": "Little to choose between the options\nCAS-02 is tiring (condition 66); the model rates this a toss-up and options are close, draw 6.5% for an attacking change.",
+        "errors": [],
+        "locale": "en",
+        "mode": "analyst"
+       },
+       {
+        "stage": "localizer",
+        "attempt": 0,
+        "outcome": "passed",
+        "text": "Little to choose between the options\nCAS-02 is tiring (condition 66); the model says toss-up (toss-up). +0.0 points, 90% interval +0.0 to +0.1.",
+        "errors": [],
+        "locale": "en",
+        "mode": "analyst"
+       }
+      ]
      }
     },
     "es": {
      "casual": {
-      "headline": "Tras el gol, CAS-02 se está agotando (66%).",
-      "reason": "Las opciones están muy parejas: el modelo no ve apenas diferencia (igualado).",
-      "source": "template"
+      "headline": "Poco que elegir entre las opciones",
+      "reason": "CAS-02 se cansa (66); el modelo dice igualado (igualado). Las opciones están muy parecidas.",
+      "source": "model",
+      "trace": [
+       {
+        "stage": "narrator",
+        "attempt": 0,
+        "outcome": "rejected",
+        "text": "Go for an attacking change\nCAS-02 is tiring (condition 66) and the model finds options close, a toss-up with win_attacking 0.2 and draw_attacking 6.5.",
+        "errors": [
+         "internal name 'win_attacking' in the text; use plain words",
+         "internal name 'draw_attacking' in the text; use plain words",
+         "toss-up headline calls for an action ('Go for'); say the options are close"
+        ],
+        "locale": "en",
+        "mode": "analyst"
+       },
+       {
+        "stage": "narrator",
+        "attempt": 1,
+        "outcome": "passed",
+        "text": "Little to choose between the options\nCAS-02 is tiring (condition 66); the model rates this a toss-up and options are close, draw 6.5% for an attacking change.",
+        "errors": [],
+        "locale": "en",
+        "mode": "analyst"
+       },
+       {
+        "stage": "localizer",
+        "attempt": 0,
+        "outcome": "rejected",
+        "text": "Poco que elegir entre las opciones\nCAS-02 se cansa (66); el modelo dice igualado (igualado). Opciones cercanas, usar 0 puntos como guía.",
+        "errors": [
+         "'0 puntos': say the options are about even, without a number"
+        ],
+        "locale": "es",
+        "mode": "casual"
+       },
+       {
+        "stage": "localizer",
+        "attempt": 1,
+        "outcome": "passed",
+        "text": "Poco que elegir entre las opciones\nCAS-02 se cansa (66); el modelo dice igualado (igualado). Las opciones están muy parecidas.",
+        "errors": [],
+        "locale": "es",
+        "mode": "casual"
+       }
+      ]
      },
      "analyst": {
-      "headline": "Tras el gol, CAS-02 se está agotando (66%).",
-      "reason": "Las opciones están muy parejas: cambiar ahora mueve la probabilidad de victoria +0,0 pts, intervalo del 90%: +0,0 a +0,1 (igualado).",
-      "source": "template"
+      "headline": "Poco que elegir entre las opciones",
+      "reason": "CAS-02 se cansa (66); el modelo dice igualado. +0,0 puntos, intervalo del 90%: +0,0 a +0,1.",
+      "source": "model",
+      "trace": [
+       {
+        "stage": "narrator",
+        "attempt": 0,
+        "outcome": "rejected",
+        "text": "Go for an attacking change\nCAS-02 is tiring (condition 66) and the model finds options close, a toss-up with win_attacking 0.2 and draw_attacking 6.5.",
+        "errors": [
+         "internal name 'win_attacking' in the text; use plain words",
+         "internal name 'draw_attacking' in the text; use plain words",
+         "toss-up headline calls for an action ('Go for'); say the options are close"
+        ],
+        "locale": "en",
+        "mode": "analyst"
+       },
+       {
+        "stage": "narrator",
+        "attempt": 1,
+        "outcome": "passed",
+        "text": "Little to choose between the options\nCAS-02 is tiring (condition 66); the model rates this a toss-up and options are close, draw 6.5% for an attacking change.",
+        "errors": [],
+        "locale": "en",
+        "mode": "analyst"
+       },
+       {
+        "stage": "localizer",
+        "attempt": 0,
+        "outcome": "passed",
+        "text": "Poco que elegir entre las opciones\nCAS-02 se cansa (66); el modelo dice igualado. +0,0 puntos, intervalo del 90%: +0,0 a +0,1.",
+        "errors": [],
+        "locale": "es",
+        "mode": "analyst"
+       }
+      ]
      }
     }
    },

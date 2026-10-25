@@ -1163,3 +1163,22 @@ button.bc-option.bc-voted { color: var(--bc-ink); border-color: var(--bc-accent)
 @media (max-width: 700px), (max-height: 500px) {
   .bc-bench { display: none; } /* a phone's letterbox has no room; the fan view lists the bench */
 }
+
+/* The lower third's credit line, and how a line was written (TracePanel) */
+.bc-lower-credit { margin: 0.2em 0 0; font-size: 0.75em; color: var(--bc-muted); display: flex; flex-wrap: wrap; align-items: center; gap: 0.6em; }
+.bc-lower-credit button {
+  font: inherit; color: var(--bc-accent); background: none; border: 0; padding: 0;
+  text-decoration: underline; text-underline-offset: 2px; cursor: pointer;
+}
+.bc-trace { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.bc-trace-step { padding: 10px 12px; border: 1px solid var(--bc-line); border-left: 4px solid var(--bc-line); border-radius: 8px; }
+.bc-trace-step.passed { border-left-color: #45b277; }
+.bc-trace-step.rejected, .bc-trace-step.timeout, .bc-trace-step.error { border-left-color: #ef5a43; }
+.bc-trace-step.used { border-left-color: var(--bc-accent); }
+.bc-trace-step p { margin: 0; }
+.bc-trace-head { display: flex; justify-content: space-between; gap: 12px; font-size: 13px; color: var(--bc-muted); }
+.bc-trace-head b { color: var(--bc-ink); }
+.bc-trace-text { margin-top: 6px !important; }
+.bc-trace-label { margin-top: 8px !important; font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--bc-muted); }
+.bc-trace-errors { margin: 4px 0 0; padding-left: 1.2em; font-size: 13px; color: #ffb4a6; }
+.bc-trace-text { white-space: pre-line; } /* headline, then reason */

@@ -36,7 +36,7 @@ from numpy.random import SeedSequence
 
 from dugout.agents.lexicon import LOCALES
 from dugout.agents.foundry import ENV_ENDPOINT, client_from_env
-from dugout.agents.pipeline import ModelClient, NarrationPipeline, StubClient
+from dugout.agents.pipeline import ModelClient, NarrationPipeline, StubClient, card_fields
 from dugout.agents.recap import RecapRow, template_line
 from dugout.agents.templates import MODES
 from dugout.agents.workflow import NarrationWorkflow
@@ -278,7 +278,8 @@ def main() -> None:
                 card = pipeline.run(payload, loc, mode)
                 # The stub client returns the template text; label it as such, not as a model.
                 source = card.source if memo else "template"
-                narration[loc][mode] = {"headline": card.headline, "reason": card.reason, "source": source}
+                narration[loc][mode] = {"headline": card.headline, "reason": card.reason, "source": source,
+                                        "trace": card_fields(card)["trace"]}
                 if card.fallback:
                     print(f"{payload['decision_id']} {loc} {mode}: template ({card.fallback})")
         c = closed[point["id"]]

@@ -115,6 +115,7 @@ export interface CardMessage {
   headline: string;
   reason: string;
   source: "model" | "template";
+  trace?: NarrationStep[];
   payload: DecisionPayload;
 }
 
@@ -132,10 +133,24 @@ export interface CardClosed {
 export type Locale = "en" | "es";
 export type Mode = "casual" | "analyst";
 
+/** One step of how a card's line was written (dugout.agents.workflow): a model stage and what the
+ *  code check made of its reply, or the template that replaced the model's line. */
+export interface NarrationStep {
+  stage: "narrator" | "localizer" | "template";
+  attempt: number;
+  outcome: "passed" | "rejected" | "timeout" | "error" | "used";
+  text: string;
+  errors: string[];
+  locale: string;
+  mode: string;
+}
+
 export interface Narration {
   headline: string;
   reason: string;
   source: "model" | "template";
+  /** How the line was written; absent in older files and from the plain pipeline. */
+  trace?: NarrationStep[];
 }
 
 export interface DecisionCard {

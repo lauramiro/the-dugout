@@ -69,7 +69,7 @@ def _step(turn: Turn, outcome: str, text: str = "", errors: tuple[str, ...] = ()
 
 def _template(turn: Turn, reason: str, trace: tuple[TraceStep, ...]) -> Card:
     narration = template_narration(turn.payload, turn.locale, turn.mode)
-    used = TraceStep("template", 0, "used", f"{narration.headline} {narration.reason}", (), turn.locale, turn.mode)
+    used = TraceStep("template", 0, "used", f"{narration.headline}\n{narration.reason}", (), turn.locale, turn.mode)
     return Card(narration.headline, narration.reason, "template", reason, trace + (used,))
 
 
@@ -118,7 +118,7 @@ class GroundingStep(Executor):
             [parsed] if isinstance(parsed, str)
             else check_narration(parsed, turn.payload, *turn.stage_target)
         )
-        text = reply.text if isinstance(parsed, str) else f"{parsed.headline} {parsed.reason}"
+        text = reply.text if isinstance(parsed, str) else f"{parsed.headline}\n{parsed.reason}"
         trace = turn.trace + (_step(turn, "rejected" if errors else "passed", text, tuple(errors)),)
         if not errors:
             if turn.stage == NARRATOR:

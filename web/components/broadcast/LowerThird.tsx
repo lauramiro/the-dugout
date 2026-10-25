@@ -18,6 +18,8 @@ interface Props {
   running: boolean;
   /** Whether keys 1 to 4 vote here; off while a story screen (tablet, phone) covers the picture. */
   keys?: boolean;
+  /** Opens how the line was written (the narration workflow's trace). */
+  onTrace?: () => void;
   t: Translate;
 }
 
@@ -29,7 +31,7 @@ function narrationFor(card: DecisionCard, locale: Locale, mode: Mode): Narration
 /** The decision as a lower third: what triggered it, the model's line, the options as bars.
  *  The rows are the viewer's vote too (click, or keys 1 to 4) for VOTE_SECONDS of running
  *  clock. A manager_sub card is raised by the change itself, so there is nothing to call. */
-export function LowerThird({ card, roster, mode, locale, vote, onVote, running, keys = true, t }: Props) {
+export function LowerThird({ card, roster, mode, locale, vote, onVote, running, keys = true, onTrace, t }: Props) {
   const { payload } = card;
   const narration = narrationFor(card, locale, mode);
   const pick = payload.recommendation.option_id;
@@ -66,7 +68,12 @@ export function LowerThird({ card, roster, mode, locale, vote, onVote, running, 
         <div className="bc-lower-text">
           <p className="bc-lower-headline">{withNames(narration.headline, roster)}</p>
           <p className="bc-lower-reason">{withNames(narration.reason, roster)}</p>
-          <p className="bc-lower-reason" style={{ fontSize: "0.75em" }}>{t(narration.source === "model" ? "creditModel" : "creditTemplate")}</p>
+          <p className="bc-lower-credit">
+            {t(narration.source === "model" ? "creditModel" : "creditTemplate")}
+            {onTrace && narration.trace && narration.trace.length > 0 && (
+              <button type="button" onClick={onTrace}>{t("traceOpen")}</button>
+            )}
+          </p>
         </div>
       )}
       <ol className={`bc-options${open ? " voting" : ""}`}>

@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { formatMinute, lastAtOrBefore } from "../../lib/clock";
-import type { DecisionCard, Locale } from "../../lib/contracts";
+import type { DecisionCard, Locale, Narration, Roster } from "../../lib/contracts";
+import { withNames } from "../../lib/derive";
+import { stepLabel } from "../../lib/trace";
 import { SPEEDS, type FeedState, type PlaybackControls, type Timed } from "../../lib/datasource";
 import { decimal, type Translate } from "../../lib/i18n";
 
@@ -8,7 +10,7 @@ import { decimal, type Translate } from "../../lib/i18n";
 // always on screen, chapters to jump between decisions, a slate while there is no picture,
 // and the About and How it's graded panels.
 
-export type PanelId = "about" | "graded";
+export type PanelId = "about" | "graded" | "trace";
 
 const REPO = "https://github.com/lauramiro/the-dugout/blob/main";
 const TITLE_MS = 8000;
@@ -178,6 +180,43 @@ const GRADED = {
   narratedOf: 100,
   firstPass: 84.2,
 };
+
+/** How one line was written: each agent step and what the code check made of it. */
+export function TracePanel({ narration, roster, onClose, t }: {
+  narration: Narration | undefined; roster: Roster | null; onClose: () => void; t: Translate;
+}) {
+  const steps = narration?.trace ?? [];
+  return (
+    <Panel title={t("traceTitle")} onClose={onClose} t={t}>
+      <p className="bc-dialog-lead">{narration ? withNames(`${narration.headline} ${narration.reason}`, roster) : ""}</p>
+      <p className="bc-dialog-note">{t("traceLead")}</p>
+      {steps.length === 0 ? (
+        <p>{t("traceNone")}</p>
+      ) : (
+        <ol className="bc-trace">
+          {steps.map((step, i) => {
+            const label = stepLabel(step);
+            return (
+              <li key={i} className={`bc-trace-step ${step.outcome}`}>
+                <p className="bc-trace-head">
+                  <span>{t(label.who, label.whoVars)}</span>
+                  <b>{t(label.outcome)}</b>
+                </p>
+                {step.text && <p className="bc-trace-text">{withNames(step.text, roster)}</p>}
+                {step.errors.length > 0 && (
+                  <>
+                    <p className="bc-trace-label">{t("traceChecks")}</p>
+                    <ul className="bc-trace-errors">{step.errors.map((e, j) => <li key={j}>{e}</li>)}</ul>
+                  </>
+                )}
+              </li>
+            );
+          })}
+        </ol>
+      )}
+    </Panel>
+  );
+}
 
 export function GradedPanel({ onClose, locale, t }: { onClose: () => void; locale: Locale; t: Translate }) {
   const n = (v: number, digits: number) => decimal(v, locale, digits);

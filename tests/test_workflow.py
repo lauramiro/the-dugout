@@ -141,7 +141,7 @@ def test_trace_records_each_step_with_the_check_errors():
     steps = [(s.stage, s.attempt, s.outcome) for s in card.trace]
     assert steps == [("narrator", 0, "rejected"), ("narrator", 1, "passed"), ("localizer", 0, "passed")]
     assert any("4.9" in e for e in card.trace[0].errors)
-    assert card.trace[2].text == "RFC-03 se está agotando (60%). Cambiar ahora: +3,9 pts de probabilidad de victoria (fuerte)."
+    assert card.trace[2].text == "RFC-03 se está agotando (60%).\nCambiar ahora: +3,9 pts de probabilidad de victoria (fuerte)."
     assert (card.trace[2].locale, card.trace[2].mode) == ("es", "analyst")
 
 
