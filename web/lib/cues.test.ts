@@ -302,4 +302,6 @@ test("pickCall prefers the manager's call on a card the viewer voted on when two
   assert.equal(pickCall(shown, { "rfc-60-20": { option: "sub_like_for_like" } })?.id, "manager_call:rfc-60-20");
   assert.equal(pickCall(shown, {})?.id, "manager_call:rfc-72-40", "no vote: the latest, as before");
   assert.equal(pickCall([], {}), undefined);
+  assert.equal(pickCall(shown, { "rfc-60-20": { option: null } })?.id, "manager_call:rfc-72-40", "a timed-out vote is no vote");
+  assert.equal(pickCall(shown, { "rfc-60-20": { option: "a" }, "rfc-72-40": { option: "b" } })?.id, "manager_call:rfc-72-40");
 });
