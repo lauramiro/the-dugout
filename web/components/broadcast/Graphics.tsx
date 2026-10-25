@@ -168,6 +168,7 @@ export function WhatIf({ cue, cards, roster, locale, mode, t, next, leadId, repo
       ) : (
         <h2 className="bc-whatif-title">{t("whatIf")}</h2>
       )}
+      {shown === "whatif" && <p className="bc-whatif-note">{t("whatIfNote")}</p>}
       {shown === "report" ? report : (
         <ol className="bc-whatif-rows">
           {ordered.map((row) => {

@@ -587,6 +587,7 @@
 .bc-report-line.lead { font-weight: 800; font-size: 1.2em; }
 .bc-report-status { align-self: center; color: var(--bc-muted); }
 
+.bc-whatif-note { margin: -0.6cqh 0 1.2cqh; color: var(--bc-muted); font-size: 0.8em; }
 .bc-whatif-rows { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.8cqh; }
 
 .bc-whatif-row {

@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { buildCues } from "./cues.ts";
 import { demoLog } from "./demoLog.testutil.ts";
 import { en, es, translator, type StringKey } from "./i18n.ts";
-import { matchReport, reportLines, stripMinute, whatIfLead } from "./matchReport.ts";
+import { matchReport, reportLines, stripMinute, whatIfLead, whatIfRows } from "./matchReport.ts";
 
 const log = demoLog();
 const cards = log.cards.map((c) => c.item);
@@ -74,4 +74,11 @@ test("every report string exists in both languages, translated, with no long das
     assert.notEqual(es[k], en[k], k);
     assert.ok(!/[–—]/.test(en[k] + es[k]), k);
   }
+});
+
+test("What if drops a later card that prices the same call against the same change of the manager's", () => {
+  const ids = whatIfRows(whatif, cards).map((r) => r.decision_id);
+  assert.ok(ids.includes("rfc-60-20"));
+  assert.ok(!ids.includes("rfc-72-40"), "72': Varga off against the 79' change again, the 60' row already says it");
+  assert.ok(ids.includes("rfc-85-10"), "a different call stays");
 });

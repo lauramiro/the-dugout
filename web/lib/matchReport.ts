@@ -28,8 +28,20 @@ export interface MatchReport {
 /** What if's rows. A manager_sub card was raised by the manager's own change, so it has no call of his to
  *  price against the model's: leave it out rather than count that change twice. */
 export function whatIfRows(cue: Cue, cards: readonly DecisionCard[]): WhatIfRow[] {
-  const trigger = (id: string) => cards.find((c) => c.payload.decision_id === id)?.payload.trigger;
-  return ((cue.data.rows as WhatIfRow[]) ?? []).filter((row) => trigger(row.decision_id) !== "manager_sub");
+  const card = (id: string) => cards.find((c) => c.payload.decision_id === id);
+  // A later card of the same club that prices the same call against the same change of the manager's says
+  // what an earlier row already said: keep the first.
+  const said = new Set<string>();
+  return ((cue.data.rows as WhatIfRow[]) ?? []).filter((row) => {
+    const c = card(row.decision_id);
+    if (c?.payload.trigger === "manager_sub") return false;
+    const action = c?.payload.manager_action;
+    if (!c?.review || !action) return true;
+    const key = JSON.stringify([c.payload.team, c.review.model.id, action.period, action.t_ms, action.subs]);
+    if (said.has(key)) return false;
+    said.add(key);
+    return true;
+  });
 }
 
 /** The decision What if leads with: `leadId` (the story's own card) or the cue's lead when it is a row,
