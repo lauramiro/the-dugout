@@ -1,6 +1,8 @@
 // "Your call" votes. A replay keeps them in the page; live mode also posts them to the
 // decision service (POST /votes, GET /votes/{decision_id}) for the crowd tally.
 
+import { serviceUrl } from "./config.ts";
+
 export interface Tally {
   decision_id: string;
   counts: Record<string, number>;
@@ -40,25 +42,12 @@ export class LocalVotes implements VoteStore {
   }
 }
 
-// public/config.json is written at deploy time by infra/deploy.sh: {"stubUrl": "https://..."}
 export class ServiceVotes implements VoteStore {
-  private base: Promise<string> | null = null;
   private viewer: string | null = null;
-
-  private url(): Promise<string> {
-    this.base ??= fetch("/config.json")
-      .then((res) => res.json() as Promise<{ stubUrl: string }>)
-      .then((c) => c.stubUrl)
-      .catch((err: unknown) => {
-        this.base = null; // a failed fetch is tried again on the next vote, not kept
-        throw err;
-      });
-    return this.base;
-  }
 
   async cast(decisionId: string, optionId: string): Promise<Tally | null> {
     this.viewer ??= viewerId();
-    const res = await fetch(`${await this.url()}/votes`, {
+    const res = await fetch(`${await serviceUrl()}/votes`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ decision_id: decisionId, viewer_id: this.viewer, option_id: optionId }),
@@ -70,7 +59,7 @@ export class ServiceVotes implements VoteStore {
   }
 
   async tally(decisionId: string): Promise<Tally | null> {
-    const res = await fetch(`${await this.url()}/votes/${encodeURIComponent(decisionId)}`);
+    const res = await fetch(`${await serviceUrl()}/votes/${encodeURIComponent(decisionId)}`);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     return (await res.json()) as Tally;
   }

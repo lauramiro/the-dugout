@@ -13,3 +13,12 @@ export function reconnectDelayMs(attempt: number): number {
 export function statusOnDrop(status: Status): Status {
   return status === "ready" ? "ready" : "error";
 }
+
+/** A connection that stayed open this long counts as working, so the next drop starts the backoff again. */
+export const STABLE_MS = 10_000;
+
+/** The attempt count after a close: back to 0 only if the connection held for STABLE_MS, so one that
+ *  is accepted and closed at once (a quota, a draining service) keeps backing off. */
+export function attemptsAfterClose(attempts: number, openForMs: number): number {
+  return openForMs >= STABLE_MS ? 0 : attempts;
+}

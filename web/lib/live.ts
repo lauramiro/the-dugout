@@ -13,15 +13,9 @@ import type {
   WinProbPoint,
 } from "./contracts";
 import { emptyLog, interpolate, type DataSource, type FeedState, type PitchFrame, type Timed } from "./datasource";
-import { reconnectDelayMs, statusOnDrop } from "./reconnect";
+import { serviceUrl } from "./config";
+import { attemptsAfterClose, reconnectDelayMs, statusOnDrop } from "./reconnect";
 import { parseSchedule, type Schedule } from "./schedule";
-
-// public/config.json is written at deploy time by infra/deploy.sh: {"stubUrl": "https://..."}
-async function loadStubUrl(): Promise<string> {
-  const res = await fetch("/config.json");
-  const { stubUrl } = (await res.json()) as { stubUrl: string };
-  return stubUrl;
-}
 
 export class LiveDataSource implements DataSource {
   readonly kind = "live" as const;
@@ -49,6 +43,11 @@ export class LiveDataSource implements DataSource {
 
   start(): void {
     this.disposed = false;
+    if (!this.connecting) {
+      // once per page, not on every reconnect: neither file changes while the page is open
+      void this.loadRoster();
+      void this.loadSchedule();
+    }
     this.connecting ??= this.connect();
   }
 
@@ -73,25 +72,28 @@ export class LiveDataSource implements DataSource {
   private async connect(): Promise<void> {
     const generation = ++this.generation;
     try {
-      void this.loadRoster(generation);
-      void this.loadSchedule(generation);
-      const base = await loadStubUrl();
+      const base = await serviceUrl();
       const res = await fetch(`${base}/negotiate`);
       const { url } = (await res.json()) as { url: string | null };
       if (!url) throw new Error("Web PubSub is not configured on the decision service");
       if (this.disposed || generation !== this.generation) return;
       const ws = new WebSocket(url);
       this.ws = ws;
+      let openedAt = Number.POSITIVE_INFINITY;
       ws.onopen = () => {
-        this.attempts = 0;
+        openedAt = Date.now();
         this.set({ status: "ready", error: null, playing: true });
       };
       ws.onclose = () => {
         if (this.ws !== ws) return;
+        this.attempts = attemptsAfterClose(this.attempts, Date.now() - openedAt);
         this.set({ playing: false });
         this.retry(generation);
       };
-      ws.onerror = () => this.set({ status: statusOnDrop(this.state.status), error: "Web PubSub connection failed" });
+      ws.onerror = () => {
+        if (this.ws !== ws) return;
+        this.set({ status: statusOnDrop(this.state.status), error: "Web PubSub connection failed" });
+      };
       ws.onmessage = (m) => {
         try {
           this.receive(JSON.parse(m.data as string) as Record<string, unknown>);
@@ -115,24 +117,24 @@ export class LiveDataSource implements DataSource {
 
   // The scenario's team sheet, as a broadcaster has it before kick-off; without it the page
   // shows player ids.
-  private async loadRoster(generation: number): Promise<void> {
+  private async loadRoster(): Promise<void> {
     try {
       const res = await fetch("/demo/roster.json");
       if (!res.ok) return;
       const roster = (await res.json()) as Roster;
-      if (this.disposed || generation !== this.generation) return;
+      if (this.disposed) return;
       this.set({ log: { ...this.state.log, roster } });
     } catch {
       // no roster: names fall back to ids
     }
   }
 
-  private async loadSchedule(generation: number): Promise<void> {
+  private async loadSchedule(): Promise<void> {
     try {
       const res = await fetch("/schedule.json");
       if (!res.ok) return;
       const schedule = parseSchedule(await res.json());
-      if (this.disposed || generation !== this.generation) return;
+      if (this.disposed) return;
       this.schedule = schedule;
       for (const l of this.listeners) l();
     } catch {
