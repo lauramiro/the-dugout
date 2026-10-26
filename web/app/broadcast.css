@@ -1062,6 +1062,13 @@ a.bc-hood-open:hover { filter: brightness(1.08); }
   }
 }
 
+/* A phone held sideways: the picture fills the window's height, and the links and replay controls would sit on
+   top of the decision card and What if. They go under the picture instead, a scroll away. */
+@media (max-height: 500px) and (orientation: landscape) {
+  .bc-wrap { align-items: start; overflow-y: auto; }
+  .bc-chrome { position: static; translate: none; max-width: none; padding: 12px 16px; font-size: 13px; gap: 10px; }
+}
+
 /* Live: next kick-off of the scheduled demo replay (components/broadcast/KickoffSlate.tsx). */
 .bc-kickoff {
   position: absolute;
