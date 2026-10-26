@@ -12,7 +12,6 @@ from __future__ import annotations
 
 import math
 
-import numpy as np
 
 from dugout.contracts import PITCH_LENGTH, PITCH_WIDTH, Event
 from dugout.sim.match import Y_BANDS, step
