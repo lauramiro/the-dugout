@@ -141,6 +141,9 @@ function cardCues(cardPos: number, card: DecisionCard, events: readonly Timed<Ma
   // A manager_sub card is raised by the change itself: that change is not a call on it.
   if (payload.trigger === "manager_sub") return out;
   const action = payload.manager_action;
+  // A queued card whose call was settled before it opened (a later goal came first): no graphic
+  // over the fresh card. The What if still lists the call.
+  if (action && at(action.period, action.t_ms) < cardPos) return out;
   if (action) {
     const callPos = Math.max(at(action.period, action.t_ms), cardPos);
     out.push({

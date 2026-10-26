@@ -81,3 +81,11 @@ test("fanMoment: live, the log ends where the feed has got to, which is not full
   assert.equal(fanMoment(live, pos, "RFC", "en", "casual", true).kind, "decision");
   assert.equal(fanMoment(live, pos, "RFC", "en", "casual").kind, "full-time"); // a replay that ends there
 });
+
+test("fanMoment: a queued card whose call was settled before it opened shows the card, not the call", () => {
+  // rfc-91-10 opens at 91' with the manager's no change dated 89' (the next goal came first).
+  const log = demoLog();
+  const card = log.cards.find((c) => c.item.payload.decision_id === "rfc-91-10")!;
+  const m = fanMoment(log, card.pos + 5_000, "RFC", "en", "casual");
+  assert.equal(m.kind, "decision");
+});

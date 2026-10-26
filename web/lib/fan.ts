@@ -3,7 +3,7 @@
 // numbers are the card's own; nothing is computed that the card does not carry.
 
 import { benchAt, type BenchPlayer } from "./bench.ts";
-import { revealPos } from "./calls.ts";
+import { managerPos, revealPos } from "./calls.ts";
 import { formatMinute, lastAtOrBefore, toPos } from "./clock.ts";
 import type { DecisionCard, Locale, Mode, Narration, Strength, TeamCode, Trigger } from "./contracts";
 import { MANAGER_CALL_MS } from "./cues.ts";
@@ -99,6 +99,8 @@ export function fanMoment(log: MatchLog, pos: number, club: TeamCode, locale: Lo
 
   const revealed = cards.find((c) => {
     if (c.item.payload.trigger === "manager_sub") return false; // raised by the change itself
+    const settled = managerPos(c.item, log.firstHalfEnd);
+    if (settled !== null && settled < c.pos) return false; // settled before it opened: show the card
     const at = revealPos(c, log.firstHalfEnd);
     return at !== null && at <= pos && pos < at + MANAGER_CALL_MS;
   });

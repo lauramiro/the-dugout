@@ -305,3 +305,12 @@ test("pickCall prefers the manager's call on a card the viewer voted on when two
   assert.equal(pickCall(shown, { "rfc-60-20": { option: null } })?.id, "manager_call:rfc-72-40", "a timed-out vote is no vote");
   assert.equal(pickCall(shown, { "rfc-60-20": { option: "a" }, "rfc-72-40": { option: "b" } })?.id, "manager_call:rfc-72-40");
 });
+
+test("no manager call graphic for a card whose call was known before it opened", () => {
+  // A goal card queued behind another opens at 91', but the next goal (89') already settled it.
+  const c = card({
+    id: "rfc-91-10", t_ms: 5_460_000, trigger: "goal_after_55",
+    manager_action: { period: 2, t_ms: 5_340_000, subs: [], option_id: "no_change" },
+  });
+  assert.equal(ofKind(buildCues(log([c]), null), "manager_call").length, 0);
+});
