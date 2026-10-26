@@ -143,6 +143,8 @@ uv run uvicorn dugout.service.app:app --port 8000   # MCP at http://localhost:80
 cd web && npm install && npm run dev
 ```
 
+GitHub Actions runs the same tests, the type check and the build on every push and pull request (`.github/workflows/ci.yml`), with no secrets.
+
 The page replays the demo match from `web/public/demo/` by default; open it with `?source=live` to follow the Web PubSub feed. Without `FOUNDRY_ENDPOINT` (see `env.example`) narration uses the templates. To deploy to Azure, run `infra/foundry.sh` and then `infra/deploy.sh`; both print every command and change nothing without `--apply`.
 
 ## License
