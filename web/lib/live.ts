@@ -13,6 +13,7 @@ import type {
   WinProbPoint,
 } from "./contracts";
 import { emptyLog, interpolate, type DataSource, type FeedState, type PitchFrame, type Timed } from "./datasource";
+import { reconnectDelayMs, statusOnDrop } from "./reconnect";
 import { parseSchedule, type Schedule } from "./schedule";
 
 // public/config.json is written at deploy time by infra/deploy.sh: {"stubUrl": "https://..."}
@@ -33,6 +34,8 @@ export class LiveDataSource implements DataSource {
   private disposed = false;
   private connecting: Promise<void> | null = null;
   private generation = 0;
+  private attempts = 0;
+  private retryTimer: ReturnType<typeof setTimeout> | undefined;
   private half: LiveHalf = { firstHalfEnd: HALF_MS, secondHalf: false };
   /** Kick-off times, from schedule.json; null when the deployment has no scheduled replay. */
   schedule: Schedule | null = null;
@@ -51,6 +54,7 @@ export class LiveDataSource implements DataSource {
 
   dispose(): void {
     this.disposed = true;
+    clearTimeout(this.retryTimer);
     this.ws?.close();
     this.ws = undefined;
     this.connecting = null;
@@ -74,13 +78,21 @@ export class LiveDataSource implements DataSource {
       const base = await loadStubUrl();
       const res = await fetch(`${base}/negotiate`);
       const { url } = (await res.json()) as { url: string | null };
-      if (!url) throw new Error("Web PubSub is not configured on the stub");
+      if (!url) throw new Error("Web PubSub is not configured on the decision service");
       if (this.disposed || generation !== this.generation) return;
-      this.ws = new WebSocket(url);
-      this.ws.onopen = () => this.set({ status: "ready" });
-      this.ws.onclose = () => this.set({ playing: false });
-      this.ws.onerror = () => this.set({ status: "error", error: "Web PubSub connection failed" });
-      this.ws.onmessage = (m) => {
+      const ws = new WebSocket(url);
+      this.ws = ws;
+      ws.onopen = () => {
+        this.attempts = 0;
+        this.set({ status: "ready", error: null, playing: true });
+      };
+      ws.onclose = () => {
+        if (this.ws !== ws) return;
+        this.set({ playing: false });
+        this.retry(generation);
+      };
+      ws.onerror = () => this.set({ status: statusOnDrop(this.state.status), error: "Web PubSub connection failed" });
+      ws.onmessage = (m) => {
         try {
           this.receive(JSON.parse(m.data as string) as Record<string, unknown>);
         } catch {
@@ -88,8 +100,17 @@ export class LiveDataSource implements DataSource {
         }
       };
     } catch (err) {
-      if (!this.disposed) this.set({ status: "error", error: err instanceof Error ? err.message : String(err) });
+      if (this.disposed) return;
+      this.set({ status: statusOnDrop(this.state.status), error: err instanceof Error ? err.message : String(err) });
+      this.retry(generation);
     }
+  }
+
+  // A fresh negotiate each time: the client URL from the last one may have expired.
+  private retry(generation: number): void {
+    if (this.disposed || generation !== this.generation) return;
+    clearTimeout(this.retryTimer);
+    this.retryTimer = setTimeout(() => void this.connect(), reconnectDelayMs(this.attempts++));
   }
 
   // The scenario's team sheet, as a broadcaster has it before kick-off; without it the page
