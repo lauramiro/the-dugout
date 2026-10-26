@@ -1,4 +1,6 @@
-"""Storage for decisions, cards and votes. Cosmos DB replaces MemoryStore later (decision 16)."""
+"""Storage for decisions, cards and votes. MemoryStore is what runs: votes reset when the service
+scales to zero. A Cosmos DB store behind the same Protocol is the production path (README).
+"""
 
 from __future__ import annotations
 
