@@ -139,3 +139,15 @@ def test_explain_decision_gives_the_app_what_it_shows(cards):
 ])
 def test_minute_labels_match_the_screens(period, t_ms, label):
     assert mcp_server.minute_label(period, t_ms) == label
+
+
+def test_price_options_carries_the_card_app_too():
+    # A bare engine payload: the App shows the options without narration.
+    async def go():
+        async with Client(mcp_server.server) as client:
+            return (await client.list_tools()).tools
+    tool = next(t for t in asyncio.run(go()) if t.name == "price_options")
+    assert tool.meta["ui"]["resourceUri"] == mcp_server.CARD_APP
+    out = data(call("price_options", {"minute": 64, "team": "RFC"}))
+    assert out["clock"] == "64'" and out["names"]["RFC-03"] == "Leon Varga"
+    assert out["options"] and out["recommendation"]

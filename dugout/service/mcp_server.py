@@ -87,6 +87,19 @@ def _names() -> dict[str, str]:
     return {p.id: p.name for team in (scenario.home, scenario.away) for p in team.players}
 
 
+
+@apps.tool(resource_uri=CARD_APP, annotations=READ_ONLY)
+def price_options(minute: int, team: str, period: int | None = None) -> dict[str, Any]:
+    """The decision engine at a minute of the demo match, for one team (RFC or CAS): win, draw
+    and loss probability and expected points for no change, a like-for-like substitution, an
+    attacking and a defensive change, each option's gap to no change with a 90% interval, the
+    recommended option with its strength (strong, lean or toss-up) and the evidence. 20,000
+    simulated runs per option on common random numbers. The payload's trigger is "on_request";
+    `names` and `clock` are as in explain_decision."""
+    s = _snapshot_at(minute, period)
+    payload = decide(s, _team(s, team), "on_request")
+    return {**payload, "names": _names(), "clock": minute_label(s["period"], payload["t_ms"])}
+
 server = MCPServer(
     extensions=[apps],
     name="the-dugout",
@@ -178,12 +191,3 @@ def match_state(minute: int, period: int | None = None) -> dict[str, Any]:
     }
 
 
-@server.tool(annotations=READ_ONLY)
-def price_options(minute: int, team: str, period: int | None = None) -> dict[str, Any]:
-    """The decision engine at a minute of the demo match, for one team (RFC or CAS): win, draw
-    and loss probability and expected points for no change, a like-for-like substitution, an
-    attacking and a defensive change, each option's gap to no change with a 90% interval, the
-    recommended option with its strength (strong, lean or toss-up) and the evidence. 20,000
-    simulated runs per option on common random numbers. The payload's trigger is "on_request"."""
-    s = _snapshot_at(minute, period)
-    return decide(s, _team(s, team), "on_request")

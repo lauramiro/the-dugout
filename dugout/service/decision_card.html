@@ -68,12 +68,14 @@
           strength: { strong: "Strong", lean: "Lean", toss_up: "Toss-up" },
           trigger: { condition_drop: "Fading against his team", goal_after_55: "Goal after 55'", manager_sub: "Manager's substitution", on_request: "On request" },
           option: { no_change: "No change", sub_like_for_like: "Like-for-like sub for {name}", attacking: "Attacking change", defensive: "Defensive change" },
-          foot: (foundry) => `Numbers from the decision engine on a synthetic match. Text ${foundry ? "written by a Microsoft Foundry model and" : "from the templates,"} checked in code.` },
+          foot: (foundry) => `Numbers from the decision engine on a synthetic match. Text ${foundry ? "written by a Microsoft Foundry model and" : "from the templates,"} checked in code.`,
+          engineOnly: "Numbers from the decision engine on a synthetic match, asked at this minute; no narration." },
     es: { pick: "Elección del modelo", pts: "pts", reference: "referencia", ci90: "Intervalo del 90%", failed: "No se pudo mostrar esta decisión.",
           strength: { strong: "Fuerte", lean: "Leve", toss_up: "Igualado" },
           trigger: { condition_drop: "Se apaga frente a su equipo", goal_after_55: "Gol después del 55'", manager_sub: "Cambio del entrenador", on_request: "A petición" },
           option: { no_change: "Sin cambios", sub_like_for_like: "Cambio por {name}, mismo puesto", attacking: "Cambio ofensivo", defensive: "Cambio defensivo" },
-          foot: (foundry) => `Números del motor de decisiones en un partido sintético. Texto ${foundry ? "escrito por un modelo de Microsoft Foundry y" : "de las plantillas,"} verificado en código.` },
+          foot: (foundry) => `Números del motor de decisiones en un partido sintético. Texto ${foundry ? "escrito por un modelo de Microsoft Foundry y" : "de las plantillas,"} verificado en código.`,
+          engineOnly: "Números del motor de decisiones en un partido sintético, pedidos para este minuto; sin narración." },
   };
   const PLAYER_ID = /\b[A-Z]{2,4}-\d{2}\b/g;
   let lang = "en";
@@ -118,8 +120,7 @@
         el("span", {}, card.clock ?? `${Math.floor(p.t_ms / 60000)}'`), el("span", {}, p.team),
         el("span", {}, t.trigger[p.trigger] ?? p.trigger.replaceAll("_", " ")),
         el("span", { class: "strength" }, t.strength[p.recommendation.strength] ?? p.recommendation.strength)),
-      el("h1", {}, withNames(card.headline)),
-      el("p", { class: "reason" }, withNames(card.reason)),
+      ...(card.headline ? [el("h1", {}, withNames(card.headline)), el("p", { class: "reason" }, withNames(card.reason))] : []),
       el("ol", {}, ...p.options.map((o) => {
         const pick = o.id === best;
         const name = el("span", { class: "label" }, label(o));
@@ -130,7 +131,7 @@
         if (card.mode === "analyst" && o.ci90) nums.append(el("span", { class: "ci" }, `${t.ci90} ${points(o.ci90[0])} / ${points(o.ci90[1])}`));
         return el("li", { class: pick ? "pick" : "" }, name, meter, nums);
       })),
-      el("footer", {}, t.foot(card.narrated_by === "foundry" && card.source === "model")),
+      el("footer", {}, card.headline ? t.foot(card.narrated_by === "foundry" && card.source === "model") : t.engineOnly),
     );
   }
 
@@ -163,8 +164,10 @@
     }
     if (msg.method === "ui/notifications/tool-result") {
       const content = msg.params?.structuredContent;
-      const card = content?.payload ? content : content?.result; // a dict, or wrapped as {"result": ...}
-      msg.params?.isError || !card?.payload ? failed() : render(card);
+      const data = content?.payload || content?.options ? content : content?.result; // a dict, or wrapped as {"result": ...}
+      if (msg.params?.isError || !(data?.payload || data?.options)) failed();
+      // explain_decision sends a narrated card; price_options a bare engine payload, shown as an analyst would see it
+      else render(data.payload ? data : { payload: data, names: data.names, clock: data.clock, locale: "en", mode: "analyst" });
     } else if (msg.method === "ui/notifications/tool-cancelled") {
       failed();
     } else if (msg.method === "ui/notifications/host-context-changed") {
