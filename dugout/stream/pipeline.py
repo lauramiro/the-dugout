@@ -227,6 +227,9 @@ class PipelineRunner:
 
 def make_decisions(publisher: Publisher | None, service_url: str | None) -> Decisions:
     if service_url:
+        if not os.environ.get("DECISIONS_TOKEN"):
+            print("DECISIONS_TOKEN is not set: the decision service refuses POST /decisions without it, "
+                  "so every card will fail", file=sys.stderr)
         return HttpDecisions(service_url)
     return InProcessDecisions(default_service(), publisher, extra=ThreadPoolExecutor(max_workers=3))
 

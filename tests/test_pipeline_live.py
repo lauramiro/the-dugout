@@ -294,3 +294,12 @@ def test_a_failing_winprob_point_does_not_stop_the_stream(monkeypatch):
 def test_slim_snapshots_keep_the_match_id(run):
     snaps = [m for m in run[0] if "subs_left" in m]
     assert all(s["match_id"] == "rfc-cas-0073" for s in snaps)
+
+
+def test_a_runner_sent_to_the_service_without_a_token_says_so(monkeypatch, capsys):
+    monkeypatch.delenv("DECISIONS_TOKEN", raising=False)
+    live.make_decisions(None, "https://svc.example")
+    assert "DECISIONS_TOKEN" in capsys.readouterr().err
+    monkeypatch.setenv("DECISIONS_TOKEN", "t0k")
+    live.make_decisions(None, "https://svc.example")
+    assert capsys.readouterr().err == ""
