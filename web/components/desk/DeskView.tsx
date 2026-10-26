@@ -133,10 +133,11 @@ export function DeskView(props: DeskViewProps) {
     if (!finished) shownAtFullTime.current = false;
   }, [finished]);
 
-  // The story picks a player out: bring his row into view once each time it changes.
+  // The story picks a player out: bring his row into view once each time it changes, in the middle of the
+  // screen, clear of the story's caption bar (at the bottom edge it was half under it).
   const root = useRef<HTMLElement>(null);
   useEffect(() => {
-    if (highlight) root.current?.querySelector(".cond-row.flagged")?.scrollIntoView({ block: "nearest" });
+    if (highlight) root.current?.querySelector(".cond-row.flagged")?.scrollIntoView({ block: "center" });
   }, [highlight, snapshot !== null]);
 
   return (

@@ -203,6 +203,14 @@ export default function BroadcastPage() {
   // A portrait phone: the decision card and What if go in a sheet under the picture (lib/sheet.ts).
   const sheetMode = usePhoneSheet();
   const stepId = story.step?.id;
+  // The vote step: the phone's prompt and countdown sit under the options, below the fold of the frame.
+  useEffect(() => {
+    if (stepId !== "vote") return;
+    const timer = setTimeout(() => {
+      document.querySelector(".st-screen.phone .fan-vote-hint")?.scrollIntoView({ block: "end" });
+    }, 600);
+    return () => clearTimeout(timer);
+  }, [stepId]);
   useEffect(() => {
     // also when the story ends (no step), where the sheet moves back under the controls
     if (sheetMode) document.querySelector(".bc-wrap")?.scrollTo({ top: 0 });
