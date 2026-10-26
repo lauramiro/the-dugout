@@ -1,7 +1,8 @@
 <!doctype html>
 <!-- The decision card as an MCP App (ui://the-dugout/decision-card.html), rendered by hosts that
      support MCP Apps when explain_decision runs. Self-contained: the host's sandbox allows no
-     outside requests. Protocol: specification/2026-01-26/apps.mdx in modelcontextprotocol/ext-apps. -->
+     outside requests, so the strings below repeat web/lib/i18n.ts (keep them in step).
+     Protocol: specification/2026-01-26/apps.mdx in modelcontextprotocol/ext-apps. -->
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -53,6 +54,7 @@
   .nums { text-align: right; font-variant-numeric: tabular-nums; min-width: 92px; }
   .nums b { display: block; }
   .nums em { font-style: normal; color: var(--muted); font-size: 12px; }
+  .nums .ci { display: block; color: var(--muted); font-size: 11px; }
   footer { margin-top: 12px; color: var(--muted); font-size: 12px; }
   .waiting { color: var(--muted); }
 </style>
@@ -62,20 +64,24 @@
 <script>
 (() => {
   const TEXT = {
-    en: { pick: "Model's pick", win: "win", pts: "pts", strength: { strong: "Strong", lean: "Lean", toss_up: "Toss-up" },
+    en: { pick: "Model's pick", pts: "pts", reference: "reference", ci90: "90% interval", failed: "This decision could not be shown.",
+          strength: { strong: "Strong", lean: "Lean", toss_up: "Toss-up" },
           trigger: { condition_drop: "Fading against his team", goal_after_55: "Goal after 55'", manager_sub: "Manager's substitution", on_request: "On request" },
           option: { no_change: "No change", sub_like_for_like: "Like-for-like sub for {name}", attacking: "Attacking change", defensive: "Defensive change" },
-          foot: (src) => `Numbers from the decision engine on a synthetic match. Text ${src === "model" ? "written by a Microsoft Foundry model and" : "from the template,"} checked in code.` },
-    es: { pick: "Elección del modelo", win: "victoria", pts: "pts", strength: { strong: "Fuerte", lean: "Leve", toss_up: "Igualado" },
+          foot: (foundry) => `Numbers from the decision engine on a synthetic match. Text ${foundry ? "written by a Microsoft Foundry model and" : "from the templates,"} checked in code.` },
+    es: { pick: "Elección del modelo", pts: "pts", reference: "referencia", ci90: "Intervalo del 90%", failed: "No se pudo mostrar esta decisión.",
+          strength: { strong: "Fuerte", lean: "Leve", toss_up: "Igualado" },
           trigger: { condition_drop: "Se apaga frente a su equipo", goal_after_55: "Gol después del 55'", manager_sub: "Cambio del entrenador", on_request: "A petición" },
           option: { no_change: "Sin cambios", sub_like_for_like: "Cambio por {name}, mismo puesto", attacking: "Cambio ofensivo", defensive: "Cambio defensivo" },
-          foot: (src) => `Números del motor de decisiones en un partido sintético. Texto ${src === "model" ? "escrito por un modelo de Microsoft Foundry y" : "de la plantilla,"} verificado en código.` },
+          foot: (foundry) => `Números del motor de decisiones en un partido sintético. Texto ${foundry ? "escrito por un modelo de Microsoft Foundry y" : "de las plantillas,"} verificado en código.` },
   };
+  const PLAYER_ID = /\b[A-Z]{2,4}-\d{2}\b/g;
+  let lang = "en";
   let nextId = 1;
   const pending = new Map();
   const post = (msg) => window.parent.postMessage({ jsonrpc: "2.0", ...msg }, "*");
   const request = (method, params) => new Promise((resolve, reject) => {
-    const id = nextId++;
+    const id = `card-${nextId++}`; // a string, so it never collides with the host's own numeric ids
     pending.set(id, { resolve, reject });
     post({ id, method, params });
   });
@@ -87,36 +93,49 @@
     return node;
   };
 
+  // As web/lib/i18n.ts: whole-number percentages to one decimal, points with a true minus sign.
+  const decimal = (x, digits) => { const s = x.toFixed(digits); return lang === "en" ? s : s.replace(".", ","); };
+  const pct = (x) => `${decimal(x * 100, 1)}%`;
+  const points = (x) => { const n = Math.round(x * 1000) / 10; return `${n > 0 ? "+" : n < 0 ? "−" : ""}${decimal(Math.abs(n), 1)}`; };
+
   function render(card) {
     const p = card.payload;
-    const lang = TEXT[card.locale] ? card.locale : "en";
+    lang = TEXT[card.locale] ? card.locale : "en";
     const t = TEXT[lang];
-    const fmt = (x, digits) => new Intl.NumberFormat(lang === "es" ? "es-ES" : "en-GB",
-      { minimumFractionDigits: digits, maximumFractionDigits: digits, signDisplay: "exceptZero" }).format(x);
-    const pct = (x) => new Intl.NumberFormat(lang === "es" ? "es-ES" : "en-GB",
-      { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(x * 100) + "%";
+    const names = card.names ?? {};
+    const withNames = (text) => text.replace(PLAYER_ID, (id) => names[id] ?? id);
     document.documentElement.lang = lang;
-    const minute = Math.floor(p.t_ms / 60000);
-    const root = document.getElementById("card");
-    root.replaceChildren(
+    // a toss-up says the options are close instead of recommending one (as the web card)
+    const best = p.recommendation.strength === "toss_up" ? null : p.recommendation.option_id;
+    const tiring = p.evidence.find((e) => e.type === "condition")?.player_id;
+    const label = (o) => {
+      const name = t.option[o.id];
+      if (!name || (name.includes("{name}") && !tiring)) return withNames(o.label);
+      return name.replace("{name}", names[tiring] ?? tiring);
+    };
+    document.getElementById("card").replaceChildren(
       el("div", { class: "board" },
-        el("span", {}, `${minute}'`), el("span", {}, p.team), el("span", {}, t.trigger[p.trigger] ?? p.trigger.replaceAll("_", " ")),
+        el("span", {}, card.clock ?? `${Math.floor(p.t_ms / 60000)}'`), el("span", {}, p.team),
+        el("span", {}, t.trigger[p.trigger] ?? p.trigger.replaceAll("_", " ")),
         el("span", { class: "strength" }, t.strength[p.recommendation.strength] ?? p.recommendation.strength)),
-      el("h1", {}, card.headline),
-      el("p", { class: "reason" }, card.reason),
+      el("h1", {}, withNames(card.headline)),
+      el("p", { class: "reason" }, withNames(card.reason)),
       el("ol", {}, ...p.options.map((o) => {
-        const pick = o.id === p.recommendation.option_id;
-        const tiring = p.evidence.find((e) => e.type === "condition")?.player_id;
-        const name = t.option[o.id];
-        const label = el("span", { class: "label" }, name && (tiring || !name.includes("{name}")) ? name.replace("{name}", tiring) : o.label);
-        if (pick) label.append(el("small", {}, t.pick));
-        const meter = el("span", { class: "meter", role: "img", "aria-label": `${pct(o.win)} ${t.win}` }, el("span", { style: `width:${Math.round(o.win * 100)}%` }));
+        const pick = o.id === best;
+        const name = el("span", { class: "label" }, label(o));
+        if (pick) name.append(el("small", {}, t.pick));
+        const meter = el("span", { class: "meter", role: "img", "aria-label": pct(o.win) }, el("span", { style: `width:${Math.round(o.win * 100)}%` }));
         const nums = el("span", { class: "nums" }, el("b", {}, pct(o.win)),
-          el("em", {}, o.id === "no_change" ? t.win : `${fmt(o.delta_win * 100, 1)} ${t.pts}`));
-        return el("li", { class: pick ? "pick" : "" }, label, meter, nums);
+          el("em", {}, o.id === "no_change" ? t.reference : `${points(o.delta_win)} ${t.pts}`));
+        if (card.mode === "analyst" && o.ci90) nums.append(el("span", { class: "ci" }, `${t.ci90} ${points(o.ci90[0])} / ${points(o.ci90[1])}`));
+        return el("li", { class: pick ? "pick" : "" }, name, meter, nums);
       })),
-      el("footer", {}, t.foot(card.source)),
+      el("footer", {}, t.foot(card.narrated_by === "foundry" && card.source === "model")),
     );
+  }
+
+  function failed() {
+    document.getElementById("card").replaceChildren(el("p", { class: "waiting" }, TEXT[lang].failed));
   }
 
   function applyContext(ctx) {
@@ -130,22 +149,33 @@
   window.addEventListener("message", (event) => {
     const msg = event.data;
     if (!msg || msg.jsonrpc !== "2.0") return;
-    if (msg.id !== undefined && pending.has(msg.id)) {
-      const { resolve, reject } = pending.get(msg.id);
+    if (msg.method === undefined) { // a response to one of our requests
+      const waiting = pending.get(msg.id);
+      if (!waiting) return;
       pending.delete(msg.id);
-      msg.error ? reject(new Error(msg.error.message ?? "error")) : resolve(msg.result);
-    } else if (msg.method === "ui/notifications/tool-result") {
+      msg.error ? waiting.reject(new Error(msg.error.message ?? "error")) : waiting.resolve(msg.result);
+      return;
+    }
+    if (msg.id !== undefined) { // a request from the host: answer it, so it never waits on us
+      const known = msg.method === "ping" || msg.method === "ui/resource-teardown";
+      post(known ? { id: msg.id, result: {} } : { id: msg.id, error: { code: -32601, message: "Method not found" } });
+      return;
+    }
+    if (msg.method === "ui/notifications/tool-result") {
       const content = msg.params?.structuredContent;
       const card = content?.payload ? content : content?.result; // a dict, or wrapped as {"result": ...}
-      if (card?.payload) render(card);
+      msg.params?.isError || !card?.payload ? failed() : render(card);
+    } else if (msg.method === "ui/notifications/tool-cancelled") {
+      failed();
     } else if (msg.method === "ui/notifications/host-context-changed") {
       applyContext(msg.params);
     }
   });
 
+  // The card's own height: the document's would never be smaller than the frame the host opened.
   new ResizeObserver(() => {
-    post({ method: "ui/notifications/size-changed",
-           params: { width: document.documentElement.scrollWidth, height: document.documentElement.scrollHeight } });
+    const box = document.body.getBoundingClientRect();
+    post({ method: "ui/notifications/size-changed", params: { width: Math.ceil(box.width), height: Math.ceil(box.height) } });
   }).observe(document.body);
 
   request("ui/initialize", {

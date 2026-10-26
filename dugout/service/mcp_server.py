@@ -12,6 +12,7 @@ grounding check, exactly as on screen. Cards opened by the live pipeline are ser
 
 from __future__ import annotations
 
+import os
 from functools import cache
 from pathlib import Path
 from typing import Any, Literal
@@ -20,8 +21,10 @@ from mcp.server.apps import Apps
 from mcp.server.mcpserver import MCPServer
 from mcp_types import ToolAnnotations
 
+from dugout.agents.foundry import ENV_ENDPOINT
 from dugout.engine.payload import decide
 from dugout.service.cards import CardService
+from dugout.sim.scenario import load_scenario
 from dugout.stream.replay import read_events
 from dugout.stream.snapshots import lineup_from_scenario, process
 
@@ -52,14 +55,36 @@ def explain_decision(decision_id: str, locale: Locale = "en",
     grounding check, which verifies every number against the payload. `source` says whether the
     text came from the model or from the template fallback. decision_id is one from
     match_overview, or a card the live pipeline opened. casual is plain words; analyst adds
-    decimals and the interval."""
+    decimals and the interval. `names` maps the player ids in the text to names, `narrated_by`
+    says whether Foundry or the templates narrate, and `clock` is the minute as the screens show
+    it (45+2', 90+2')."""
     cards = _cards()
+    point = _demo()["points"].get(decision_id)
     if cards.payload(decision_id) is None:
-        point = _demo()["points"].get(decision_id)
         if point is None:
             raise ValueError(f"unknown decision_id {decision_id!r}; see match_overview")
         cards.open(point["snapshot"], point["team"], point["trigger"], decision_id)
-    return cards.card(decision_id, locale, mode)
+    card = cards.card(decision_id, locale, mode)
+    # For the decision card App, and any client: names for the ids in the text, who wrote the
+    # words (as /healthz reports it), and the minute as the screens show it.
+    return {**card, "names": _names(), "narrated_by": "foundry" if os.environ.get(ENV_ENDPOINT) else "templates",
+            "clock": minute_label(point["period"] if point else None, card["payload"]["t_ms"])}
+
+
+def minute_label(period: int | None, t_ms: int) -> str:
+    """The minute as the screens write it (web/lib/clock.ts formatMinute): 45+2', 90+2'. Without
+    a period (a live card), the plain minute."""
+    minute = t_ms // MIN_MS
+    regular = {1: 45, 2: 90}.get(period)
+    if regular is not None and minute >= regular and t_ms > regular * MIN_MS:
+        return f"{regular}+{minute - regular + 1}'"
+    return f"{minute}'"
+
+
+@cache
+def _names() -> dict[str, str]:
+    scenario = load_scenario(SCENARIO)
+    return {p.id: p.name for team in (scenario.home, scenario.away) for p in team.players}
 
 
 server = MCPServer(

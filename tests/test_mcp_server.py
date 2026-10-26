@@ -119,3 +119,23 @@ def test_explain_decision_carries_the_decision_card_app():
     for step in ("ui/initialize", "ui/notifications/initialized", "ui/notifications/tool-result",
                  "ui/notifications/size-changed"):
         assert step in page.text
+
+
+def test_explain_decision_gives_the_app_what_it_shows(cards):
+    # What the decision card reads beyond the card itself: names for the ids in the text, who
+    # wrote the words, and the minute as the screens show it.
+    point = data(call("match_overview"))["decision_points"][0]
+    out = data(call("explain_decision", {"decision_id": point["decision_id"]}))
+    for key in ("payload", "headline", "reason", "locale", "mode", "source"):
+        assert key in out
+    assert out["names"]["RFC-03"] == "Leon Varga" and out["names"]["CAS-01"]
+    assert out["narrated_by"] == "templates"  # no FOUNDRY_ENDPOINT in the tests
+    assert out["clock"] == f"{point['minute']}'"
+
+
+@pytest.mark.parametrize("period, t_ms, label", [
+    (1, 2_640_000, "44'"), (1, 2_700_000, "45'"), (1, 2_790_000, "45+2'"),
+    (2, 3_630_000, "60'"), (2, 5_460_000, "90+2'"), (None, 5_460_000, "91'"),
+])
+def test_minute_labels_match_the_screens(period, t_ms, label):
+    assert mcp_server.minute_label(period, t_ms) == label
