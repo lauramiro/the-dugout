@@ -130,9 +130,9 @@ def price_options(minute: int, team: str, period: int | None = None) -> dict[str
     and loss probability and expected points for no change, a like-for-like substitution, an
     attacking and a defensive change, each option's gap to no change with a 90% interval, the
     recommended option with its strength (strong, lean or toss-up) and the evidence. 20,000
-    simulated runs per option on common random numbers."""
+    simulated runs per option on common random numbers. The payload's trigger is "on_request"."""
     s = _snapshot_at(minute, period)
-    return decide(s, _team(s, team), "manager_sub")
+    return decide(s, _team(s, team), "on_request")
 
 
 @server.tool(annotations=READ_ONLY)

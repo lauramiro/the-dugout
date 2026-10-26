@@ -66,6 +66,7 @@ def test_price_options_runs_the_engine():
     out = data(call("price_options", {"minute": 64, "team": "rfc"}))
     assert out["team"] == "RFC" and out["options"][0]["id"] == "no_change"
     assert out["recommendation"]["strength"] in ("strong", "lean", "toss_up")
+    assert out["trigger"] == "on_request"  # asked by an agent, not raised by a trigger or a substitution
 
 
 def test_price_options_refuses_an_unknown_team():

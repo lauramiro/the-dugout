@@ -114,4 +114,4 @@ Decision points (`dugout.stream.triggers`), one record each, carrying the snapsh
  "manager_action": null}
 ```
 
-Triggers: `condition_drop`, `goal_after_55`, `manager_sub`. Strength: `strong` (gap of 3 points or more), `lean` (1 to 3), `toss_up` (under 1). The `ci90` values above are placeholders.
+Triggers: `condition_drop`, `goal_after_55`, `manager_sub`, and `on_request` for a payload an agent asked for through the MCP tool `price_options` at a minute of its choosing. Strength: `strong` (gap of 3 points or more), `lean` (1 to 3), `toss_up` (under 1). The `ci90` values above are placeholders.
