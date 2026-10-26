@@ -39,4 +39,6 @@ test("kickoff: a page that has just connected mid-match waits for the feed befor
   assert.equal(kickoff(schedule, mid, true, mid - 3_000).kind, "on", "3 s after connecting: joining, not the next kick-off");
   assert.equal(kickoff(schedule, mid, true, mid - CONNECT_WAIT_MS - 1).kind, "next", "connected a while and still nothing: missed");
   assert.equal(kickoff(schedule, mid, true).kind, "next", "without a connection time, as before");
+  const between = slot + schedule.duration_ms + GRACE_MS + 60_000;
+  assert.equal(kickoff(schedule, between, true, between - 1_000).kind, "next", "between slots: the countdown at once");
 });
