@@ -90,8 +90,11 @@ function context(log: MatchLog, card: Timed<DecisionCard>, pos: number, club: Te
 
 /** The fan's moment at `pos` for `club`: full time, a manager's call being revealed (the
  *  earliest card when one change answers several), the open card, or nothing. */
-export function fanMoment(log: MatchLog, pos: number, club: TeamCode, locale: Locale, mode: Mode): FanMoment {
-  if (log.duration > 0 && pos >= log.duration) return { kind: "full-time" };
+export function fanMoment(log: MatchLog, pos: number, club: TeamCode, locale: Locale, mode: Mode,
+                          live = false): FanMoment {
+  // Live, the playhead is always the end of the log so far, so only a replay can reach full time
+  // (as on the TV picture and the desk).
+  if (!live && log.duration > 0 && pos >= log.duration) return { kind: "full-time" };
   const cards = log.cards.filter((c) => c.item.payload.team === club);
 
   const revealed = cards.find((c) => {

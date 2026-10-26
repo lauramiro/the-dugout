@@ -114,6 +114,6 @@ export default function FanPage() {
   }
   return (
     <FanView log={log} playhead={playhead} club={club} locale={prefs.locale} mode={prefs.mode} votes={votes}
-      onVote={castVote} running={live || feed.playing} header={header} t={t} />
+      onVote={castVote} running={live || feed.playing} header={header} live={live} t={t} />
   );
 }

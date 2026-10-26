@@ -72,3 +72,12 @@ test("fanMoment: at full time the moment is full-time, and before the first card
   assert.equal(fanMoment(log, log.duration, "RFC", "en", "casual").kind, "full-time");
   assert.equal(fanMoment(log, demoPos(1, 600_000), "RFC", "en", "casual").kind, "waiting");
 });
+
+test("fanMoment: live, the log ends where the feed has got to, which is not full time", () => {
+  // Live, every message moves the playhead and the log's duration together, so the card open
+  // at 60:30 must still show; only the replay knows where the match ends.
+  const pos = demoPos(2, 3_630_000);
+  const live = { ...demoLog(), duration: pos };
+  assert.equal(fanMoment(live, pos, "RFC", "en", "casual", true).kind, "decision");
+  assert.equal(fanMoment(live, pos, "RFC", "en", "casual").kind, "full-time"); // a replay that ends there
+});

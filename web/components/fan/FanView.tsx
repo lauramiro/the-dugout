@@ -27,14 +27,16 @@ interface Props {
   leadId?: string | null;
   /** Controls above the moment (the standalone page's club picker and replay buttons). */
   header?: ReactNode;
+  /** The Web PubSub feed rather than a replay: the match has no known end, so no full time. */
+  live?: boolean;
   t: Translate;
 }
 
 /** The fan's phone: the score, then what the manager is weighing on the club's open card, the
  *  vote, the manager's call when it comes, and the What if at full time. */
-export function FanView({ log, playhead, club, locale, mode, votes, onVote, running, leadId = null, header, t }: Props) {
+export function FanView({ log, playhead, club, locale, mode, votes, onVote, running, leadId = null, header, live = false, t }: Props) {
   const { roster } = log;
-  const moment = fanMoment(log, playhead, club, locale, mode);
+  const moment = fanMoment(log, playhead, club, locale, mode, live);
   const goals = scoreAt(log, playhead);
   const { tMs } = fromPos(playhead, log.firstHalfEnd);
   const teams = roster ? [roster.home, roster.away] : [];
