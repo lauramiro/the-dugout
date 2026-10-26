@@ -144,7 +144,7 @@ function cardCues(cardPos: number, card: DecisionCard, events: readonly Timed<Ma
   const action = payload.manager_action;
   if (action) {
     const actedAt = at(action.period, action.t_ms);
-    const shownAt = callPos(actedAt, cardPos, closed ? closedPos : null) ?? cardPos;
+    const shownAt = callPos(actedAt, cardPos, closed ? closedPos : null);
     out.push({
       id: `manager_call:${id}`, kind: "manager_call", in_pos: shownAt, out_pos: shownAt + MANAGER_CALL_MS,
       data: {

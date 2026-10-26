@@ -25,8 +25,7 @@ export function managerPos(card: DecisionCard, firstHalfEnd: number): number | n
 /** Where a manager's call shows, from the positions of the call, the card's opening and its
  *  closing (null when not known). After the opening; a call settled at or before it (a queued
  *  card that a later goal overtook) waits for the card to close, so the fresh card shows first. */
-export function callPos(managerAt: number | null, cardAt: number, closedAt: number | null): number | null {
-  if (managerAt === null) return null;
+export function callPos(managerAt: number, cardAt: number, closedAt: number | null): number {
   if (managerAt > cardAt) return managerAt;
   return closedAt === null ? cardAt : Math.max(closedAt, cardAt);
 }
@@ -35,7 +34,8 @@ export function callPos(managerAt: number | null, cardAt: number, closedAt: numb
  *  itself, so its call is known as it opens. */
 export function revealPos(card: Timed<DecisionCard>, firstHalfEnd: number): number | null {
   const at = managerPos(card.item, firstHalfEnd);
-  if (at === null || card.item.payload.trigger === "manager_sub") return at === null ? null : Math.max(at, card.pos);
+  if (at === null) return null;
+  if (card.item.payload.trigger === "manager_sub") return Math.max(at, card.pos);
   const closed = card.item.closed;
   return callPos(at, card.pos, closed ? toPos(closed.period, closed.t_ms, firstHalfEnd) : null);
 }

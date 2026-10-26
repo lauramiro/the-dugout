@@ -62,11 +62,11 @@ def explain_decision(decision_id: str, locale: Locale = "en",
     point = _demo()["points"].get(decision_id)
     if cards.payload(decision_id) is None:
         if point is None:
-            raise ToolError(f"unknown decision_id {decision_id!r}; see match_overview")
+            raise _unknown_decision(decision_id)
         cards.open(point["snapshot"], point["team"], point["trigger"], decision_id)
     card = cards.card(decision_id, locale, mode)
     if card is None:  # the store lost it between the two calls
-        raise ToolError(f"unknown decision_id {decision_id!r}; see match_overview")
+        raise _unknown_decision(decision_id)
     # For the decision card App, and any client: names for the ids in the text, who wrote the
     # words (as /healthz reports it), and the minute as the screens show it. A card that is not
     # a demo point carries no period, so its minute is the plain one.
@@ -74,12 +74,16 @@ def explain_decision(decision_id: str, locale: Locale = "en",
             "clock": minute_label(point["period"] if point else None, card["payload"]["t_ms"])}
 
 
+def _unknown_decision(decision_id: str) -> ToolError:
+    return ToolError(f"unknown decision_id {decision_id!r}; see match_overview")
+
+
 def minute_label(period: int | None, t_ms: int) -> str:
     """The minute as the screens write it (web/lib/clock.ts formatMinute): 45+2', 90+2'. Without
     a period (a live card), the plain minute."""
     minute = t_ms // MIN_MS
     regular = {1: 45, 2: 90}.get(period)
-    if regular is not None and minute >= regular and t_ms > regular * MIN_MS:
+    if regular is not None and t_ms > regular * MIN_MS:
         return f"{regular}+{minute - regular + 1}'"
     return f"{minute}'"
 
@@ -192,5 +196,3 @@ def match_state(minute: int, period: int | None = None) -> dict[str, Any]:
                      "trend_per_min": p["trend_per_min"]}
                     for p in s["players"] if p["condition_est"] is not None],
     }
-
-
