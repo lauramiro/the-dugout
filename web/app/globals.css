@@ -1666,3 +1666,31 @@ a.review-open {
 .trace-details .bc-trace-text { margin-top: 4px !important; } /* broadcast.css sets these with !important on the TV page */
 .trace-details .bc-trace-label { margin-top: 6px !important; }
 .trace-details summary:focus-visible { outline: 2px solid var(--focus, currentColor); outline-offset: 2px; }
+
+.not-found {
+  min-height: 100dvh;
+  display: grid;
+  place-content: center;
+  gap: 12px;
+  padding: var(--gutter);
+  text-align: center;
+}
+
+.not-found h1 {
+  font-family: var(--font-display), sans-serif;
+  font-size: 2.4rem;
+  text-transform: uppercase;
+}
+
+.not-found nav {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px 20px;
+  margin-top: 8px;
+}
+
+.not-found a {
+  color: var(--home);
+  font-weight: 600;
+}
