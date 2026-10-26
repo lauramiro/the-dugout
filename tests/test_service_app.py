@@ -6,7 +6,7 @@ from dugout.agents.pipeline import NarrationPipeline, StubClient
 from dugout.agents.sample import SAMPLE_PAYLOAD
 from dugout.service.app import app, get_cards, get_publisher
 from dugout.service.cards import CardService
-from dugout.service.store import MemoryStore
+from dugout.service.store import MemoryStore, StoreFull
 
 SNAPSHOT = {"t_ms": 3_720_000, "score": {"RFC": 1, "CAS": 0},
             "rates": {"RFC": {"for90": 1.5, "against90": 1.2}, "CAS": {"for90": 1.2, "against90": 1.5}}}
@@ -141,6 +141,33 @@ def test_votes_for_a_card_the_live_runner_opened(env):
     assert vote(client, "v3", "made_up", decision="cas-69-10").status_code == 422
     assert vote(client, "v4", "no_change", decision="not-a-card").status_code == 404
     assert client.get("/votes/not-a-card").status_code == 404
+
+
+def test_a_live_card_vote_again_replaces_the_earlier_one(env):
+    # The half-hourly replays reuse card ids and a browser keeps its viewer id, so a vote in a
+    # later replay replaces this viewer's earlier one instead of being refused.
+    client, _, _ = env
+    assert vote(client, "v1", "no_change", decision="rfc-60-01").status_code == 200
+    tally = vote(client, "v1", "attacking", decision="rfc-60-01").json()
+    assert tally["counts"] == {"attacking": 1} and tally["total"] == 1
+
+
+def test_the_vote_store_is_bounded():
+    store = MemoryStore(max_decisions=2, max_ballots=2)
+    assert store.add_vote("a-1-01", "v1", "x") and store.add_vote("a-1-01", "v2", "x")
+    with pytest.raises(StoreFull):
+        store.add_vote("a-1-01", "v3", "x")
+    assert store.add_vote("a-1-01", "v1", "y", replace=True)  # a replacement adds no ballot
+    store.add_vote("b-1-01", "v1", "x")
+    with pytest.raises(StoreFull):
+        store.add_vote("c-1-01", "v1", "x")
+
+
+def test_a_full_store_answers_503(env):
+    client, _, _ = env
+    app.dependency_overrides[get_cards]().store = MemoryStore(max_decisions=1, max_ballots=1)
+    assert vote(client, "v1", "no_change", decision="rfc-60-01").status_code == 200
+    assert vote(client, "v2", "no_change", decision="rfc-60-01").status_code == 503
 
 
 def test_vote_validation(env):

@@ -30,6 +30,7 @@ from dugout.engine.options import default_options
 from dugout.service.cards import CardService, default_service
 from dugout.service.mcp_server import server as mcp_server
 from dugout.service.publisher import Publisher, default_publisher
+from dugout.service.store import StoreFull
 
 Locale = Literal["en", "es"]
 Mode = Literal["casual", "analyst"]
@@ -153,22 +154,30 @@ DECISION_ID = re.compile(r"[a-z]{2,4}-\d{1,3}-\d{2}")
 ENGINE_OPTIONS = frozenset(o.id for o in default_options(0))
 
 
-def _vote_options(cards: CardService, decision_id: str) -> frozenset[str]:
-    """The options a vote may name. The live runner opens decisions in its own process, so the
-    service often has no payload for a live card; then any of the engine's options counts."""
+def _vote_options(cards: CardService, decision_id: str) -> tuple[frozenset[str], bool]:
+    """The options a vote may name, and whether the service knows the card. The live runner
+    opens decisions in its own process, so the service often has no payload for a live card;
+    then any of the engine's options counts."""
     payload = cards.payload(decision_id)
     if payload is not None:
-        return frozenset(o["id"] for o in payload["options"])
+        return frozenset(o["id"] for o in payload["options"]), True
     if DECISION_ID.fullmatch(decision_id):
-        return ENGINE_OPTIONS
+        return ENGINE_OPTIONS, False
     raise HTTPException(404, "unknown decision")
 
 
 @app.post("/votes")
 def cast_vote(req: VoteRequest, cards: CardService = Depends(get_cards)) -> dict:
-    if req.option_id not in _vote_options(cards, req.decision_id):
+    options, known = _vote_options(cards, req.decision_id)
+    if req.option_id not in options:
         raise HTTPException(422, f"unknown option {req.option_id!r}")
-    if not cards.store.add_vote(req.decision_id, req.viewer_id, req.option_id):
+    # A live card's id comes back with each half-hourly replay of the demo match, so a vote
+    # again replaces the viewer's earlier one; on a card the service opened, the first stands.
+    try:
+        added = cards.store.add_vote(req.decision_id, req.viewer_id, req.option_id, replace=not known)
+    except StoreFull as err:
+        raise HTTPException(503, str(err)) from err
+    if not added:
         raise HTTPException(409, "viewer already voted on this decision")
     return _tally(cards, req.decision_id)
 
