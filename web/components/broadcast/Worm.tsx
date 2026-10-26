@@ -37,9 +37,9 @@ export function Worm({ winprob, cards, playhead, duration, firstHalfEnd, roster,
       </span>
       <svg viewBox="0 0 100 20" preserveAspectRatio="none" aria-hidden="true">
         <line x1="0" y1="10" x2="100" y2="10" className="bc-worm-mid" />
-        {cards.filter((c) => c <= playhead).map((c, i) => (
-          // two cards can open at one position (a goal raises one for each team)
-          <line key={`${c}-${i}`} x1={x(c)} y1="0" x2={x(c)} y2="20" className="bc-worm-card" />
+        {/* one marker per position: a goal raises a card for each team at the same moment */}
+        {[...new Set(cards)].filter((c) => c <= playhead).map((c) => (
+          <line key={c} x1={x(c)} y1="0" x2={x(c)} y2="20" className="bc-worm-card" />
         ))}
         <path d={path} className="bc-worm-line" />
       </svg>
