@@ -91,7 +91,7 @@ Claude Code: `claude mcp add --transport http the-dugout https://dugout-service.
 | **Microsoft Foundry** | The model behind the narration and recap agents | `gpt-5-mini` (2025-08-07), Global Standard, minimal reasoning effort, uksouth |
 | **Microsoft Agent Framework** | The narration workflow: narrator, grounding check, localizer, grounding check, with retries | `dugout/agents/workflow.py` |
 | **Azure Web PubSub** | Push: cards, snapshots, events and win probability to every open page | Hub `decisions`, Standard tier (one unit, Standard_S1, for the judging days; `WPS_SKU` in the deploy script, Free_F1 by default); the browser gets a short-lived client URL from `/negotiate` |
-| **Azure Static Web Apps** | The page: a Next.js static export, so it needs no server of its own | Free tier |
+| **Azure Static Web Apps** | The page: a Next.js static export, so it needs no server of its own | Free tier; `web/public/staticwebapp.config.json` sends a content security policy (scripts and styles from the page itself, connections only to Container Apps and Web PubSub), `nosniff`, a referrer policy and a permissions policy |
 | **Cost Management** | A budget on the resource group | $40 a month (set at deploy with `BUDGET_USD`; the script default is $20), email alerts at 80% and 100% |
 
 **One script, repeatable.** `infra/foundry.sh` and `infra/deploy.sh` create everything above. Both print every `az` command and change nothing without `--apply`, and every step is an upsert, so a rerun updates the running apps in place (about six minutes). Regions are North Europe for the apps, UK South for Foundry and East US 2 for Static Web Apps (the free subscription refused West Europe).
