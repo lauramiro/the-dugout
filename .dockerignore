@@ -8,3 +8,7 @@ data/*
 !data/demo-rfc-cas-0073.jsonl
 __pycache__
 .pytest_cache
+.worktrees
+.superpowers
+.gstack
+.claude
