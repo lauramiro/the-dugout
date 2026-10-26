@@ -165,8 +165,22 @@ def classify(error: str) -> str:
         return "wrong article"
     if "calls the options close" in error:
         return "close on a strong or lean card"
-    if error.startswith("casual text"):
-        return "casual: interval, decimals or a probability"
+    if error.startswith("casual text does not quote the interval"):
+        return "casual: interval"
+    if error.startswith("casual text uses whole numbers"):
+        return "casual: decimals"
+    if error.startswith("casual text quotes no win"):
+        return "casual: a win, draw or loss probability"
+    if error.startswith("long dash"):
+        return "long dash"
+    if error.startswith("'~'"):
+        return "'~' for about"
+    if "is masculine" in error or "does not agree" in error:
+        return "wrong agreement"
+    if "appears twice" in error:
+        return "strength word twice"
+    if error.startswith("toss-up headline calls for an action"):
+        return "toss-up headline calls for an action"
     if "write the whole text in" in error:
         return "wrong language"
     if "would come off" in error:
