@@ -76,6 +76,7 @@
   stroke: rgba(0, 0, 0, 0.75);
   stroke-width: 0.5px;
   text-transform: uppercase;
+  pointer-events: none;
 }
 
 .bc-tag.fading .bc-tag-label text { fill: var(--bc-accent); }

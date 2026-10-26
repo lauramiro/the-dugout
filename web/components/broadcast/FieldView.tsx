@@ -42,7 +42,7 @@ export function FieldView({ frame, roster, tags, label }: Props) {
             className={`dot ${team === home ? "home" : "away"}${info?.role === "GK" ? " keeper" : ""}`}
             transform={`translate(${p.x.toFixed(2)} ${sy(p.y).toFixed(2)})`}
           >
-            {tag && <TagMark tag={tag} />}
+            {tag && <TagRing tag={tag} />}
             <circle r={1.75} />
             <text dy={0.62}>{shirt(p.id)}</text>
           </g>
@@ -53,6 +53,20 @@ export function FieldView({ frame, roster, tags, label }: Props) {
           <circle r={0.85} />
         </g>
       )}
+      {/* Labels go on a layer of their own, after every player, so no later dot paints over a name. */}
+      {frame?.players.map((p) => {
+        const tag = byId.get(p.id);
+        if (!tag) return null;
+        return (
+          <g
+            key={`tag-${p.id}`}
+            className={`bc-tag ${tag.tone}`}
+            transform={`translate(${p.x.toFixed(2)} ${sy(p.y).toFixed(2)})`}
+          >
+            <TagLabel tag={tag} />
+          </g>
+        );
+      })}
     </svg>
   );
 }
@@ -60,7 +74,7 @@ export function FieldView({ frame, roster, tags, label }: Props) {
 const RING_R = 3;
 const RING_C = 2 * Math.PI * RING_R;
 
-function TagMark({ tag }: { tag: PlayerTag }) {
+function TagRing({ tag }: { tag: PlayerTag }) {
   const ring = tag.ring === null ? null : Math.min(1, Math.max(0, tag.ring));
   const band = ring === null ? "" : ring >= 0.8 ? "high" : ring >= 0.69 ? "mid" : "low";
   return (
@@ -74,12 +88,17 @@ function TagMark({ tag }: { tag: PlayerTag }) {
           transform="rotate(-90)"
         />
       )}
-      <g className="bc-tag-label" transform={`translate(0 ${-RING_R - 1.4})`}>
-        <text textAnchor="middle">{tag.label}</text>
-        {tag.detail && (
-          <text textAnchor="middle" y={-2.4} className="bc-tag-detail">{tag.detail}</text>
-        )}
-      </g>
+    </g>
+  );
+}
+
+function TagLabel({ tag }: { tag: PlayerTag }) {
+  return (
+    <g className="bc-tag-label" transform={`translate(0 ${-RING_R - 1.4})`}>
+      <text textAnchor="middle">{tag.label}</text>
+      {tag.detail && (
+        <text textAnchor="middle" y={-2.4} className="bc-tag-detail">{tag.detail}</text>
+      )}
     </g>
   );
 }
