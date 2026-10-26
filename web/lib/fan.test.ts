@@ -1,6 +1,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { fanMoment, type FanContext } from "./fan.ts";
+import { revealPos } from "./calls.ts";
+import { toPos } from "./clock.ts";
 import type { MatchLog } from "./datasource.ts";
 import { demoLog, demoPos } from "./demoLog.testutil.ts";
 
@@ -88,4 +90,13 @@ test("fanMoment: a queued card whose call was settled before it opened shows the
   const card = log.cards.find((c) => c.item.payload.decision_id === "rfc-91-10")!;
   const m = fanMoment(log, card.pos + 5_000, "RFC", "en", "casual");
   assert.equal(m.kind, "decision");
+});
+
+test("revealPos: every view reveals a call settled before its card opened when the card closes", () => {
+  const log = demoLog();
+  const card = log.cards.find((c) => c.item.payload.decision_id === "rfc-91-10")!;
+  const closed = card.item.closed!;
+  assert.equal(revealPos(card, log.firstHalfEnd), toPos(closed.period, closed.t_ms, log.firstHalfEnd));
+  const late = card.pos + 5_000 < revealPos(card, log.firstHalfEnd)!;
+  assert.ok(late, "the card shows first");
 });

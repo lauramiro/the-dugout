@@ -22,10 +22,22 @@ export function managerPos(card: DecisionCard, firstHalfEnd: number): number | n
   return action ? toPos(action.period, action.t_ms, firstHalfEnd) : null;
 }
 
-/** Reveal once the manager has acted, and never before the card itself opened. */
+/** Where a manager's call shows, from the positions of the call, the card's opening and its
+ *  closing (null when not known). After the opening; a call settled at or before it (a queued
+ *  card that a later goal overtook) waits for the card to close, so the fresh card shows first. */
+export function callPos(managerAt: number | null, cardAt: number, closedAt: number | null): number | null {
+  if (managerAt === null) return null;
+  if (managerAt > cardAt) return managerAt;
+  return closedAt === null ? cardAt : Math.max(closedAt, cardAt);
+}
+
+/** Reveal once the manager has acted (see callPos). A manager_sub card is raised by the change
+ *  itself, so its call is known as it opens. */
 export function revealPos(card: Timed<DecisionCard>, firstHalfEnd: number): number | null {
   const at = managerPos(card.item, firstHalfEnd);
-  return at === null ? null : Math.max(at, card.pos);
+  if (at === null || card.item.payload.trigger === "manager_sub") return at === null ? null : Math.max(at, card.pos);
+  const closed = card.item.closed;
+  return callPos(at, card.pos, closed ? toPos(closed.period, closed.t_ms, firstHalfEnd) : null);
 }
 
 /** The option id the manager's call stands for in the review, if any. */

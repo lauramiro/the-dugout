@@ -4,6 +4,7 @@
 // Runtime imports carry the .ts extension so Node's test runner can load this file without
 // a bundler; clock.ts imports nothing.
 
+import { callPos } from "./calls.ts";
 import { formatMinute, toPos } from "./clock.ts";
 import type { DecisionCard, MatchEvent, TeamCode } from "./contracts";
 import type { MatchLog, Timed } from "./datasource";
@@ -141,18 +142,17 @@ function cardCues(cardPos: number, card: DecisionCard, events: readonly Timed<Ma
   // A manager_sub card is raised by the change itself: that change is not a call on it.
   if (payload.trigger === "manager_sub") return out;
   const action = payload.manager_action;
-  // A queued card whose call was settled before it opened (a later goal came first): no graphic
-  // over the fresh card. The What if still lists the call.
-  if (action && at(action.period, action.t_ms) < cardPos) return out;
   if (action) {
-    const callPos = Math.max(at(action.period, action.t_ms), cardPos);
+    const actedAt = at(action.period, action.t_ms);
+    const shownAt = callPos(actedAt, cardPos, closed ? closedPos : null) ?? cardPos;
     out.push({
-      id: `manager_call:${id}`, kind: "manager_call", in_pos: callPos, out_pos: callPos + MANAGER_CALL_MS,
+      id: `manager_call:${id}`, kind: "manager_call", in_pos: shownAt, out_pos: shownAt + MANAGER_CALL_MS,
       data: {
         decision_id: id, team: payload.team, subs: action.subs, no_change: action.subs.length === 0,
         option_id: action.option_id,
         matched: action.option_id === payload.recommendation.option_id,
-        minutes_after: Math.round((callPos - cardPos) / MIN_MS),
+        // a call settled before the card opened is not "minutes after" it
+        minutes_after: actedAt > cardPos ? Math.round((actedAt - cardPos) / MIN_MS) : null,
       },
     });
   } else if (closed?.reason === "change") {

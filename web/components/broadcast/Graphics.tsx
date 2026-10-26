@@ -50,8 +50,7 @@ export function ManagerCall({ cue, roster, you, t }: {
       {matched !== null && (
         <p className={`bc-call-verdict${matched ? " same" : ""}`}>
           {matched ? t("sameAsModel") : t("differentCall")}
-          {" · "}
-          {t("minutesAfterCard", { n: Number(cue.data.minutes_after) })}
+          {cue.data.minutes_after !== null && <>{" · "}{t("minutesAfterCard", { n: Number(cue.data.minutes_after) })}</>}
         </p>
       )}
       {you && <p className={`bc-call-you${you.agrees ? " same" : ""}`}>{t("youCalled", { option: you.label })}</p>}

@@ -306,11 +306,14 @@ test("pickCall prefers the manager's call on a card the viewer voted on when two
   assert.equal(pickCall(shown, { "rfc-60-20": { option: "a" }, "rfc-72-40": { option: "b" } })?.id, "manager_call:rfc-72-40");
 });
 
-test("no manager call graphic for a card whose call was known before it opened", () => {
+test("a card whose call was settled before it opened shows the call when it closes, with no minutes after", () => {
   // A goal card queued behind another opens at 91', but the next goal (89') already settled it.
   const c = card({
     id: "rfc-91-10", t_ms: 5_460_000, trigger: "goal_after_55",
+    closed: { period: 2, t_ms: 5_640_000, reason: "timeout" },
     manager_action: { period: 2, t_ms: 5_340_000, subs: [], option_id: "no_change" },
   });
-  assert.equal(ofKind(buildCues(log([c]), null), "manager_call").length, 0);
+  const [cue] = ofKind(buildCues(log([c]), null), "manager_call");
+  assert.equal(cue.in_pos, pos(2, 5_640_000));
+  assert.equal(cue.data.minutes_after, null);
 });
