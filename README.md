@@ -80,6 +80,8 @@ The decision service also serves a Model Context Protocol server at `/mcp` (`dug
 | `price_options` | The decision engine at any minute, for either team: every option's win probability and expected points, the gap to no change with a 90% interval, the recommendation and its strength |
 | `explain_decision` | A narrated card in English or Spanish, casual or analyst, written by the narration workflow and passed by the grounding check |
 
+`explain_decision` also carries an MCP App (the `io.modelcontextprotocol/ui` extension, spec 2026-01-26): a host that supports MCP Apps, such as Claude or GitHub Copilot, renders the decision card itself next to the answer (`ui://the-dugout/decision-card.html`, in the viewer's language and light or dark theme), while other clients get the same JSON as before.
+
 The tools call the same state engine, decision engine and narration workflow as the live screen, so an agent gets the same numbers and the same checked text a viewer does. A producer can ask "what was the left-back change worth at 64'?" and get the engine's answer, not a model's guess.
 
 To connect GitHub Copilot in VS Code, add `.vscode/mcp.json`:

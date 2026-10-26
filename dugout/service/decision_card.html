@@ -1,0 +1,162 @@
+<!doctype html>
+<!-- The decision card as an MCP App (ui://the-dugout/decision-card.html), rendered by hosts that
+     support MCP Apps when explain_decision runs. Self-contained: the host's sandbox allows no
+     outside requests. Protocol: specification/2026-01-26/apps.mdx in modelcontextprotocol/ext-apps. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Dugout decision card</title>
+<style>
+  :root {
+    --bg: var(--color-background-primary, #f5f7f6);
+    --ink: var(--color-text-primary, #15211b);
+    --muted: var(--color-text-secondary, #5b6962);
+    --rule: var(--color-border-primary, #c9d2cd);
+    --pick: #2d8656;
+    --bar: #1d5ba6;
+    --board: #121614;
+    --amber: #ffb627;
+    color-scheme: light dark;
+  }
+  :root[data-theme="dark"] {
+    --bg: var(--color-background-primary, #1a221e);
+    --ink: var(--color-text-primary, #e4ebe7);
+    --muted: var(--color-text-secondary, #93a39b);
+    --rule: var(--color-border-primary, #2e3a34);
+    --pick: #45b277;
+    --bar: #5b97e0;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font: 14px/1.4 var(--font-sans, system-ui, sans-serif);
+  }
+  .card { padding: 14px 16px; }
+  .board {
+    display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+    background: var(--board); color: var(--amber);
+    padding: 6px 10px; border-radius: 6px;
+    font: 700 13px/1.2 ui-monospace, monospace; letter-spacing: 0.06em; text-transform: uppercase;
+  }
+  .board .strength { margin-left: auto; color: #fff; }
+  h1 { font-size: 17px; margin: 12px 0 4px; }
+  .reason { margin: 0 0 12px; color: var(--muted); }
+  ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+  li { display: grid; grid-template-columns: 1fr auto auto; gap: 10px; align-items: center; padding: 6px 8px; border: 1px solid var(--rule); border-radius: 6px; }
+  li.pick { border-color: var(--pick); }
+  .label small { display: block; color: var(--pick); font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; }
+  .meter { width: 90px; height: 6px; background: var(--rule); border-radius: 3px; overflow: hidden; }
+  .meter span { display: block; height: 100%; background: var(--bar); }
+  .nums { text-align: right; font-variant-numeric: tabular-nums; min-width: 92px; }
+  .nums b { display: block; }
+  .nums em { font-style: normal; color: var(--muted); font-size: 12px; }
+  footer { margin-top: 12px; color: var(--muted); font-size: 12px; }
+  .waiting { color: var(--muted); }
+</style>
+</head>
+<body>
+<main class="card" id="card"><p class="waiting">Waiting for the decision...</p></main>
+<script>
+(() => {
+  const TEXT = {
+    en: { pick: "Model's pick", win: "win", pts: "pts", strength: { strong: "Strong", lean: "Lean", toss_up: "Toss-up" },
+          trigger: { condition_drop: "Fading against his team", goal_after_55: "Goal after 55'", manager_sub: "Manager's substitution", on_request: "On request" },
+          option: { no_change: "No change", sub_like_for_like: "Like-for-like sub for {name}", attacking: "Attacking change", defensive: "Defensive change" },
+          foot: (src) => `Numbers from the decision engine on a synthetic match. Text ${src === "model" ? "written by a Microsoft Foundry model and" : "from the template,"} checked in code.` },
+    es: { pick: "Elección del modelo", win: "victoria", pts: "pts", strength: { strong: "Fuerte", lean: "Leve", toss_up: "Igualado" },
+          trigger: { condition_drop: "Se apaga frente a su equipo", goal_after_55: "Gol después del 55'", manager_sub: "Cambio del entrenador", on_request: "A petición" },
+          option: { no_change: "Sin cambios", sub_like_for_like: "Cambio por {name}, mismo puesto", attacking: "Cambio ofensivo", defensive: "Cambio defensivo" },
+          foot: (src) => `Números del motor de decisiones en un partido sintético. Texto ${src === "model" ? "escrito por un modelo de Microsoft Foundry y" : "de la plantilla,"} verificado en código.` },
+  };
+  let nextId = 1;
+  const pending = new Map();
+  const post = (msg) => window.parent.postMessage({ jsonrpc: "2.0", ...msg }, "*");
+  const request = (method, params) => new Promise((resolve, reject) => {
+    const id = nextId++;
+    pending.set(id, { resolve, reject });
+    post({ id, method, params });
+  });
+
+  const el = (tag, attrs = {}, ...kids) => {
+    const node = document.createElement(tag);
+    for (const [k, v] of Object.entries(attrs)) node.setAttribute(k, v);
+    for (const kid of kids) node.append(kid);
+    return node;
+  };
+
+  function render(card) {
+    const p = card.payload;
+    const lang = TEXT[card.locale] ? card.locale : "en";
+    const t = TEXT[lang];
+    const fmt = (x, digits) => new Intl.NumberFormat(lang === "es" ? "es-ES" : "en-GB",
+      { minimumFractionDigits: digits, maximumFractionDigits: digits, signDisplay: "exceptZero" }).format(x);
+    const pct = (x) => new Intl.NumberFormat(lang === "es" ? "es-ES" : "en-GB",
+      { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(x * 100) + "%";
+    document.documentElement.lang = lang;
+    const minute = Math.floor(p.t_ms / 60000);
+    const root = document.getElementById("card");
+    root.replaceChildren(
+      el("div", { class: "board" },
+        el("span", {}, `${minute}'`), el("span", {}, p.team), el("span", {}, t.trigger[p.trigger] ?? p.trigger.replaceAll("_", " ")),
+        el("span", { class: "strength" }, t.strength[p.recommendation.strength] ?? p.recommendation.strength)),
+      el("h1", {}, card.headline),
+      el("p", { class: "reason" }, card.reason),
+      el("ol", {}, ...p.options.map((o) => {
+        const pick = o.id === p.recommendation.option_id;
+        const tiring = p.evidence.find((e) => e.type === "condition")?.player_id;
+        const name = t.option[o.id];
+        const label = el("span", { class: "label" }, name && (tiring || !name.includes("{name}")) ? name.replace("{name}", tiring) : o.label);
+        if (pick) label.append(el("small", {}, t.pick));
+        const meter = el("span", { class: "meter", role: "img", "aria-label": `${pct(o.win)} ${t.win}` }, el("span", { style: `width:${Math.round(o.win * 100)}%` }));
+        const nums = el("span", { class: "nums" }, el("b", {}, pct(o.win)),
+          el("em", {}, o.id === "no_change" ? t.win : `${fmt(o.delta_win * 100, 1)} ${t.pts}`));
+        return el("li", { class: pick ? "pick" : "" }, label, meter, nums);
+      })),
+      el("footer", {}, t.foot(card.source)),
+    );
+  }
+
+  function applyContext(ctx) {
+    if (!ctx) return;
+    if (ctx.theme) document.documentElement.dataset.theme = ctx.theme;
+    for (const [name, value] of Object.entries(ctx.styles?.variables ?? {})) {
+      document.documentElement.style.setProperty(name, value);
+    }
+  }
+
+  window.addEventListener("message", (event) => {
+    const msg = event.data;
+    if (!msg || msg.jsonrpc !== "2.0") return;
+    if (msg.id !== undefined && pending.has(msg.id)) {
+      const { resolve, reject } = pending.get(msg.id);
+      pending.delete(msg.id);
+      msg.error ? reject(new Error(msg.error.message ?? "error")) : resolve(msg.result);
+    } else if (msg.method === "ui/notifications/tool-result") {
+      const content = msg.params?.structuredContent;
+      const card = content?.payload ? content : content?.result; // a dict, or wrapped as {"result": ...}
+      if (card?.payload) render(card);
+    } else if (msg.method === "ui/notifications/host-context-changed") {
+      applyContext(msg.params);
+    }
+  });
+
+  new ResizeObserver(() => {
+    post({ method: "ui/notifications/size-changed",
+           params: { width: document.documentElement.scrollWidth, height: document.documentElement.scrollHeight } });
+  }).observe(document.body);
+
+  request("ui/initialize", {
+    protocolVersion: "2026-01-26",
+    appCapabilities: { availableDisplayModes: ["inline"] },
+    clientInfo: { name: "the-dugout-decision-card", version: "1.0.0" },
+  }).then((result) => {
+    applyContext(result?.hostContext);
+    post({ method: "ui/notifications/initialized", params: {} });
+  }).catch(() => {});
+})();
+</script>
+</body>
+</html>

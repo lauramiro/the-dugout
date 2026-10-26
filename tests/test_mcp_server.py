@@ -100,3 +100,22 @@ def test_mcp_route_answers_initialize_and_leaves_the_service_routes_alone():
         assert res.status_code == 200, res.text
         assert res.json()["result"]["serverInfo"]["name"] == "the-dugout"
         assert client.get("/healthz").json()["ok"] is True
+
+
+def test_explain_decision_carries_the_decision_card_app():
+    # MCP Apps: hosts that support it render ui://the-dugout/decision-card.html with the tool's
+    # result; other clients get the same JSON as before.
+    async def go():
+        async with Client(mcp_server.server) as client:
+            tools = (await client.list_tools()).tools
+            read = await client.read_resource("ui://the-dugout/decision-card.html")
+            return tools, read
+    tools, read = asyncio.run(go())
+    explain = next(t for t in tools if t.name == "explain_decision")
+    assert explain.meta["ui"]["resourceUri"] == "ui://the-dugout/decision-card.html"
+    assert explain.annotations.read_only_hint
+    (page,) = read.contents
+    assert page.mime_type == "text/html;profile=mcp-app"
+    for step in ("ui/initialize", "ui/notifications/initialized", "ui/notifications/tool-result",
+                 "ui/notifications/size-changed"):
+        assert step in page.text

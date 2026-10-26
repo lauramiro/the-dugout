@@ -16,6 +16,7 @@ from functools import cache
 from pathlib import Path
 from typing import Any, Literal
 
+from mcp.server.apps import Apps
 from mcp.server.mcpserver import MCPServer
 from mcp_types import ToolAnnotations
 
@@ -34,7 +35,35 @@ Locale = Literal["en", "es"]
 Mode = Literal["casual", "analyst"]
 READ_ONLY = ToolAnnotations(read_only_hint=True, open_world_hint=False)
 
+# MCP Apps: hosts that support the extension render the decision card next to explain_decision's
+# answer; other clients get the same JSON as before. Defined before the server, which registers
+# an extension's tools when it is built; the tool calls the helpers further down.
+CARD_APP = "ui://the-dugout/decision-card.html"
+apps = Apps()
+apps.add_html_resource(CARD_APP, (Path(__file__).parent / "decision_card.html").read_text(encoding="utf-8"),
+                       title="The Dugout decision card", prefers_border=True)
+
+
+@apps.tool(resource_uri=CARD_APP, annotations=READ_ONLY)
+def explain_decision(decision_id: str, locale: Locale = "en",
+                     mode: Mode = "casual") -> dict[str, Any]:
+    """A narrated decision card: the engine's payload plus a headline and reason written by the
+    narration agents (Microsoft Agent Framework on Foundry when configured) and passed by the
+    grounding check, which verifies every number against the payload. `source` says whether the
+    text came from the model or from the template fallback. decision_id is one from
+    match_overview, or a card the live pipeline opened. casual is plain words; analyst adds
+    decimals and the interval."""
+    cards = _cards()
+    if cards.payload(decision_id) is None:
+        point = _demo()["points"].get(decision_id)
+        if point is None:
+            raise ValueError(f"unknown decision_id {decision_id!r}; see match_overview")
+        cards.open(point["snapshot"], point["team"], point["trigger"], decision_id)
+    return cards.card(decision_id, locale, mode)
+
+
 server = MCPServer(
+    extensions=[apps],
     name="the-dugout",
     title="The Dugout",
     instructions=(
@@ -133,21 +162,3 @@ def price_options(minute: int, team: str, period: int | None = None) -> dict[str
     simulated runs per option on common random numbers. The payload's trigger is "on_request"."""
     s = _snapshot_at(minute, period)
     return decide(s, _team(s, team), "on_request")
-
-
-@server.tool(annotations=READ_ONLY)
-def explain_decision(decision_id: str, locale: Locale = "en",
-                     mode: Mode = "casual") -> dict[str, Any]:
-    """A narrated decision card: the engine's payload plus a headline and reason written by the
-    narration agents (Microsoft Agent Framework on Foundry when configured) and passed by the
-    grounding check, which verifies every number against the payload. `source` says whether the
-    text came from the model or from the template fallback. decision_id is one from
-    match_overview, or a card the live pipeline opened. casual is plain words; analyst adds
-    decimals and the interval."""
-    cards = _cards()
-    if cards.payload(decision_id) is None:
-        point = _demo()["points"].get(decision_id)
-        if point is None:
-            raise ValueError(f"unknown decision_id {decision_id!r}; see match_overview")
-        cards.open(point["snapshot"], point["team"], point["trigger"], decision_id)
-    return cards.card(decision_id, locale, mode)
