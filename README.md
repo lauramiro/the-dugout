@@ -116,6 +116,7 @@ The page also serves [`/llms.txt`](https://ashy-ocean-03bdf100f.2.azurestaticapp
 - Votes live in the decision service's memory, so they reset when it scales to zero and are not shared across replicas. Azure Cosmos DB would hold them. The runner opens live cards in its own process, so the service counts a vote for any well-formed card id and one of the engine's options; the half-hourly replays reuse the same ids, so their votes add to the same tallies.
 - Event Hubs, Web PubSub and Foundry are reached with keys held as Container Apps secrets. The next step is Microsoft Entra ID role assignments for the apps' managed identities, as the image pull already does.
 - Tracking frames stay off the live feed, as sized for the Free tier; the Standard unit it now runs on could carry them with a runner change.
+- The MCP tools and the vote routes are public and not rate-limited; each `price_options` call runs 80,000 simulated matches. The replica cap (10) and the budget alert bound the cost; Azure API Management or Front Door rate limits would be the production answer.
 
 ## Results
 
