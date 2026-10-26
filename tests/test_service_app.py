@@ -23,8 +23,12 @@ class FakePublisher:
         return "wss://example.invalid/client/hubs/decisions"
 
 
+TOKEN = "test-token"
+
+
 @pytest.fixture
-def env():
+def env(monkeypatch):
+    monkeypatch.setenv("DECISIONS_TOKEN", TOKEN)
     pub, engine_calls = FakePublisher(), []
 
     def engine(snapshot, team, trigger):
@@ -38,9 +42,10 @@ def env():
     app.dependency_overrides.clear()
 
 
-def open_decision(client, **extra):
+def open_decision(client, token=TOKEN, **extra):
     body = {"snapshot": SNAPSHOT, "team": "RFC", "trigger": "condition_drop", **extra}
-    return client.post("/decisions", json=body)
+    headers = {"Authorization": f"Bearer {token}"} if token else {}
+    return client.post("/decisions", json=body, headers=headers)
 
 
 def test_post_decisions_returns_and_publishes_the_card(env):
@@ -71,6 +76,20 @@ def test_post_decisions_for_the_away_team(env):
 def test_post_decisions_rejects_a_team_not_in_the_snapshot(env):
     client, pub, calls = env
     assert open_decision(client, team="XXX").status_code == 422
+    assert calls == [] and pub.sent == []
+
+
+def test_post_decisions_needs_the_write_token(env):
+    client, pub, calls = env
+    assert open_decision(client, token=None).status_code == 401
+    assert open_decision(client, token="wrong").status_code == 401
+    assert calls == [] and pub.sent == []
+
+
+def test_post_decisions_is_off_without_a_configured_token(env, monkeypatch):
+    client, pub, calls = env
+    monkeypatch.delenv("DECISIONS_TOKEN")
+    assert open_decision(client).status_code == 403
     assert calls == [] and pub.sent == []
 
 
@@ -119,6 +138,8 @@ def test_vote_validation(env):
     open_decision(client)
     assert vote(client, option="made_up").status_code == 422
     assert client.get("/votes/rfc-62-01").json()["total"] == 0
+    assert vote(client, viewer="v" * 65).status_code == 422
+    assert vote(client, viewer="").status_code == 422
 
 
 def test_negotiate_and_healthz_keep_the_stub_shapes(env):
@@ -129,7 +150,8 @@ def test_negotiate_and_healthz_keep_the_stub_shapes(env):
     assert client.get("/negotiate").json() == {"url": None}
 
 
-def test_post_decisions_uses_the_decision_points_id():
+def test_post_decisions_uses_the_decision_points_id(monkeypatch):
+    monkeypatch.setenv("DECISIONS_TOKEN", TOKEN)
     from dugout.engine.payload import decide
     cards = CardService(lambda s, t, g, **kw: decide(s, t, g, n=2_000, **kw),
                         NarrationPipeline(StubClient()), MemoryStore())
@@ -139,7 +161,8 @@ def test_post_decisions_uses_the_decision_points_id():
     try:
         snap = {**SNAPSHOT, "subs_left": {"RFC": 5, "CAS": 5}, "players": [], "threat_by_channel": {}}
         body = {"snapshot": snap, "team": "RFC", "trigger": "manager_sub", "decision_id": "rfc-62-03"}
-        card = TestClient(app).post("/decisions", json=body).json()["card"]
+        headers = {"Authorization": f"Bearer {TOKEN}"}
+        card = TestClient(app).post("/decisions", json=body, headers=headers).json()["card"]
     finally:
         app.dependency_overrides.clear()
     assert card["decision_id"] == card["payload"]["decision_id"] == "rfc-62-03"

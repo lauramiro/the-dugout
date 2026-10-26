@@ -115,13 +115,16 @@ def test_http_decisions_posts_the_point_with_its_id(monkeypatch):
 
     def fake_urlopen(req, timeout):
         seen["url"], seen["body"] = req.full_url, json.loads(req.data)
+        seen["auth"] = req.get_header("Authorization")
         return io.BytesIO(b'{"pushed": true}')
 
     monkeypatch.setattr(live.urllib.request, "urlopen", fake_urlopen)
+    monkeypatch.setenv("DECISIONS_TOKEN", "t0k")
     point = {"id": "rfc-62-01", "team": "RFC", "trigger": "manager_sub", "snapshot": {"t_ms": 1}}
     assert HttpDecisions("https://svc.example/").open(point) == {"pushed": True}
     assert seen["url"] == "https://svc.example/decisions"
     assert seen["body"]["decision_id"] == "rfc-62-01" and seen["body"]["snapshot"] == {"t_ms": 1}
+    assert seen["auth"] == "Bearer t0k"
 
 
 # Message shapes against web/lib/live.ts (LiveDataSource.receive), which tells messages apart by key:

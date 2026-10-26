@@ -119,14 +119,18 @@ class InProcessDecisions:
 
 
 class HttpDecisions:
-    """The deployed decision service, which publishes the card itself."""
+    """The deployed decision service, which publishes the card itself. Sends DECISIONS_TOKEN
+    from the environment, which the service requires on POST /decisions."""
 
     def __init__(self, base_url: str, locale: str = "en", mode: str = "casual", timeout_s: float = 60) -> None:
         self._url, self._locale, self._mode, self._timeout = base_url.rstrip("/") + "/decisions", locale, mode, timeout_s
 
     def open(self, point: dict) -> dict:
         body = json.dumps(_request(point, self._locale, self._mode)).encode()
-        req = urllib.request.Request(self._url, body, {"Content-Type": "application/json"})
+        headers = {"Content-Type": "application/json"}
+        if token := os.environ.get("DECISIONS_TOKEN"):
+            headers["Authorization"] = f"Bearer {token}"
+        req = urllib.request.Request(self._url, body, headers)
         with urllib.request.urlopen(req, timeout=self._timeout) as res:
             return json.load(res)
 

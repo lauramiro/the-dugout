@@ -4,22 +4,25 @@
 
 Settings (environment): WEBPUBSUB_CONNECTION_STRING, WEBPUBSUB_HUB (default "decisions"),
 STUB_CORS_ORIGINS (comma separated, default "*"; same name as the stub so the deployed
-setting carries over). Without a connection string the push is skipped and reported as such.
+setting carries over), DECISIONS_TOKEN (the bearer token POST /decisions requires; without it
+the route is off, since a card it opens goes to every open page). Without a connection string
+the push is skipped and reported as such.
 Narration goes through Foundry when FOUNDRY_ENDPOINT is set, else the stub client. The MCP
 server (dugout.service.mcp_server) is mounted at /mcp.
 """
 
 from __future__ import annotations
 
+import hmac
 import os
 from collections import Counter
 from contextlib import asynccontextmanager
 from functools import cache
 from typing import Literal
 
-from fastapi import Depends, FastAPI, HTTPException
+from fastapi import Depends, FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from dugout.service.cards import CardService, default_service
 from dugout.service.mcp_server import server as mcp_server
@@ -38,10 +41,14 @@ class DecisionRequest(BaseModel):
     mode: Mode = "casual"
 
 
+# Votes are kept in memory, so ids are bounded; the page's viewer id is a 36-character UUID.
+Id = Field(min_length=1, max_length=64)
+
+
 class VoteRequest(BaseModel):
-    decision_id: str
-    viewer_id: str
-    option_id: str
+    decision_id: str = Id
+    viewer_id: str = Id
+    option_id: str = Id
 
 
 # Stateless with JSON responses, so any replica can answer any request (Container Apps scales
@@ -91,7 +98,17 @@ def negotiate(publisher: Publisher | None = Depends(get_publisher)) -> dict:
     return {"url": publisher.client_url()}
 
 
-@app.post("/decisions")
+def require_write_token(authorization: str | None = Header(default=None)) -> None:
+    """POST /decisions publishes to every viewer, so it needs DECISIONS_TOKEN as a bearer token.
+    The deployed runner opens decisions in process and never calls the route."""
+    token = os.environ.get("DECISIONS_TOKEN")
+    if not token:
+        raise HTTPException(403, "opening decisions over HTTP is off (DECISIONS_TOKEN not set)")
+    if not hmac.compare_digest((authorization or "").encode(), f"Bearer {token}".encode()):
+        raise HTTPException(401, "missing or wrong bearer token")
+
+
+@app.post("/decisions", dependencies=[Depends(require_write_token)])
 def open_decision(req: DecisionRequest, cards: CardService = Depends(get_cards),
                   publisher: Publisher | None = Depends(get_publisher)) -> dict:
     """Run the engine for the team's decision point and publish its card in the requested
