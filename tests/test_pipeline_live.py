@@ -303,3 +303,23 @@ def test_a_runner_sent_to_the_service_without_a_token_says_so(monkeypatch, capsy
     monkeypatch.setenv("DECISIONS_TOKEN", "t0k")
     live.make_decisions(None, "https://svc.example")
     assert capsys.readouterr().err == ""
+
+
+def test_the_runners_entry_point_plays_the_demo_match(monkeypatch, capsys):
+    # What the runner container executes (python dugout/stream/pipeline.py), on a file instead of
+    # Event Hubs: no env file, no Foundry, no Web PubSub, and the replay's waits removed.
+    monkeypatch.setattr(live, "load_dotenv", lambda: None)
+    for name in ("FOUNDRY_ENDPOINT", "WEBPUBSUB_CONNECTION_STRING", "SERVICE_URL", "PIPELINE_SOURCE"):
+        monkeypatch.delenv(name, raising=False)
+    sent = []
+
+    def quick_replay(events, sink, speed):
+        events = list(events)
+        sent.append(len(events))
+        replay(events, sink, speed, sleep=lambda s: None)
+
+    monkeypatch.setattr(live, "replay", quick_replay)
+    live.main([str(DEMO), "--scenario", str(SCENARIO), "--speed", "20"])  # exits with a message if a card fails
+    err = capsys.readouterr().err
+    assert "decisions via InProcessDecisions" in err and "publishing nowhere" in err
+    assert sent == [len(read_events(DEMO))]
