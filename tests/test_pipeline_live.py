@@ -1,6 +1,8 @@
 """Live pipeline: the demo stream through the runner with an in-process service and a fake publisher."""
 import io
 import json
+import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -305,12 +307,27 @@ def test_a_runner_sent_to_the_service_without_a_token_says_so(monkeypatch, capsy
     assert capsys.readouterr().err == ""
 
 
+class InlineExecutor:
+    """Runs submitted work at once, so every extra version is narrated inside the test."""
+
+    def __init__(self, max_workers=None):
+        pass
+
+    def submit(self, fn, *args):
+        fn(*args)
+
+
 def test_the_runners_entry_point_plays_the_demo_match(monkeypatch, capsys):
-    # What the runner container executes (python dugout/stream/pipeline.py), on a file instead of
-    # Event Hubs: no env file, no Foundry, no Web PubSub, and the replay's waits removed.
+    # live.main, which the runner container runs, on a file instead of Event Hubs: no env file,
+    # no Foundry, no Web PubSub, the replay's waits removed, a small engine sample, and every
+    # locale and mode narrated in the test (a failure there is only printed, so it is checked).
     monkeypatch.setattr(live, "load_dotenv", lambda: None)
     for name in ("FOUNDRY_ENDPOINT", "WEBPUBSUB_CONNECTION_STRING", "SERVICE_URL", "PIPELINE_SOURCE"):
         monkeypatch.delenv(name, raising=False)
+    monkeypatch.setattr(live, "default_service", lambda: CardService(
+        lambda s, team, trigger, **kw: decide(s, team, trigger, n=500, **kw),
+        NarrationPipeline(StubClient()), MemoryStore()))
+    monkeypatch.setattr(live, "ThreadPoolExecutor", InlineExecutor)
     sent = []
 
     def quick_replay(events, sink, speed):
@@ -322,4 +339,13 @@ def test_the_runners_entry_point_plays_the_demo_match(monkeypatch, capsys):
     live.main([str(DEMO), "--scenario", str(SCENARIO), "--speed", "20"])  # exits with a message if a card fails
     err = capsys.readouterr().err
     assert "decisions via InProcessDecisions" in err and "publishing nowhere" in err
+    assert "failed" not in err
     assert sent == [len(read_events(DEMO))]
+
+
+def test_the_runner_starts_as_a_script():
+    # The container runs `python /app/dugout/stream/pipeline.py`, not the module: check that path imports.
+    out = subprocess.run([sys.executable, str(ROOT / "dugout" / "stream" / "pipeline.py"), "--help"],
+                         cwd=ROOT, capture_output=True, text=True, timeout=120)
+    assert out.returncode == 0, out.stderr
+    assert "--eventhub" in out.stdout
