@@ -145,9 +145,24 @@ def test_vote_validation(env):
 def test_negotiate_and_healthz_keep_the_stub_shapes(env):
     client, _, _ = env
     assert client.get("/negotiate").json() == {"url": "wss://example.invalid/client/hubs/decisions"}
-    assert client.get("/healthz").json() == {"ok": True}
+    assert client.get("/healthz").json()["ok"] is True
     app.dependency_overrides[get_publisher] = lambda: None
     assert client.get("/negotiate").json() == {"url": None}
+
+
+def test_healthz_says_what_the_service_runs_on_without_secrets(env, monkeypatch):
+    client, _, _ = env
+    monkeypatch.setenv("FOUNDRY_ENDPOINT", "https://secret-host.example")
+    monkeypatch.setenv("FOUNDRY_API_KEY", "k3y")
+    monkeypatch.setenv("FOUNDRY_MODEL", "gpt-5-mini")
+    body = client.get("/healthz").json()
+    assert body == {"ok": True, "narration": "foundry", "model": "gpt-5-mini", "push": "web_pubsub",
+                    "decisions_route": "on", "mcp": "/mcp"}
+    for name in ("FOUNDRY_ENDPOINT", "FOUNDRY_API_KEY", "FOUNDRY_MODEL", "DECISIONS_TOKEN"):
+        monkeypatch.delenv(name)
+    app.dependency_overrides[get_publisher] = lambda: None
+    assert client.get("/healthz").json() == {"ok": True, "narration": "templates", "model": None, "push": "off",
+                                             "decisions_route": "off", "mcp": "/mcp"}
 
 
 def test_post_decisions_uses_the_decision_points_id(monkeypatch):

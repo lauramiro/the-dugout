@@ -98,4 +98,4 @@ def test_mcp_route_answers_initialize_and_leaves_the_service_routes_alone():
         res = client.post("/mcp", json=body, headers=headers)
         assert res.status_code == 200, res.text
         assert res.json()["result"]["serverInfo"]["name"] == "the-dugout"
-        assert client.get("/healthz").json() == {"ok": True}
+        assert client.get("/healthz").json()["ok"] is True

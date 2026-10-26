@@ -24,6 +24,7 @@ from fastapi import Depends, FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
+from dugout.agents.foundry import ENV_ENDPOINT, ENV_MODEL
 from dugout.service.cards import CardService, default_service
 from dugout.service.mcp_server import server as mcp_server
 from dugout.service.publisher import Publisher, default_publisher
@@ -86,8 +87,15 @@ def get_publisher() -> Publisher | None:
 
 
 @app.get("/healthz")
-def healthz() -> dict:
-    return {"ok": True}
+def healthz(publisher: Publisher | None = Depends(get_publisher)) -> dict:
+    """Up, plus what the service runs on (names only, never endpoints or keys)."""
+    foundry = bool(os.environ.get(ENV_ENDPOINT))
+    return {"ok": True,
+            "narration": "foundry" if foundry else "templates",
+            "model": os.environ.get(ENV_MODEL) if foundry else None,
+            "push": "web_pubsub" if publisher is not None else "off",
+            "decisions_route": "on" if os.environ.get("DECISIONS_TOKEN") else "off",
+            "mcp": "/mcp"}
 
 
 @app.get("/negotiate")
