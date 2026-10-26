@@ -48,7 +48,11 @@ export class ServiceVotes implements VoteStore {
   private url(): Promise<string> {
     this.base ??= fetch("/config.json")
       .then((res) => res.json() as Promise<{ stubUrl: string }>)
-      .then((c) => c.stubUrl);
+      .then((c) => c.stubUrl)
+      .catch((err: unknown) => {
+        this.base = null; // a failed fetch is tried again on the next vote, not kept
+        throw err;
+      });
     return this.base;
   }
 
