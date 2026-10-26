@@ -2,6 +2,9 @@ FROM python:3.12-slim
 # uv pinned so a rebuild resolves the same tool (latest release on 2026-10-26)
 COPY --from=ghcr.io/astral-sh/uv:0.13.5 /uv /usr/local/bin/uv
 WORKDIR /app
+# Compiled at build: the apps run as a user who cannot write __pycache__, so without this every
+# cold start would compile each module again.
+ENV UV_COMPILE_BYTECODE=1
 COPY pyproject.toml uv.lock README.md ./
 RUN uv sync --frozen --no-dev --no-install-project
 COPY dugout ./dugout
