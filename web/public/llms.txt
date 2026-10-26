@@ -1,0 +1,23 @@
+# The Dugout
+
+> Explains a football manager's substitution decisions as they happen: who is tiring, what each option is worth in win probability (with a 90% interval and a strength label), and at full time what a different call would have changed. An entry to the Microsoft x Premier League "Inside the Game" hackathon. Every club, player and match is synthetic; nothing is betting-related.
+
+Numbers come from code (a Monte Carlo decision engine on what a club could observe); words come from Microsoft Agent Framework agents on a Microsoft Foundry model, and a code check verifies every number before it is shown. Agents can ask the same engine directly through the MCP server below instead of reading the page.
+
+## Use it
+
+- [MCP server](https://dugout-service.wittypond-73564413.northeurope.azurecontainerapps.io/mcp): Streamable HTTP, stateless, read-only tools match_overview, match_state, price_options and explain_decision (English or Spanish, casual or analyst)
+- [Broadcast view](https://ashy-ocean-03bdf100f.2.azurestaticapps.net/): the demo match as a TV picture with the decision graphics; add ?t=60 to open at a minute, ?source=live for the Web PubSub feed
+- [Analyst desk](https://ashy-ocean-03bdf100f.2.azurestaticapps.net/desk): pitch, condition bars, timeline and the decision card
+- [Fan view](https://ashy-ocean-03bdf100f.2.azurestaticapps.net/fan): one club's card and a vote before the manager's call
+- [Cue sheet](https://ashy-ocean-03bdf100f.2.azurestaticapps.net/?cues=json): every broadcast graphic as timed cues, machine-readable
+
+## Docs
+
+- [README](https://github.com/lauramiro/the-dugout#readme): pitch, architecture on Azure, agents, MCP setup, results
+- [Data contracts](https://github.com/lauramiro/the-dugout/blob/main/docs/data-contracts.md): event, tracking frame, snapshot and decision payload
+- [Evaluation](https://github.com/lauramiro/the-dugout/blob/main/docs/evaluation.md): the engine graded against the simulator's true counterfactual gaps
+
+## Optional
+
+- [Narration eval](https://github.com/lauramiro/the-dugout/blob/main/eval/results/narration.md): how often the model's lines pass the check, retries and latency

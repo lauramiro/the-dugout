@@ -90,6 +90,8 @@ To connect GitHub Copilot in VS Code, add `.vscode/mcp.json`:
 
 Claude Code: `claude mcp add --transport http the-dugout https://dugout-service.wittypond-73564413.northeurope.azurecontainerapps.io/mcp`
 
+The page also serves [`/llms.txt`](https://ashy-ocean-03bdf100f.2.azurestaticapps.net/llms.txt) (the llmstxt.org format), so an agent that lands on the site finds the MCP server and the docs without scraping the page.
+
 ## Built on Azure
 
 | Service | Role in The Dugout | Configuration |
