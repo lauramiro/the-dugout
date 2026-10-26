@@ -37,13 +37,16 @@ export function parseSchedule(json: unknown): Schedule | null {
  *  missed (the job did not run, for example on the deploy that created it) and counts down to the
  *  next one instead of saying the match is under way. */
 export const JOIN_WAIT_MS = 120_000;
+/** A page that joins mid-match needs a moment for the feed's first message: until then it is joining. */
+export const CONNECT_WAIT_MS = 15_000;
 
 /** The match on now (epoch ms, from the latest slot), or the next kick-off. `empty`: nothing has
- *  arrived from the feed; a slot that has sent nothing by JOIN_WAIT_MS counts as missed. */
-export function kickoff(schedule: Schedule, now: number, empty = false): Kickoff {
+ *  arrived from the feed; a slot that has sent nothing by JOIN_WAIT_MS counts as missed, once the page has been
+ *  connected for CONNECT_WAIT_MS (`connectedAt`, epoch ms; without it, at once). */
+export function kickoff(schedule: Schedule, now: number, empty = false, connectedAt = -Infinity): Kickoff {
   const period = schedule.every_min * 60_000;
   const last = Math.floor(now / period) * period;
-  const missed = empty && now - last > JOIN_WAIT_MS;
+  const missed = empty && now - last > JOIN_WAIT_MS && now - connectedAt > CONNECT_WAIT_MS;
   if (!missed && now < last + schedule.duration_ms + GRACE_MS) return { kind: "on", since: last, until: last + schedule.duration_ms };
   return { kind: "next", at: last + period };
 }

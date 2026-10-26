@@ -26,6 +26,8 @@ export function KickoffSlate({ schedule, empty, locale, t }: {
   t: Translate;
 }) {
   const [now, setNow] = useState<number | null>(null);
+  // When this page started listening: a judge who arrives mid-match is joining until the first message lands.
+  const [connectedAt] = useState(() => Date.now());
   useEffect(() => {
     const tick = () => setNow(Date.now());
     tick();
@@ -34,7 +36,7 @@ export function KickoffSlate({ schedule, empty, locale, t }: {
   }, [schedule]);
   if (now === null) return null;
 
-  const k = kickoff(schedule, now, empty);
+  const k = kickoff(schedule, now, empty, connectedAt);
   if (k.kind === "on" && !empty) return null;
   const time = (ms: number) => new Date(ms).toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
   return (
