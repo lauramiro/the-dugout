@@ -820,9 +820,9 @@ button.bc-option {
 }
 
 button.bc-option.bc-pick { color: var(--bc-ink); }
-button.bc-option:disabled { cursor: default; }
-button.bc-option:not(:disabled) { cursor: pointer; border-color: var(--bc-line); }
-button.bc-option:not(:disabled):hover { border-color: var(--bc-accent); background: rgba(255, 255, 255, 0.05); }
+button.bc-option[aria-disabled="true"] { cursor: default; }
+button.bc-option:not([aria-disabled="true"]) { cursor: pointer; border-color: var(--bc-line); }
+button.bc-option:not([aria-disabled="true"]):hover { border-color: var(--bc-accent); background: rgba(255, 255, 255, 0.05); }
 button.bc-option.bc-voted { color: var(--bc-ink); border-color: var(--bc-accent); }
 
 .bc-options.voting .bc-option { grid-template-columns: 1.4em 14.6em 1fr 4em 6.5em; }

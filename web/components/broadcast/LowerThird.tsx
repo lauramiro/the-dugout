@@ -84,10 +84,12 @@ export function LowerThird({ card, roster, mode, locale, vote, onVote, running, 
             <button
               type="button"
               className={`bc-option${o.id === pick ? " bc-pick" : ""}${o.id === vote?.option ? " bc-voted" : ""}`}
-              disabled={!open}
+              // aria-disabled, not disabled: a disabled button drops the focus, so after a vote it would land on the
+              // page; this way it stays on the option just chosen
+              aria-disabled={!open}
               aria-pressed={votable ? o.id === vote?.option : undefined}
               aria-keyshortcuts={open ? String(i + 1) : undefined}
-              onClick={() => onVote(o.id)}
+              onClick={() => open && onVote(o.id)}
             >
               {open && <kbd className="bc-option-key">{i + 1}</kbd>}
               <span className="bc-option-label">
