@@ -166,7 +166,13 @@ export default function BroadcastPage() {
   const shown = useHeldCues(cues, pos);
   const snapshotAt = lastAtOrBefore(log.snapshots, pos);
   const snapshot = snapshotAt >= 0 ? log.snapshots[snapshotAt].item : null;
-  const tags = playerTags(shown, prefs.player, snapshot, frame, log.roster, prefs.locale, t);
+  // A portrait phone: the decision card and What if go in a sheet under the picture (lib/sheet.ts).
+  const sheetMode = usePhoneSheet();
+  // While a decision card is over the picture, the sprint and speed tags step aside: they ran under the card and
+  // read as struck through. The fading player's ring and the followed player stay. In the phone sheet the card is
+  // under the picture, so nothing is covered.
+  const cardOverPicture = !sheetMode && shown.some((c) => c.kind === "decision");
+  const tags = playerTags(shown, prefs.player, snapshot, frame, log.roster, prefs.locale, t, cardOverPicture);
   const latest = (kind: Cue["kind"]) => [...shown].reverse().find((c) => c.kind === kind);
   const decision = latest("decision");
   const goalCue = latest("goal");
@@ -200,8 +206,6 @@ export default function BroadcastPage() {
     : liveEmpty && !schedule ? "waiting"
     : feed.status === "loading" && !(live && schedule) ? "loading" : null;
 
-  // A portrait phone: the decision card and What if go in a sheet under the picture (lib/sheet.ts).
-  const sheetMode = usePhoneSheet();
   const stepId = story.step?.id;
   // The vote step: the phone's prompt and countdown sit under the options, below the fold of the frame.
   useEffect(() => {
@@ -422,7 +426,7 @@ const SPEED_TAG_MS = 8;
  *  (running stats from the snapshot), any player above SPEED_TAG_MS. Speed comes from the
  *  tracking frame as given and shows only while the player is fast. */
 function playerTags(shown: readonly Cue[], focus: string | null, snapshot: Snapshot | null, frame: PitchFrame | null,
-  roster: Roster | null, locale: Locale, t: Translate): PlayerTag[] {
+  roster: Roster | null, locale: Locale, t: Translate, cardOverPicture = false): PlayerTag[] {
   const stats = (id: string) => snapshot?.players.find((p) => p.id === id);
   const condition = (id: string) => stats(id)?.condition_est ?? null;
   const speed = (id: string) => frame?.players.find((p) => p.id === id)?.v ?? null;
@@ -435,7 +439,7 @@ function playerTags(shown: readonly Cue[], focus: string | null, snapshot: Snaps
     tags.set(id, { id, label: `${playerName(roster, id)} · ${Math.round(value * 100)}%`, detail: null, ring: value, tone: "fading" });
   }
   for (const cue of shown) {
-    if (cue.kind !== "sprint") continue;
+    if (cue.kind !== "sprint" || cardOverPicture) continue;
     const id = String(cue.data.player_id);
     if (tags.has(id)) continue;
     const v = speed(id);
@@ -453,7 +457,7 @@ function playerTags(shown: readonly Cue[], focus: string | null, snapshot: Snaps
     tags.set(focus, { id: focus, label: playerName(roster, focus), detail, ring: condition(focus), tone: "focus" });
   }
   for (const p of frame?.players ?? []) {
-    if (p.v < SPEED_TAG_MS || tags.has(p.id)) continue;
+    if (cardOverPicture || p.v < SPEED_TAG_MS || tags.has(p.id)) continue;
     tags.set(p.id, { id: p.id, label: `${playerName(roster, p.id)} · ${kmh(p.v)}`, detail: null, ring: null, tone: "sprint" });
   }
   return [...tags.values()];
