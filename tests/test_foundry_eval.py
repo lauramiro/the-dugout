@@ -97,13 +97,17 @@ def test_error_classes_group_by_kind():
     assert classify("'0 points': say the options are about even, without a number") == "casual: zero points"
     assert classify("casual text does not quote the interval") == "casual: interval"
     assert classify("casual text uses whole numbers; 5.8 has decimals") == "casual: decimals"
-    assert classify("casual text quotes no win, draw or loss probability (82%); give the gap in points")         == "casual: a win, draw or loss probability"
+    assert (classify("casual text quotes no win, draw or loss probability (82%); give the gap in points")
+            == "casual: a win, draw or loss probability")
     assert classify("long dash '—' in the text; use a comma, a colon or a full stop") == "long dash"
     assert classify("'~' for about; write it in words") == "'~' for about"
     assert classify("'unas 3 puntos': puntos is masculine, write unos") == "wrong agreement"
-    assert classify("'opciones igualado' does not agree; write 'las opciones están muy parejas (igualado)'")         == "wrong agreement"
-    assert classify("'toss-up' appears twice; write it once, as '(toss-up)' at the end, not also in the sentence")         == "strength word twice"
-    assert classify("toss-up headline calls for an action ('Take'); say the options are close")         == "toss-up headline calls for an action"
+    assert (classify("'opciones igualado' does not agree; write 'las opciones están muy parejas (igualado)'")
+            == "wrong agreement")
+    assert classify("'toss-up' appears twice; write it once, as '(toss-up)' at the end, "
+                    "not also in the sentence") == "strength word twice"
+    assert (classify("toss-up headline calls for an action ('Take'); say the options are close")
+            == "toss-up headline calls for an action")
     assert classify("something new") == "other"
 
 

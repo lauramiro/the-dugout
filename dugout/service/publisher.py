@@ -1,4 +1,4 @@
-"""Web PubSub publishing, shared by the decision service and the stub.
+"""Web PubSub publishing, used by the decision service and the pipeline runner.
 
 Settings (environment): WEBPUBSUB_CONNECTION_STRING, WEBPUBSUB_HUB (default "decisions").
 Without a connection string there is no publisher and callers skip the push.
