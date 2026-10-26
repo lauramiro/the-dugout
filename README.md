@@ -111,7 +111,7 @@ Claude Code: `claude mcp add --transport http the-dugout https://dugout-service.
 
 **What would change for production.** Each limit is a deliberate cut for a hackathon budget:
 - The runner keeps one replica, because Event Hubs has no checkpoint store here (a second replica would publish everything twice). A Blob Storage checkpoint store would allow more replicas and a restart without replaying the match.
-- Votes live in the decision service's memory, so they reset when it scales to zero and are not shared across replicas. Azure Cosmos DB would hold them.
+- Votes live in the decision service's memory, so they reset when it scales to zero and are not shared across replicas. Azure Cosmos DB would hold them. The runner opens live cards in its own process, so the service counts a vote for any well-formed card id and one of the engine's options; the half-hourly replays reuse the same ids, so their votes add to the same tallies.
 - Event Hubs, Web PubSub and Foundry are reached with keys held as Container Apps secrets. The next step is Microsoft Entra ID role assignments for the apps' managed identities, as the image pull already does.
 - Tracking frames stay off the live feed, as sized for the Free tier; the Standard unit it now runs on could carry them with a runner change.
 

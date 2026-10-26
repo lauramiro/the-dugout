@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import hmac
 import os
+import re
 from collections import Counter
 from contextlib import asynccontextmanager
 from functools import cache
@@ -25,6 +26,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
 from dugout.agents.foundry import ENV_ENDPOINT, ENV_MODEL
+from dugout.engine.options import default_options
 from dugout.service.cards import CardService, default_service
 from dugout.service.mcp_server import server as mcp_server
 from dugout.service.publisher import Publisher, default_publisher
@@ -146,12 +148,25 @@ def get_decision(decision_id: str, locale: Locale = "en", mode: Mode = "casual",
     return card
 
 
+# Decision ids as the triggers and the engine write them: club, minute, two-digit sequence.
+DECISION_ID = re.compile(r"[a-z]{2,4}-\d{1,3}-\d{2}")
+ENGINE_OPTIONS = frozenset(o.id for o in default_options(0))
+
+
+def _vote_options(cards: CardService, decision_id: str) -> frozenset[str]:
+    """The options a vote may name. The live runner opens decisions in its own process, so the
+    service often has no payload for a live card; then any of the engine's options counts."""
+    payload = cards.payload(decision_id)
+    if payload is not None:
+        return frozenset(o["id"] for o in payload["options"])
+    if DECISION_ID.fullmatch(decision_id):
+        return ENGINE_OPTIONS
+    raise HTTPException(404, "unknown decision")
+
+
 @app.post("/votes")
 def cast_vote(req: VoteRequest, cards: CardService = Depends(get_cards)) -> dict:
-    payload = cards.payload(req.decision_id)
-    if payload is None:
-        raise HTTPException(404, "unknown decision")
-    if req.option_id not in {o["id"] for o in payload["options"]}:
+    if req.option_id not in _vote_options(cards, req.decision_id):
         raise HTTPException(422, f"unknown option {req.option_id!r}")
     if not cards.store.add_vote(req.decision_id, req.viewer_id, req.option_id):
         raise HTTPException(409, "viewer already voted on this decision")
@@ -160,8 +175,7 @@ def cast_vote(req: VoteRequest, cards: CardService = Depends(get_cards)) -> dict
 
 @app.get("/votes/{decision_id}")
 def get_votes(decision_id: str, cards: CardService = Depends(get_cards)) -> dict:
-    if cards.payload(decision_id) is None:
-        raise HTTPException(404, "unknown decision")
+    _vote_options(cards, decision_id)
     return _tally(cards, decision_id)
 
 

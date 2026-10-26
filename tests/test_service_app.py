@@ -131,10 +131,20 @@ def test_votes_one_per_viewer_and_tally(env):
     assert tally == {"decision_id": "rfc-62-01", "counts": {"no_change": 1, "sub_lb": 2}, "total": 3}
 
 
+def test_votes_for_a_card_the_live_runner_opened(env):
+    # The runner opens decisions in its own process, so the service has no payload for them;
+    # a well-formed id and one of the engine's option ids is enough to count the vote.
+    client, _, _ = env
+    assert client.get("/votes/cas-69-10").json() == {"decision_id": "cas-69-10", "counts": {}, "total": 0}
+    assert vote(client, "v1", "sub_like_for_like", decision="cas-69-10").status_code == 200
+    assert vote(client, "v2", "no_change", decision="cas-69-10").json()["total"] == 2
+    assert vote(client, "v3", "made_up", decision="cas-69-10").status_code == 422
+    assert vote(client, "v4", "no_change", decision="not-a-card").status_code == 404
+    assert client.get("/votes/not-a-card").status_code == 404
+
+
 def test_vote_validation(env):
     client, _, _ = env
-    assert vote(client).status_code == 404
-    assert client.get("/votes/rfc-62-01").status_code == 404
     open_decision(client)
     assert vote(client, option="made_up").status_code == 422
     assert client.get("/votes/rfc-62-01").json()["total"] == 0
