@@ -142,7 +142,7 @@ def test_vote_validation(env):
     assert vote(client, viewer="").status_code == 422
 
 
-def test_negotiate_and_healthz_keep_the_stub_shapes(env):
+def test_negotiate_and_healthz(env):
     client, _, _ = env
     assert client.get("/negotiate").json() == {"url": "wss://example.invalid/client/hubs/decisions"}
     assert client.get("/healthz").json()["ok"] is True

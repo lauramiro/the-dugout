@@ -3,8 +3,8 @@
     uvicorn dugout.service.app:app --port 8000
 
 Settings (environment): WEBPUBSUB_CONNECTION_STRING, WEBPUBSUB_HUB (default "decisions"),
-STUB_CORS_ORIGINS (comma separated, default "*"; same name as the stub so the deployed
-setting carries over), DECISIONS_TOKEN (the bearer token POST /decisions requires; without it
+STUB_CORS_ORIGINS (comma separated, default "*"; named after the first walking-skeleton
+service, kept so the deployed setting carries over), DECISIONS_TOKEN (the bearer token POST /decisions requires; without it
 the route is off, since a card it opens goes to every open page). Without a connection string
 the push is skipped and reported as such.
 Narration goes through Foundry when FOUNDRY_ENDPOINT is set, else the stub client. The MCP
