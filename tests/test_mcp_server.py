@@ -121,7 +121,8 @@ def test_explain_decision_carries_the_decision_card_app():
         assert step in page.text
 
 
-def test_explain_decision_gives_the_app_what_it_shows(cards):
+def test_explain_decision_gives_the_app_what_it_shows(cards, monkeypatch):
+    monkeypatch.delenv("FOUNDRY_ENDPOINT", raising=False)
     # What the decision card reads beyond the card itself: names for the ids in the text, who
     # wrote the words, and the minute as the screens show it.
     point = data(call("match_overview"))["decision_points"][0]
@@ -151,3 +152,21 @@ def test_price_options_carries_the_card_app_too():
     out = data(call("price_options", {"minute": 64, "team": "RFC"}))
     assert out["clock"] == "64'" and out["names"]["RFC-03"] == "Leon Varga"
     assert out["options"] and out["recommendation"]
+
+
+def test_explain_decision_on_a_lost_card_says_unknown(cards, monkeypatch):
+    point = data(call("match_overview"))["decision_points"][0]
+    monkeypatch.setattr(cards, "card", lambda *a, **k: None)
+    result = call("explain_decision", {"decision_id": point["decision_id"]})
+    assert result.is_error and "unknown decision_id" in str(result.content)
+
+
+def test_overview_clock_uses_the_screens_minute():
+    assert mcp_server._clock(1, 2_790_000) == "45+2' (half 1)"
+    assert mcp_server._clock(2, 3_840_000) == "64' (half 2)"
+
+
+def test_anticipated_errors_reach_the_agent_with_their_message():
+    # ToolError, not ValueError: the SDK hides any other exception's message from the client.
+    assert "team must be one of" in str(call("price_options", {"minute": 64, "team": "XYZ"}).content)
+    assert "see match_overview" in str(call("explain_decision", {"decision_id": "rfc-1-99"}).content)

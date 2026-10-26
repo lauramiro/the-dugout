@@ -70,9 +70,15 @@ class CardService:
             return self._locks[key]
 
 
+def narrated_by() -> str:
+    """Who narrates cards in this process: "foundry" when FOUNDRY_ENDPOINT is set, else "templates"
+    (the stub client answers with the templates). Read by /healthz and the MCP tools."""
+    return "foundry" if os.environ.get(ENV_ENDPOINT) else "templates"
+
+
 def default_narrator() -> Narrator:
     """The Agent Framework workflow on Foundry when FOUNDRY_ENDPOINT is set, else the stub client."""
-    if os.environ.get(ENV_ENDPOINT):
+    if narrated_by() == "foundry":
         return NarrationWorkflow(client_from_env())
     return NarrationPipeline(StubClient())
 

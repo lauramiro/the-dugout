@@ -12,18 +12,17 @@ grounding check, exactly as on screen. Cards opened by the live pipeline are ser
 
 from __future__ import annotations
 
-import os
 from functools import cache
 from pathlib import Path
 from typing import Any, Literal
 
 from mcp.server.apps import Apps
 from mcp.server.mcpserver import MCPServer
+from mcp.server.mcpserver.exceptions import ToolError
 from mcp_types import ToolAnnotations
 
-from dugout.agents.foundry import ENV_ENDPOINT
 from dugout.engine.payload import decide
-from dugout.service.cards import CardService
+from dugout.service.cards import CardService, narrated_by
 from dugout.sim.scenario import load_scenario
 from dugout.stream.replay import read_events
 from dugout.stream.snapshots import lineup_from_scenario, process
@@ -38,9 +37,10 @@ Locale = Literal["en", "es"]
 Mode = Literal["casual", "analyst"]
 READ_ONLY = ToolAnnotations(read_only_hint=True, open_world_hint=False)
 
-# MCP Apps: hosts that support the extension render the decision card next to explain_decision's
-# answer; other clients get the same JSON as before. Defined before the server, which registers
-# an extension's tools when it is built; the tool calls the helpers further down.
+# MCP Apps: hosts that support the extension render the decision card next to the answers of
+# explain_decision (a narrated card) and price_options (a bare engine payload); other clients get
+# the same JSON as before. Defined before the server, which registers an extension's tools when it
+# is built; the tools call the helpers further down.
 CARD_APP = "ui://the-dugout/decision-card.html"
 apps = Apps()
 apps.add_html_resource(CARD_APP, (Path(__file__).parent / "decision_card.html").read_text(encoding="utf-8"),
@@ -62,12 +62,15 @@ def explain_decision(decision_id: str, locale: Locale = "en",
     point = _demo()["points"].get(decision_id)
     if cards.payload(decision_id) is None:
         if point is None:
-            raise ValueError(f"unknown decision_id {decision_id!r}; see match_overview")
+            raise ToolError(f"unknown decision_id {decision_id!r}; see match_overview")
         cards.open(point["snapshot"], point["team"], point["trigger"], decision_id)
     card = cards.card(decision_id, locale, mode)
+    if card is None:  # the store lost it between the two calls
+        raise ToolError(f"unknown decision_id {decision_id!r}; see match_overview")
     # For the decision card App, and any client: names for the ids in the text, who wrote the
-    # words (as /healthz reports it), and the minute as the screens show it.
-    return {**card, "names": _names(), "narrated_by": "foundry" if os.environ.get(ENV_ENDPOINT) else "templates",
+    # words (as /healthz reports it), and the minute as the screens show it. A card that is not
+    # a demo point carries no period, so its minute is the plain one.
+    return {**card, "names": _names(), "narrated_by": narrated_by(),
             "clock": minute_label(point["period"] if point else None, card["payload"]["t_ms"])}
 
 
@@ -87,7 +90,6 @@ def _names() -> dict[str, str]:
     return {p.id: p.name for team in (scenario.home, scenario.away) for p in team.players}
 
 
-
 @apps.tool(resource_uri=CARD_APP, annotations=READ_ONLY)
 def price_options(minute: int, team: str, period: int | None = None) -> dict[str, Any]:
     """The decision engine at a minute of the demo match, for one team (RFC or CAS): win, draw
@@ -99,6 +101,7 @@ def price_options(minute: int, team: str, period: int | None = None) -> dict[str
     s = _snapshot_at(minute, period)
     payload = decide(s, _team(s, team), "on_request")
     return {**payload, "names": _names(), "clock": minute_label(s["period"], payload["t_ms"])}
+
 
 server = MCPServer(
     extensions=[apps],
@@ -136,19 +139,19 @@ def _snapshot_at(minute: int, period: int | None) -> dict[str, Any]:
     t_ms = minute * MIN_MS
     earlier = [s for s in _demo()["snapshots"] if (s["period"], s["t_ms"]) <= (period, t_ms)]
     if not earlier:
-        raise ValueError(f"no snapshot at {minute}' in period {period}")
+        raise ToolError(f"no snapshot at {minute}' in period {period}")
     return earlier[-1]
 
 
 def _team(snapshot: dict, team: str) -> str:
     team = team.upper()
     if team not in snapshot["score"]:
-        raise ValueError(f"team must be one of {sorted(snapshot['score'])}, not {team!r}")
+        raise ToolError(f"team must be one of {sorted(snapshot['score'])}, not {team!r}")
     return team
 
 
 def _clock(period: int, t_ms: int) -> str:
-    return f"{t_ms // MIN_MS}' (half {period})"
+    return f"{minute_label(period, t_ms)} (half {period})"
 
 
 @server.tool(annotations=READ_ONLY)

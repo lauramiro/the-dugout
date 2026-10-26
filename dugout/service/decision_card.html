@@ -1,6 +1,7 @@
 <!doctype html>
 <!-- The decision card as an MCP App (ui://the-dugout/decision-card.html), rendered by hosts that
-     support MCP Apps when explain_decision runs. Self-contained: the host's sandbox allows no
+     support MCP Apps next to explain_decision (a narrated card) and price_options (a bare engine
+     payload, shown without narration in the host's language). Self-contained: the host's sandbox allows no
      outside requests, so the strings below repeat web/lib/i18n.ts (keep them in step).
      Protocol: specification/2026-01-26/apps.mdx in modelcontextprotocol/ext-apps. -->
 <html lang="en">
@@ -79,6 +80,7 @@
   };
   const PLAYER_ID = /\b[A-Z]{2,4}-\d{2}\b/g;
   let lang = "en";
+  let hostLang = "en"; // from the host's locale; used where the result carries none (price_options, errors)
   let nextId = 1;
   const pending = new Map();
   const post = (msg) => window.parent.postMessage({ jsonrpc: "2.0", ...msg }, "*");
@@ -97,7 +99,7 @@
 
   // As web/lib/i18n.ts: whole-number percentages to one decimal, points with a true minus sign.
   const decimal = (x, digits) => { const s = x.toFixed(digits); return lang === "en" ? s : s.replace(".", ","); };
-  const pct = (x) => `${decimal(x * 100, 1)}%`;
+  const pct = (x) => `${decimal(Math.round(x * 1000) / 10, 1)}%`;
   const points = (x) => { const n = Math.round(x * 1000) / 10; return `${n > 0 ? "+" : n < 0 ? "−" : ""}${decimal(Math.abs(n), 1)}`; };
 
   function render(card) {
@@ -136,12 +138,13 @@
   }
 
   function failed() {
-    document.getElementById("card").replaceChildren(el("p", { class: "waiting" }, TEXT[lang].failed));
+    document.getElementById("card").replaceChildren(el("p", { class: "waiting" }, TEXT[hostLang].failed));
   }
 
   function applyContext(ctx) {
     if (!ctx) return;
     if (ctx.theme) document.documentElement.dataset.theme = ctx.theme;
+    if (ctx.locale) hostLang = ctx.locale.toLowerCase().startsWith("es") ? "es" : "en";
     for (const [name, value] of Object.entries(ctx.styles?.variables ?? {})) {
       document.documentElement.style.setProperty(name, value);
     }
@@ -167,7 +170,7 @@
       const data = content?.payload || content?.options ? content : content?.result; // a dict, or wrapped as {"result": ...}
       if (msg.params?.isError || !(data?.payload || data?.options)) failed();
       // explain_decision sends a narrated card; price_options a bare engine payload, shown as an analyst would see it
-      else render(data.payload ? data : { payload: data, names: data.names, clock: data.clock, locale: "en", mode: "analyst" });
+      else render(data.payload ? data : { payload: data, names: data.names, clock: data.clock, locale: hostLang, mode: "analyst" });
     } else if (msg.method === "ui/notifications/tool-cancelled") {
       failed();
     } else if (msg.method === "ui/notifications/host-context-changed") {
