@@ -259,7 +259,7 @@
   display: grid;
   gap: 0.9cqh;
   padding: 1.4cqh 1.2cqw 1.2cqh;
-  font-size: 1cqw;
+  font-size: max(13px, 1cqw); /* a 1280 or 1024 px window would set it at 10 to 13 px, its small print at 7 */
   background: var(--bc-glass-strong);
   border: 1px solid var(--bc-line);
   border-left: 0.45cqw solid var(--bc-home);
@@ -309,7 +309,7 @@
   padding: 0.15em 0.6em;
   border: 1px solid currentColor;
   border-radius: 0.3em;
-  font-size: 0.8em;
+  font-size: max(10px, 0.8em);
   font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -354,7 +354,7 @@
 .bc-option-badge {
   margin-left: 0.5em;
   padding: 0 0.4em;
-  font-size: 0.75em;
+  font-size: max(10px, 0.75em);
   color: #0b110e;
   background: var(--bc-accent);
   border-radius: 0.25em;
@@ -394,7 +394,7 @@
 
 .bc-option-ci {
   display: block;
-  font-size: 0.8em;
+  font-size: max(10px, 0.8em);
   font-weight: 400;
   color: var(--bc-muted);
 }
@@ -509,7 +509,7 @@
   position: absolute;
   right: 1.6cqw;
   padding: 1.1cqh 1.1cqw;
-  font-size: 1.05cqw;
+  font-size: max(12px, 1.05cqw);
   background: var(--bc-glass-strong);
   border: 1px solid var(--bc-line);
   border-right: 0.45cqw solid var(--bc-home);
@@ -833,7 +833,7 @@ button.bc-option.bc-voted { color: var(--bc-ink); border-color: var(--bc-accent)
   width: 1.4em;
   height: 1.4em;
   font-family: inherit;
-  font-size: 0.85em;
+  font-size: max(10px, 0.85em);
   font-weight: 800;
   color: #0b110e;
   background: var(--bc-ink);

@@ -268,9 +268,10 @@ export default function BroadcastPage() {
     <Stage
       label={t("broadcastLabel")}
       sheetFirst={story.active}
+      // The manager's call first: it is short and it is the reveal ("You:"); a card open with it can scroll.
       // Not under the story's tablet or phone screen, where the card would stay tappable on top.
       sheet={sheetMode && (lowerThird || managerCall || whatIf) && !(story.active && story.step?.screen !== "tv")
-        ? <>{lowerThird}{managerCall}{whatIf}</> : null}
+        ? <>{managerCall}{lowerThird}{whatIf}</> : null}
       chrome={
         <Chrome
           cards={log.cards}
