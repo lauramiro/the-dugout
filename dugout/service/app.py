@@ -16,6 +16,7 @@ from __future__ import annotations
 import hmac
 import os
 import re
+import sys
 from collections import Counter
 from contextlib import asynccontextmanager
 from functools import cache
@@ -82,7 +83,13 @@ def get_cards() -> CardService:
 
 @cache
 def _publisher() -> Publisher | None:
-    return default_publisher()
+    # A malformed connection string must not take /healthz, the votes or MCP down with it.
+    # The error is named by type only: its message can echo the connection string.
+    try:
+        return default_publisher()
+    except Exception as err:
+        print(f"Web PubSub publisher unavailable: {type(err).__name__}", file=sys.stderr)
+        return None
 
 
 def get_publisher() -> Publisher | None:

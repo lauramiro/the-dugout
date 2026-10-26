@@ -219,3 +219,19 @@ def test_post_decisions_uses_the_decision_points_id(monkeypatch):
         app.dependency_overrides.clear()
     assert card["decision_id"] == card["payload"]["decision_id"] == "rfc-62-03"
     assert pub.sent == [card] and cards.payload("rfc-62-03") is not None
+
+
+def test_a_broken_web_pubsub_setting_leaves_the_service_up(monkeypatch, capsys):
+    from dugout.service import app as service_app
+
+    def broken():
+        raise ValueError("Endpoint=https://x;AccessKey=s3cret-key")  # as a malformed string might
+
+    monkeypatch.setattr(service_app, "default_publisher", broken)
+    service_app._publisher.cache_clear()
+    try:
+        assert service_app.get_publisher() is None
+        assert "s3cret" not in capsys.readouterr().err
+        assert TestClient(app).get("/healthz").json()["push"] == "off"
+    finally:
+        service_app._publisher.cache_clear()
