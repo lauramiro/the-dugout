@@ -6,7 +6,7 @@ Numbers come from code (a Monte Carlo decision engine on what a club could obser
 
 ## Use it
 
-- [MCP server](https://dugout-service.wittypond-73564413.northeurope.azurecontainerapps.io/mcp): Streamable HTTP, stateless, read-only tools match_overview, match_state, price_options and explain_decision (English or Spanish, casual or analyst)
+- [MCP server](https://dugout-service.wittypond-73564413.northeurope.azurecontainerapps.io/mcp): Streamable HTTP, stateless, read-only tools match_overview, match_state, price_options and explain_decision (English or Spanish, casual or analyst; with an MCP App that renders the decision card in hosts that support MCP Apps)
 - [Broadcast view](https://ashy-ocean-03bdf100f.2.azurestaticapps.net/): the demo match as a TV picture with the decision graphics; add ?t=60 to open at a minute, ?source=live for the Web PubSub feed
 - [Analyst desk](https://ashy-ocean-03bdf100f.2.azurestaticapps.net/desk): pitch, condition bars, timeline and the decision card
 - [Fan view](https://ashy-ocean-03bdf100f.2.azurestaticapps.net/fan): one club's card and a vote before the manager's call
