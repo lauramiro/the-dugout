@@ -87,6 +87,7 @@ export function LowerThird({ card, roster, mode, locale, vote, onVote, running, 
               // aria-disabled, not disabled: a disabled button drops the focus, so after a vote it would land on the
               // page; this way it stays on the option just chosen
               aria-disabled={!open}
+              tabIndex={votable ? undefined : -1}
               aria-pressed={votable ? o.id === vote?.option : undefined}
               aria-keyshortcuts={open ? String(i + 1) : undefined}
               onClick={() => open && onVote(o.id)}

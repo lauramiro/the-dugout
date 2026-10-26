@@ -104,8 +104,8 @@
   border: 1px solid var(--fan-line);
   border-radius: 8px;
 }
-.fan-option:not(:disabled) { cursor: pointer; }
-.fan-option:not(:disabled):hover, .fan-option:focus-visible { border-color: var(--fan-accent); outline: none; }
+.fan-option:not([aria-disabled="true"]) { cursor: pointer; }
+.fan-option:not([aria-disabled="true"]):hover, .fan-option:focus-visible { border-color: var(--fan-accent); outline: none; }
 .fan-option.is-pick { border-color: rgba(255, 182, 39, 0.5); }
 .fan-option.is-voted { border-color: var(--fan-accent); background: rgba(255, 182, 39, 0.1); }
 .fan-option kbd { display: grid; place-items: center; width: 1.4em; height: 1.4em; font: inherit; font-size: 12px; font-weight: 800; color: #0a110d; background: var(--fan-ink); border-radius: 4px; }

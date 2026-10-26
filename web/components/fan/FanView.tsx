@@ -133,7 +133,7 @@ function Decision({ card, c, roster, locale, mode, vote, onVote, running, t }: {
             return (
               <li key={o.id}>
                 <button type="button" className={`fan-option${o.pick ? " is-pick" : ""}${vote?.option === o.id ? " is-voted" : ""}`}
-                  disabled={!open} aria-pressed={votable ? vote?.option === o.id : undefined} onClick={() => onVote(c.decisionId, o.id)}>
+                  aria-disabled={!open} aria-pressed={votable ? vote?.option === o.id : undefined} onClick={() => open && onVote(c.decisionId, o.id)}>
                   {open && <kbd>{i + 1}</kbd>}
                   <span className="fan-option-name">
                     {optionLabel(option, card.item, roster, t)}
