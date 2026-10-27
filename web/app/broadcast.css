@@ -1213,7 +1213,14 @@ a.bc-hood-open:hover { filter: brightness(1.08); }
   animation: st-push-in 480ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 .st-device.tablet { width: min(calc(100vw - 32px), calc((100dvh - 128px) * 4 / 3)); aspect-ratio: 4 / 3; }
-.st-device.phone { height: calc(100dvh - 128px); aspect-ratio: 9 / 19.5; border-width: 10px; border-radius: 36px; }
+/* A phone's shape, but never narrower than the fan view needs (320 px of screen): in a window under
+   about 870 px tall (a laptop) the phone gets shorter in proportion instead of its options wrapping
+   a word a line. */
+.st-device.phone {
+  height: calc(100dvh - 128px);
+  width: max(calc((100dvh - 128px) * 9 / 19.5), min(340px, calc(100vw - 32px)));
+  border-width: 10px; border-radius: 36px;
+}
 .st-device-screen {
   width: 100%;
   height: 100%;
