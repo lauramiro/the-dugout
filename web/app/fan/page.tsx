@@ -111,12 +111,20 @@ export default function FanPage() {
     </nav>
   );
 
-  if (status !== "ready" && !live) {
-    return <main className="fan"><p className="fan-waiting">{status === "error" ? t("loadError", { error: feed.error ?? "" }) : t("loading")}</p></main>;
+  // Live keeps its frame while it connects; a feed that never connected says so (it keeps retrying).
+  if (status === "error" || (status !== "ready" && !live)) {
+    return (
+      <main className="fan">
+        {header}
+        <p className="fan-waiting" role={status === "error" ? "alert" : "status"}>
+          {status === "error" ? t("loadError", { error: feed.error ?? "" }) : t("loading")}
+        </p>
+      </main>
+    );
   }
   const liveEmpty = live && log.events.length === 0 && log.snapshots.length === 0;
-  const kickoff = live && schedule && status !== "error"
-    ? <KickoffSlate schedule={schedule} empty={liveEmpty} locale={prefs.locale} t={t} className="fan-kickoff" replayHref="/fan" />
+  const kickoff = live && schedule
+    ?<KickoffSlate schedule={schedule} empty={liveEmpty} locale={prefs.locale} t={t} className="fan-kickoff" replayHref="/fan" />
     : null;
   return (
     <FanView log={log} playhead={playhead} club={club} locale={prefs.locale} mode={prefs.mode} votes={votes}
