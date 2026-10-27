@@ -50,15 +50,17 @@ class CardService:
         if locale not in LOCALES or mode not in MODES:
             raise ValueError(f"unsupported locale {locale!r} or mode {mode!r}")
         key = (decision_id, locale, mode)
-        cached = self.store.get_card(key)
-        if cached is not None:
-            return cached
         payload = self.store.get_decision(decision_id)
         if payload is None:
             return None
+        # A cached card is good only for the payload it was narrated from: the live runner reopens
+        # the same ids in every replay, and a run joined mid-match had other numbers.
+        cached = self.store.get_card(key)
+        if cached is not None and cached["payload"] == payload:
+            return cached
         with self._key_lock(key):
             cached = self.store.get_card(key)
-            if cached is None:
+            if cached is None or cached["payload"] != payload:
                 narration = self._pipeline.run(payload, locale, mode)
                 cached = {"decision_id": decision_id, "locale": locale, "mode": mode,
                           "payload": payload, **card_fields(narration)}

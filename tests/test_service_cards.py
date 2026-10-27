@@ -71,6 +71,28 @@ def test_other_locale_or_mode_runs_the_pipeline_but_not_the_engine(parts):
     assert len(engine.calls) == 1 and len(pipeline.calls) == 3
 
 
+def test_a_decision_reopened_with_other_numbers_is_narrated_again(parts):
+    """The live runner reopens the same ids in every replay of the demo match; a card narrated
+    for an earlier run's numbers (a run joined mid-match) must not be served with them."""
+    _, pipeline, _ = parts
+    payloads = iter([SAMPLE_PAYLOAD, {**SAMPLE_PAYLOAD, "options": SAMPLE_PAYLOAD["options"][::-1]}])
+    svc = CardService(lambda snapshot, team, trigger: next(payloads), pipeline, MemoryStore())
+    svc.open(SNAPSHOT, "RFC", "condition_drop")
+    assert svc.card("rfc-62-01", "en", "casual")["payload"] == SAMPLE_PAYLOAD
+    second = svc.open(SNAPSHOT, "RFC", "condition_drop")
+    assert svc.card("rfc-62-01", "en", "casual")["payload"] == second
+    assert len(pipeline.calls) == 2
+
+
+def test_a_decision_reopened_with_the_same_numbers_keeps_its_narration(parts):
+    _, pipeline, svc = parts
+    svc.open(SNAPSHOT, "RFC", "condition_drop")
+    first = svc.card("rfc-62-01", "en", "casual")
+    svc.open(SNAPSHOT, "RFC", "condition_drop")
+    assert svc.card("rfc-62-01", "en", "casual") == first
+    assert len(pipeline.calls) == 1
+
+
 def test_unknown_decision_is_none(parts):
     _, pipeline, svc = parts
     assert svc.card("nope", "en", "casual") is None
