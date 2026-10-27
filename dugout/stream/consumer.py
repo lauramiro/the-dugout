@@ -5,7 +5,7 @@ progress. The default is "@latest", so start the runner before the replay; `from
 the whole retained stream (a hub keeps 24 hours, so earlier replays would come back too).
 
 The replay sends no end marker, so a run ends when no event has arrived for `idle_s` seconds
-after the first one. `batches` then yields None (end of run) and, with `follow`, goes on
+(RUN_IDLE_S) after the first one. `batches` then yields None (end of run) and, with `follow`, goes on
 waiting for the next run.
 
 Receiving uses EventHubConsumerClient.receive_batch (azure-eventhub 5.15.1), which blocks until
@@ -23,19 +23,25 @@ from collections.abc import Callable, Iterator
 from typing import Protocol
 
 
+# Silence that ends a run: well above the replay's longest wait (replay.MAX_WAIT_S, before a
+# goal's restart), since a run ended mid-match makes the runner wait for the next kick-off; and
+# well under the 10 minutes between scheduled matches.
+RUN_IDLE_S = 30.0
+
+
 class Runner(Protocol):
     def send(self, events: list[dict]) -> None: ...
     def end_run(self) -> None: ...
 
 
 class EventHubsSource:
-    def __init__(self, client, *, starting_position: str = "@latest", idle_s: float = 10.0,
+    def __init__(self, client, *, starting_position: str = "@latest", idle_s: float = RUN_IDLE_S,
                  poll_s: float = 1.0, clock: Callable[[], float] = time.monotonic) -> None:
         self._client, self._position = client, starting_position
         self._idle_s, self._poll_s, self._clock = idle_s, poll_s, clock
 
     @classmethod
-    def from_env(cls, *, from_start: bool = False, idle_s: float = 10.0) -> EventHubsSource:
+    def from_env(cls, *, from_start: bool = False, idle_s: float = RUN_IDLE_S) -> EventHubsSource:
         from azure.eventhub import EventHubConsumerClient
 
         client = EventHubConsumerClient.from_connection_string(

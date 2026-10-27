@@ -5,7 +5,8 @@ import time
 
 import pytest
 
-from dugout.stream.consumer import EventHubsSource, run_source
+from dugout.stream.consumer import RUN_IDLE_S, EventHubsSource, run_source
+from dugout.stream.replay import MAX_WAIT_S
 
 
 class FakeEventData:
@@ -96,3 +97,10 @@ def test_a_receive_error_is_raised():
     with pytest.raises(RuntimeError, match="auth failed"):
         list(source(client).batches())
     assert client.closed.is_set()
+
+
+def test_a_run_ends_well_after_the_longest_wait_the_replay_makes():
+    """The replay waits up to MAX_WAIT_S before a goal's restart; a run that ended there (10 s
+    left 2 s of margin) would reset the runner, which then waits for the next match's kick-off
+    and drops the rest of this one."""
+    assert RUN_IDLE_S >= 3 * MAX_WAIT_S

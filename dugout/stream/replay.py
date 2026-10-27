@@ -27,7 +27,7 @@ from pathlib import Path
 from typing import Protocol
 
 SPEEDS = (1, 5, 20)
-# The live runner (dugout.stream.consumer) ends a run after 10 s without events, so no wait
+# The live runner (dugout.stream.consumer) ends a run after RUN_IDLE_S (30 s) without events, so no wait
 # may reach that: a goal celebration is 65 s of match time, 13 s at 5x.
 MAX_WAIT_S = 8.0
 # A job that starts this late after its slot still kicks off at once instead of waiting a
