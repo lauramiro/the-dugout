@@ -30,6 +30,7 @@ import { usePhoneSheet } from "../lib/sheet";
 import type { MatchLog, PitchFrame } from "../lib/datasource";
 import { playerName } from "../lib/derive";
 import { decimal, translator, type Translate } from "../lib/i18n";
+import { forgetLinkLang } from "../lib/source";
 import { useRecordedTracking } from "../lib/useRecordedTracking";
 import { useSmoothedPos } from "../lib/useSmoothedPos";
 import { buildStory } from "../lib/story";
@@ -59,6 +60,7 @@ export default function BroadcastPage() {
   const changePrefs = (next: BroadcastPrefs) => {
     setPrefs(next);
     writePrefs(next);
+    forgetLinkLang();
   };
   const t = useMemo(() => translator(prefs.locale), [prefs.locale]);
 

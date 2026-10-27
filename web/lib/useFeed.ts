@@ -15,10 +15,13 @@ const serverSearch = () => "";
 /** One data source for the page's lifetime, chosen from the query string (see sourceChoice). */
 export function useDataSource(): DataSource {
   const search = useSyncExternalStore(noSubscribe, clientSearch, serverSearch);
-  const source = useMemo<DataSource>(() => {
-    const choice = sourceChoice(search);
-    return choice.kind === "live" ? new LiveDataSource() : new ReplayDataSource(choice.minute);
-  }, [search]);
+  // keyed on the choice, not the query: dropping ?lang= from the address must not restart the replay
+  const choice = sourceChoice(search);
+  const key = choice.kind === "live" ? "live" : `replay:${choice.minute}`;
+  const source = useMemo<DataSource>(
+    () => (choice.kind === "live" ? new LiveDataSource() : new ReplayDataSource(choice.minute)),
+    [key], // the choice, which `key` spells out
+  );
   useEffect(() => {
     source.start();
     return () => source.dispose();

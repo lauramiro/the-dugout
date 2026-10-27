@@ -16,6 +16,7 @@ import type { DataSource, FeedState, MatchLog, PlaybackControls } from "../../li
 import { benchAt } from "../../lib/bench";
 import { score, tickerEvents } from "../../lib/derive";
 import { LOCALES, translator } from "../../lib/i18n";
+import { forgetLinkLang } from "../../lib/source";
 import { useRecordedTracking } from "../../lib/useRecordedTracking";
 import { useSmoothedPos } from "../../lib/useSmoothedPos";
 import { useVotes } from "../../lib/useVotes";
@@ -85,6 +86,7 @@ export function DeskView(props: DeskViewProps) {
   const changeSettings = (next: Settings) => {
     setSettings(next);
     writeSettings(next);
+    if (!embedded) forgetLinkLang(); // embedded: the address is the TV page's
   };
   const mode = props.mode ?? settings.mode;
   const locale = props.locale ?? settings.locale;

@@ -6,6 +6,7 @@ import { FanView } from "../../components/fan/FanView";
 import type { Locale, Mode, TeamCode } from "../../lib/contracts";
 import { SPEEDS } from "../../lib/datasource";
 import { LOCALES, translator } from "../../lib/i18n";
+import { forgetLinkLang } from "../../lib/source";
 import { useDataSource, useFeed, useLinkedMinute, usePlayOnLoad } from "../../lib/useFeed";
 import { useVotes } from "../../lib/useVotes";
 import "../fan.css";
@@ -71,6 +72,7 @@ export default function FanPage() {
     const next = { ...prefs, ...patch };
     setPrefs(next);
     writePrefs(next);
+    forgetLinkLang();
   };
   const t = useMemo(() => translator(prefs.locale), [prefs.locale]);
   const roster = log.roster;

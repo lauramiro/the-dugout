@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { LANDING_MINUTE, linkedMinute, playOnLoad, sourceChoice } from "./source.ts";
+import { LANDING_MINUTE, linkedMinute, playOnLoad, sourceChoice, withoutLang } from "./source.ts";
 
 test("sourceChoice: no query is the replay a minute before the first card, the same as the server-rendered page", () => {
   assert.equal(LANDING_MINUTE, 59);
@@ -34,4 +34,11 @@ test("linkedMinute: a link that opens a minute of its own (leaving the story) wa
   assert.equal(linkedMinute("?t=60.37&club=RFC&lang=en"), true);
   assert.equal(linkedMinute(""), false);
   assert.equal(linkedMinute("?club=RFC"), false);
+});
+
+test("withoutLang: a settings change drops ?lang= from the address, keeping the rest", () => {
+  assert.equal(withoutLang("?t=60&lang=es&club=RFC"), "?t=60&club=RFC");
+  assert.equal(withoutLang("?lang=es"), "");
+  assert.equal(withoutLang("?t=60"), null, "nothing to change");
+  assert.equal(withoutLang(""), null);
 });

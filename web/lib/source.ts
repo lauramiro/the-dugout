@@ -27,3 +27,20 @@ export function playOnLoad(s: { started: boolean; ready: boolean; controls: bool
 export function linkedMinute(search: string): boolean {
   return new URLSearchParams(search).has("t");
 }
+
+/** The query without ?lang=, or null when it has none: a ?lang= from a link (leaving the story,
+ *  a shared link) wins over storage on load, so once the viewer changes a setting, which is
+ *  stored, the address drops it and a reload keeps their choice. */
+export function withoutLang(search: string): string | null {
+  const params = new URLSearchParams(search);
+  if (!params.has("lang")) return null;
+  params.delete("lang");
+  const rest = params.toString();
+  return rest ? `?${rest}` : "";
+}
+
+/** withoutLang applied to the address bar, without a reload or a history entry. */
+export function forgetLinkLang(): void {
+  const search = withoutLang(window.location.search);
+  if (search !== null) window.history.replaceState(window.history.state, "", `${window.location.pathname}${search}${window.location.hash}`);
+}
