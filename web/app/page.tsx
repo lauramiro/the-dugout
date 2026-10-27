@@ -12,7 +12,7 @@ import { Worm } from "../components/broadcast/Worm";
 import { useHeldCues } from "../components/broadcast/useHeldCues";
 import { Scorebug } from "../components/broadcast/Scorebug";
 import {
-  DEFAULT_PREFS, readPrefs, SettingsChip, writePrefs, type BroadcastPrefs,
+  DEFAULT_PREFS, prefsFromUrl, readPrefs, SettingsChip, writePrefs, type BroadcastPrefs,
 } from "../components/broadcast/SettingsChip";
 import { Stage } from "../components/broadcast/Stage";
 import { Bench } from "../components/broadcast/Bench";
@@ -51,7 +51,7 @@ export default function BroadcastPage() {
   const [cuesJson, setCuesJson] = useState(false);
   useEffect(() => setCuesJson(new URLSearchParams(window.location.search).get("cues") === "json"), []);
   const [prefs, setPrefs] = useState<BroadcastPrefs>(DEFAULT_PREFS);
-  useEffect(() => setPrefs((p) => ({ ...p, ...readPrefs() })), []);
+  useEffect(() => setPrefs((p) => ({ ...p, ...readPrefs(), ...prefsFromUrl() })), []);
   useEffect(() => {
     document.documentElement.lang = prefs.locale;
   }, [prefs.locale]);

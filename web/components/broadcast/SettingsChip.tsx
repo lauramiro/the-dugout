@@ -29,6 +29,12 @@ export function readPrefs(): Partial<BroadcastPrefs> {
   }
 }
 
+/** ?lang= from a link (leaving the story passes the viewer's, or a shared link): it wins over storage. */
+export function prefsFromUrl(): Partial<BroadcastPrefs> {
+  const lang = new URLSearchParams(window.location.search).get("lang");
+  return LOCALES.includes(lang as Locale) ? { locale: lang as Locale } : {};
+}
+
 export function writePrefs(prefs: BroadcastPrefs): void {
   try {
     localStorage.setItem(PREFS_KEY, JSON.stringify(prefs));
