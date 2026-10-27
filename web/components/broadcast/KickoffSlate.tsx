@@ -18,6 +18,15 @@ export function useLiveSchedule(source: DataSource): Schedule | null {
   return useSyncExternalStore(live?.subscribe ?? noSubscribe, () => live?.schedule ?? null, noSchedule);
 }
 
+/** The replay of this screen with the page's other choices (?lang=, ?club=): the live query
+ *  without ?source=. Called after mount only (the slate renders nothing before). */
+function replayLink(path: string): string {
+  const query = new URLSearchParams(window.location.search);
+  query.delete("source");
+  const rest = query.toString();
+  return rest ? `${path}?${rest}` : path;
+}
+
 export function KickoffSlate({ schedule, empty, locale, t, className = "bc-kickoff", replayHref = "/" }: {
   schedule: Schedule;
   /** Nothing has arrived from this match yet. */
@@ -55,7 +64,7 @@ export function KickoffSlate({ schedule, empty, locale, t, className = "bc-kicko
         <p className={`${className}-label`}>{t("kickoffJoining", { time: time(k.since) })}</p>
       )}
       <p className={`${className}-note`}>{t("liveSchedule", { n: schedule.every_min, speed: schedule.speed })}</p>
-      <a className={`${className}-replay`} href={replayHref}>{t("watchReplay")}</a>
+      <a className={`${className}-replay`} href={replayLink(replayHref)}>{t("watchReplay")}</a>
     </div>
   );
 }
