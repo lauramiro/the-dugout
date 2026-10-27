@@ -124,7 +124,7 @@ export default function FanPage() {
   }
   const liveEmpty = live && log.events.length === 0 && log.snapshots.length === 0;
   const kickoff = live && schedule
-    ?<KickoffSlate schedule={schedule} empty={liveEmpty} locale={prefs.locale} t={t} className="fan-kickoff" replayHref="/fan" />
+    ? <KickoffSlate schedule={schedule} empty={liveEmpty} locale={prefs.locale} t={t} className="fan-kickoff" replayHref="/fan" />
     : null;
   return (
     <FanView log={log} playhead={playhead} club={club} locale={prefs.locale} mode={prefs.mode} votes={votes}
