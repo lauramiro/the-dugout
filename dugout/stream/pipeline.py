@@ -65,6 +65,12 @@ _UNREAD_SNAPSHOT_KEYS = ("threat_by_channel",)
 _UNREAD_PLAYER_KEYS = ("team", "role")
 
 
+def _is_kickoff(event: dict) -> bool:
+    """The match's first kick-off (a goal's restart is a kick-off too, but later in the half)."""
+    return (event.get("type") == "restart" and event.get("outcome") == "kickoff"
+            and event.get("period") == 1 and event.get("t_ms") == 0)
+
+
 def slim_snapshot(snapshot: dict) -> dict:
     """The snapshot without the fields the live page never reads (web/lib/live.ts and the components)."""
     out = {k: v for k, v in snapshot.items() if k not in _UNREAD_SNAPSHOT_KEYS}
@@ -155,9 +161,16 @@ class PipelineRunner:
         self._points = DecisionPoints()
         self._last_published: tuple[int, int] | None = None  # (period, t_ms)
         self._winprob_sent: set[tuple[int, int]] = set()
+        # A runner started mid-match (each deploy) has missed the goals and the running so far:
+        # it waits for the next kick-off rather than publish wrong snapshots and cards.
+        self._kicked_off = False
 
     def send(self, events: list[dict]) -> None:
         for e in events:
+            if not self._kicked_off:
+                if not _is_kickoff(e):
+                    continue
+                self._kicked_off = True
             self._handle(self._engine.feed(e))
             if e.get("type") in KEY_EVENT_TYPES:
                 self._publish({k: v for k, v in e.items() if v is not None})

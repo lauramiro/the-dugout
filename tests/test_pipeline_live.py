@@ -100,6 +100,24 @@ def test_a_second_run_starts_clean():
     assert snapshots[:half] == snapshots[half:]
 
 
+def test_a_run_joined_mid_match_publishes_nothing_and_the_next_run_is_whole():
+    """A runner started while a replay is under way (each deploy) has missed the goals and the
+    running so far, so its snapshots and cards would be wrong: it waits for the next kick-off."""
+    pub = FakePublisher()
+    runner = make_runner(pub)
+    events = read_events(DEMO)
+    runner.send(events[len(events) // 2:])
+    runner.end_run()
+    assert [m for m in pub.sent if "decision_id" in m or "subs_left" in m] == []
+    runner.send(events)
+    runner.end_run()
+    whole = FakePublisher()
+    clean = make_runner(whole)
+    clean.send(events)
+    clean.end_run()
+    assert [m for m in pub.sent if "subs_left" in m] == [m for m in whole.sent if "subs_left" in m]
+
+
 def test_a_failing_service_does_not_stop_the_stream():
     class Broken:
         def open(self, point):
