@@ -16,9 +16,10 @@ export function sourceChoice(search: string): SourceChoice {
 
 /** Whether a replay page should start playing now: a page opened on its own runs like a broadcast, once
  *  it has loaded, and only the first time (a pause after that stays a pause). `held`: something on the
- *  page asks for a wait first, such as the landing's story intro. */
-export function playOnLoad(s: { started: boolean; ready: boolean; controls: boolean; held: boolean }): boolean {
-  return !s.started && s.ready && s.controls && !s.held;
+ *  page asks for a wait first, such as the landing's story intro. `atEnd`: opened at full time, where
+ *  play would start the match again. */
+export function playOnLoad(s: { started: boolean; ready: boolean; controls: boolean; held: boolean; atEnd: boolean }): boolean {
+  return !s.started && s.ready && s.controls && !s.held && !s.atEnd;
 }
 
 /** Whether a page's query opens a minute of its own (?t=), as leaving the story does: such a page waits

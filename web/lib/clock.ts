@@ -10,6 +10,11 @@ export function toPos(period: 1 | 2, tMs: number, firstHalfEnd: number): number 
   return period === 1 ? tMs : firstHalfEnd + HALF_TIME_GAP_MS + (tMs - HALF_MS);
 }
 
+/** Where a ?t= minute opens the replay: in its half (the second from 45), at most at full time. */
+export function minutePos(minute: number, firstHalfEnd: number, duration: number): number {
+  return Math.min(minute > 0 ? toPos(minute >= 45 ? 2 : 1, minute * MIN_MS, firstHalfEnd) : 0, duration);
+}
+
 export function fromPos(pos: number, firstHalfEnd: number): { period: 1 | 2; tMs: number } {
   if (pos <= firstHalfEnd) return { period: 1, tMs: Math.max(0, pos) };
   return { period: 2, tMs: Math.max(HALF_MS, pos - firstHalfEnd - HALF_TIME_GAP_MS + HALF_MS) };

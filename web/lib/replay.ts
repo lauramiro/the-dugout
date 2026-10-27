@@ -3,7 +3,7 @@
 // tracking from the simulator, snapshots and decision points from the state engine,
 // cards from the decision engine and the narration pipeline.
 
-import { toPos, lastAtOrBefore } from "./clock";
+import { minutePos, toPos, lastAtOrBefore } from "./clock";
 import type { DecisionCard, MatchEvent, Roster, Snapshot, TrackingFrame, WinProbPoint } from "./contracts";
 import {
   emptyLog,
@@ -149,14 +149,14 @@ export class ReplayDataSource implements DataSource {
       });
 
       const byPos = <T>(a: Timed<T>, b: Timed<T>) => a.pos - b.pos;
-      const start = this.startMinute > 0 ? pos(this.startMinute >= 45 ? 2 : 1, this.startMinute * 60_000) : 0;
+      const duration = pos(2, index.period_end_t_ms["2"]);
       this.set({
         status: "ready",
-        playhead: start,
+        playhead: minutePos(this.startMinute, end1, duration),
         log: {
           roster,
           firstHalfEnd: end1,
-          duration: pos(2, index.period_end_t_ms["2"]),
+          duration,
           events: events
             .slice()
             .sort((a, b) => a.seq - b.seq)

@@ -1,6 +1,16 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { aheadPos, liveHalf, type LiveHalf } from "./clock.ts";
+import { aheadPos, liveHalf, minutePos, type LiveHalf } from "./clock.ts";
+
+test("minutePos opens a ?t= minute in its half, and past full time at full time", () => {
+  const end1 = 2_820_000; // 45+2'
+  const duration = 5_840_500;
+  assert.equal(minutePos(0, end1, duration), 0);
+  assert.equal(minutePos(30, end1, duration), 1_800_000);
+  assert.equal(minutePos(45, end1, duration), end1 + 500, "45 is the second half's kick-off");
+  assert.equal(minutePos(62, end1, duration), end1 + 500 + 17 * 60_000);
+  assert.equal(minutePos(98, end1, duration), duration, "a minute after the final whistle opens at full time");
+});
 
 test("aheadPos caps the run-on at maxAheadMs of match time, whatever the rate", () => {
   // 20x: 10 s of wall time since the last message would be 200 s of match time.

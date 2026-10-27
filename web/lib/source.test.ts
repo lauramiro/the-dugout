@@ -21,8 +21,9 @@ test("sourceChoice: ?t=0 is the full match from kick-off; an unreadable ?t= fall
 });
 
 test("playOnLoad: a replay page opened on its own starts once it has loaded, once, and not while something holds it", () => {
-  const base = { started: false, ready: true, controls: true, held: false };
+  const base = { started: false, ready: true, controls: true, held: false, atEnd: false };
   assert.equal(playOnLoad(base), true);
+  assert.equal(playOnLoad({ ...base, atEnd: true }), false, "opened at full time (?t=95): play would start the match again");
   assert.equal(playOnLoad({ ...base, started: true }), false, "only once: a pause stays a pause");
   assert.equal(playOnLoad({ ...base, ready: false }), false);
   assert.equal(playOnLoad({ ...base, controls: false }), false, "live has no controls");

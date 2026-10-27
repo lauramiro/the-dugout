@@ -34,7 +34,8 @@ export function useFeed(source: DataSource): FeedState {
 export function usePlayOnLoad(source: DataSource, feed: FeedState, held = false): void {
   const started = useRef(false);
   useEffect(() => {
-    if (!playOnLoad({ started: started.current, ready: feed.status === "ready", controls: !!source.controls, held })) return;
+    const atEnd = feed.status === "ready" && feed.playhead >= feed.log.duration;
+    if (!playOnLoad({ started: started.current, ready: feed.status === "ready", controls: !!source.controls, held, atEnd })) return;
     started.current = true;
     source.controls?.play();
   }, [feed.status, source, held]);
