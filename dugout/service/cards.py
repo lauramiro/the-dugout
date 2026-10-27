@@ -59,6 +59,8 @@ class CardService:
         if cached is not None and cached["payload"] == payload:
             return cached
         with self._key_lock(key):
+            # read again: a later run may have reopened the decision while this caller waited
+            payload = self.store.get_decision(decision_id)
             cached = self.store.get_card(key)
             if cached is None or cached["payload"] != payload:
                 narration = self._pipeline.run(payload, locale, mode)

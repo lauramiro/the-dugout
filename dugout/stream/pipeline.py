@@ -164,11 +164,15 @@ class PipelineRunner:
         # A runner started mid-match (each deploy) has missed the goals and the running so far:
         # it waits for the next kick-off rather than publish wrong snapshots and cards.
         self._kicked_off = False
+        self._skipping = False
 
     def send(self, events: list[dict]) -> None:
         for e in events:
             if not self._kicked_off:
                 if not _is_kickoff(e):
+                    if not self._skipping:
+                        self._skipping = True
+                        print("joined a match under way: waiting for the next kick-off", file=sys.stderr)
                     continue
                 self._kicked_off = True
             self._handle(self._engine.feed(e))
