@@ -63,6 +63,24 @@
 
 .fan-waiting { color: var(--fan-muted); margin: 8px 2px; }
 
+/* Live: the next scheduled kick-off (components/broadcast/KickoffSlate.tsx). */
+.fan-kickoff {
+  display: grid;
+  gap: 4px;
+  padding: 14px;
+  text-align: center;
+  background: var(--fan-card);
+  border: 1px solid var(--fan-line);
+  border-top: 3px solid var(--fan-accent);
+  border-radius: 10px;
+}
+.fan-kickoff p { margin: 0; }
+.fan-kickoff-label { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--fan-muted); }
+.fan-kickoff-time { font-family: var(--font-led), monospace; font-size: 40px; line-height: 1.1; color: var(--fan-accent); font-variant-numeric: tabular-nums; }
+.fan-kickoff-in { font-weight: 700; font-variant-numeric: tabular-nums; }
+.fan-kickoff-note { color: var(--fan-muted); font-size: 13px; }
+.fan-kickoff-replay { color: var(--fan-ink); font-weight: 700; }
+
 .fan-card {
   display: grid;
   gap: 12px;

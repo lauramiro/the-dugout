@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { KickoffSlate, useLiveSchedule } from "../../components/broadcast/KickoffSlate";
 import { FanView } from "../../components/fan/FanView";
 import type { Locale, Mode, TeamCode } from "../../lib/contracts";
 import { SPEEDS } from "../../lib/datasource";
@@ -59,6 +60,7 @@ export default function FanPage() {
   usePlayOnLoad(source, feed, useLinkedMinute() !== false);
   const { log, playhead, status } = feed;
   const live = source.kind === "live";
+  const schedule = useLiveSchedule(source);
   const { votes, castVote } = useVotes(live);
   const [prefs, setPrefs] = useState<FanPrefs>({ club: null, mode: "casual", locale: "en" });
   useEffect(() => setPrefs((p) => ({ ...p, ...readPrefs(), ...fromUrl() })), []);
@@ -112,8 +114,12 @@ export default function FanPage() {
   if (status !== "ready" && !live) {
     return <main className="fan"><p className="fan-waiting">{status === "error" ? t("loadError", { error: feed.error ?? "" }) : t("loading")}</p></main>;
   }
+  const liveEmpty = live && log.events.length === 0 && log.snapshots.length === 0;
+  const kickoff = live && schedule && status !== "error"
+    ? <KickoffSlate schedule={schedule} empty={liveEmpty} locale={prefs.locale} t={t} className="fan-kickoff" replayHref="/fan" />
+    : null;
   return (
     <FanView log={log} playhead={playhead} club={club} locale={prefs.locale} mode={prefs.mode} votes={votes}
-      onVote={castVote} running={live || feed.playing} header={header} live={live} t={t} />
+      onVote={castVote} running={live || feed.playing} header={header} live={live} kickoff={kickoff} t={t} />
   );
 }

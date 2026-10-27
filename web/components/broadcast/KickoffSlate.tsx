@@ -18,12 +18,16 @@ export function useLiveSchedule(source: DataSource): Schedule | null {
   return useSyncExternalStore(live?.subscribe ?? noSubscribe, () => live?.schedule ?? null, noSchedule);
 }
 
-export function KickoffSlate({ schedule, empty, locale, t }: {
+export function KickoffSlate({ schedule, empty, locale, t, className = "bc-kickoff", replayHref = "/" }: {
   schedule: Schedule;
   /** Nothing has arrived from this match yet. */
   empty: boolean;
   locale: Locale;
   t: Translate;
+  /** Class prefix: the TV frame's overlay, or the fan view's card (`fan-kickoff`). */
+  className?: string;
+  /** Where "watch the replay" goes: this screen's own replay. */
+  replayHref?: string;
 }) {
   const [now, setNow] = useState<number | null>(null);
   // When this page started listening: a judge who arrives mid-match is joining until the first message lands.
@@ -40,18 +44,18 @@ export function KickoffSlate({ schedule, empty, locale, t }: {
   if (k.kind === "on" && !empty) return null;
   const time = (ms: number) => new Date(ms).toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
   return (
-    <div className="bc-kickoff" role="status">
+    <div className={className} role="status">
       {k.kind === "next" ? (
         <>
-          <p className="bc-kickoff-label">{t("nextKickoff")}</p>
-          <p className="bc-kickoff-time">{time(k.at)}</p>
-          <p className="bc-kickoff-in">{t("kickoffIn", { countdown: countdown(k.at - now) })}</p>
+          <p className={`${className}-label`}>{t("nextKickoff")}</p>
+          <p className={`${className}-time`}>{time(k.at)}</p>
+          <p className={`${className}-in`}>{t("kickoffIn", { countdown: countdown(k.at - now) })}</p>
         </>
       ) : (
-        <p className="bc-kickoff-label">{t("kickoffJoining", { time: time(k.since) })}</p>
+        <p className={`${className}-label`}>{t("kickoffJoining", { time: time(k.since) })}</p>
       )}
-      <p className="bc-kickoff-note">{t("liveSchedule", { n: schedule.every_min, speed: schedule.speed })}</p>
-      <a className="bc-kickoff-replay" href="/">{t("watchReplay")}</a>
+      <p className={`${className}-note`}>{t("liveSchedule", { n: schedule.every_min, speed: schedule.speed })}</p>
+      <a className={`${className}-replay`} href={replayHref}>{t("watchReplay")}</a>
     </div>
   );
 }

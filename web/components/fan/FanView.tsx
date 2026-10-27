@@ -29,12 +29,14 @@ interface Props {
   header?: ReactNode;
   /** The Web PubSub feed rather than a replay: the match has no known end, so no full time. */
   live?: boolean;
+  /** Live, with no card open: the next scheduled kick-off (the standalone page's KickoffSlate). */
+  kickoff?: ReactNode;
   t: Translate;
 }
 
 /** The fan's phone: the score, then what the manager is weighing on the club's open card, the
  *  vote, the manager's call when it comes, and the What if at full time. */
-export function FanView({ log, playhead, club, locale, mode, votes, onVote, running, leadId = null, header, live = false, t }: Props) {
+export function FanView({ log, playhead, club, locale, mode, votes, onVote, running, leadId = null, header, live = false, kickoff, t }: Props) {
   const { roster } = log;
   const moment = fanMoment(log, playhead, club, locale, mode, live);
   const goals = scoreAt(log, playhead);
@@ -51,6 +53,7 @@ export function FanView({ log, playhead, club, locale, mode, votes, onVote, runn
         ))}
         <span className="fan-clock">{moment.kind === "full-time" ? t("fullTimeShort") : formatClock(tMs)}</span>
       </header>
+      {moment.kind === "waiting" && kickoff}
       {moment.kind === "waiting" && <p className="fan-waiting">{t("noDecision")}</p>}
       {moment.kind === "decision" && (
         <Decision key={moment.context.decisionId} card={moment.card} c={moment.context} roster={roster} locale={locale}
