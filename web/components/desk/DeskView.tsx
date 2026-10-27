@@ -16,6 +16,7 @@ import type { DataSource, FeedState, PlaybackControls } from "../../lib/datasour
 import { benchAt } from "../../lib/bench";
 import { score, tickerEvents } from "../../lib/derive";
 import { LOCALES, translator } from "../../lib/i18n";
+import { useRecordedTracking } from "../../lib/useRecordedTracking";
 import { useVotes } from "../../lib/useVotes";
 
 const TICKER_LENGTH = 8;
@@ -65,6 +66,9 @@ export function DeskView(props: DeskViewProps) {
   const { source, feed, highlight = null, embedded = false } = props;
   const { log, playhead, status } = feed;
   const { roster } = log;
+  // live: the feed carries no tracking, so the pitch draws the recorded demo match at the live clock
+  const recorded = useRecordedTracking(source, log, playhead);
+  const frame = source.kind === "live" ? recorded.frame : source.frameAt(playhead);
   const [settings, setSettings] = useState<Settings>({ mode: "casual", focus: "", locale: "en" });
   useEffect(() => {
     // ?lang= and ?club= from a link (leaving the story passes the viewer's) win over storage
@@ -165,7 +169,7 @@ export function DeskView(props: DeskViewProps) {
       <section className="match" aria-label={roster ? `${roster.teams[roster.home].name} v ${roster.teams[roster.away].name}` : undefined}>
         <Scoreboard roster={roster} score={goals} period={period} tMs={tMs} finished={finished} t={t} />
         <div className="pitch-wrap">
-          <Pitch frame={source.frameAt(playhead)} roster={roster} highlight={flaggedId} label={t("pitch")} />
+          <Pitch frame={frame} roster={roster} highlight={flaggedId} label={t("pitch")} />
           {status !== "ready" && (
             <div className="pitch-status" role="status">
               {status === "error" ? t("loadError", { error: feed.error ?? "" }) : source.kind === "live" ? t("waitingLive") : t("loading")}
